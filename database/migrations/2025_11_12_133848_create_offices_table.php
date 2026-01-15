@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('offices', function (Blueprint $table) {
+            $table->id('office_id');
+            $table->string('office_name')->unique();
+            $table->unsignedBigInteger('office_head_id')->nullable();
+            $table ->string('office_code')->nullable();
+            $table->enum('is_active', ['active','inactive'])->default('active')->comment('Status of the office');
+
+            $table->string('office_address')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('offices');
+    }
+};
