@@ -2,147 +2,210 @@
 <style>
     :root {
         --med-navy: #0f172a;
-        --med-blue: #3b82f6;
-        --med-crimson: #ef4444;
+        --med-indigo: #6366f1;
+        --med-rose: #f43f5e;
         --med-slate: #f8fafc;
     }
 
+    /* Main Container */
     #timeout-warning {
-        z-index: 10000;
+        z-index: 9999;
         width: 380px;
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        overflow: hidden;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        transform: translateX(120%);
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0,0,0,0.08);
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform: translateY(150%); /* Start off-screen bottom */
     }
 
-    #timeout-warning.show-toast { transform: translateX(0); }
+    /* Visibility States */
+    #timeout-warning.show-toast { transform: translateY(0); }
+    #timeout-warning.d-none { display: none !important; }
 
-    /* Minimized State */
+    /* Mobile Responsive Adaptation */
+    @media (max-width: 480px) {
+        #timeout-warning {
+            width: 100% !important;
+            margin: 0 !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            border-radius: 20px 20px 0 0; /* Modern Bottom Sheet Style */
+        }
+    }
+
+    /* Minimized Circle State (Floating Action Button style) */
     #timeout-warning.minimized {
-        width: 60px;
-        height: 60px;
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 30px !important;
         cursor: pointer;
-        border-radius: 50%;
-        margin-bottom: 20px;
+        bottom: 20px !important;
+        right: 20px !important;
+        transform: translateY(0) scale(1);
     }
-    #timeout-warning.minimized .med-toast-body, 
-    #timeout-warning.minimized .med-toast-header span,
-    #timeout-warning.minimized .med-toast-header .btn-close-custom {
-        display: none !important;
-    }
-    #timeout-warning.minimized .med-toast-header {
-        padding: 18px;
-        justify-content: center;
-        background: var(--med-crimson);
+    #timeout-warning.minimized .med-content, 
+    #timeout-warning.minimized .btn-close-custom { display: none !important; }
+    #timeout-warning.minimized .med-header { 
+        border-radius: 30px; 
+        height: 100%; 
+        justify-content: center !important; 
+        background: var(--med-rose);
     }
 
-    .med-toast-header {
-        background-color: var(--med-navy);
-        padding: 10px 15px;
+    .med-header {
+        background: var(--med-navy);
         color: white;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        padding: 14px 20px;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
     }
 
-    .med-toast-body { padding: 20px 15px; background: var(--med-slate); }
-
-    .timer-circle {
+    .timer-ring {
         width: 45px; height: 45px;
-        border: 3px solid #e2e8f0;
-        border-top: 3px solid var(--med-crimson);
+        border: 3px solid #f1f5f9;
+        border-top: 3px solid var(--med-rose);
         border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        font-weight: 800; color: var(--med-crimson);
+        font-weight: 900; color: var(--med-rose);
     }
 
-    .btn-restore {
-        background: var(--med-blue); color: white; border: none;
-        padding: 8px 18px; border-radius: 6px; font-weight: 600; font-size: 0.8rem;
+    .btn-med-restore {
+        background: var(--med-indigo);
+        color: white; font-weight: 700; border: none;
+        padding: 10px 24px; border-radius: 10px; font-size: 0.8rem;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        transition: transform 0.2s;
     }
+    .btn-med-restore:active { transform: scale(0.95); }
 
-    .progress-track { height: 4px; background: #e2e8f0; width: 100%; position: absolute; bottom: 0; left: 0; }
-    #timeout-bar { height: 100%; background: var(--med-crimson); width: 100%; transition: width 1s linear; }
-    
-    .btn-minimize { background: none; border: none; color: white; opacity: 0.6; cursor: pointer; }
-    .btn-minimize:hover { opacity: 1; }
+    .progress-container { height: 5px; background: #f1f5f9; width: 100%; position: absolute; bottom: 0; }
+    #timeout-bar { height: 100%; background: var(--med-rose); width: 100%; }
 </style>
 
 <div id="timeout-warning" class="position-fixed bottom-0 end-0 m-4 d-none" onclick="expandToast()">
-    <div class="med-toast-header">
+    <div class="med-header d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-2">
-            <i class="fas fa-shield-alt"></i>
-            <span class="fw-bold small text-uppercase">Security Alert</span>
+            <i class="fas fa-user-shield text-indigo-400"></i>
+            <span class="text-[10px] font-black uppercase tracking-widest">Security Guard</span>
         </div>
-        <button class="btn-minimize btn-close-custom" onclick="minimizeToast(event)">
-            <i class="fas fa-compress-alt"></i>
+        <button class="btn-close-custom bg-transparent border-0 text-white opacity-50" onclick="minimizeToast(event)">
+            <i class="fas fa-compress-alt small"></i>
         </button>
     </div>
-    
-    <div class="med-toast-body">
-        <div class="d-flex align-items-center mb-3">
-            <div class="timer-circle me-3" id="timer-seconds">120</div>
+
+    <div class="med-content p-4">
+        <div class="d-flex align-items-center mb-4">
+            <div class="timer-ring me-3" id="timer-display">120</div>
             <div>
-                <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">Session Expiring</h6>
-                <p class="text-muted small mb-0">Save your work or re-authenticate.</p>
+                <div class="text-slate-900 font-black text-sm">Session Timeout</div>
+                <div class="text-slate-500 text-[11px] leading-tight">Your session in the inventory system is about to expire.</div>
             </div>
         </div>
 
         <div class="d-flex align-items-center justify-content-between">
-            <button onclick="resetTimer(event)" class="btn-restore">RESTORE</button>
-            {{-- Fixed Logout Link --}}
-            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" 
-               class="text-decoration-none text-danger fw-bold small">
-                Log Out
-            </a>
+            <button id="restore-session-btn" onclick="executeRestore(event)" class="btn-med-restore">
+                KEEP WORKING
+            </button>
+            <form id="timeout-logout-form" action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="bg-transparent border-0 text-rose-500 font-bold text-[11px] uppercase tracking-widest">
+                    Logout
+                </button>
+            </form>
         </div>
     </div>
-    <div class="progress-track"><div id="timeout-bar"></div></div>
+    <div class="progress-container"><div id="timeout-bar"></div></div>
 </div>
 
-{{-- Hidden Logout Form --}}
-<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-    @csrf
-</form>
-
 <script>
-    const sessionLifetime = {{ config('session.lifetime') }} * 60 * 1000;
-    const warningBuffer = 120 * 1000; 
+    /**
+     * CONFIGURATION
+     * Lifetime from .env (20 mins)
+     */
+    const LIFETIME_MINS = {{ config('session.lifetime', 20) }}; 
+    const BUFFER_SECONDS = 120; // 2 minute countdown
+    
     let warningTimer, logoutTimer, countdownInterval;
 
-    function startTimers() {
+    function initSecurityTimers() {
+        stopAllLogic();
+        
         const toast = document.getElementById('timeout-warning');
+        const bar = document.getElementById('timeout-bar');
+        const display = document.getElementById('timer-display');
+        const btn = document.getElementById('restore-session-btn');
+
+        // Reset UI
         toast.classList.add('d-none');
         toast.classList.remove('show-toast', 'minimized');
-        clearInterval(countdownInterval);
-        clearTimeout(warningTimer);
-        clearTimeout(logoutTimer);
+        bar.style.width = '100%';
+        bar.style.transition = 'none'; // Prevent animation on reset
+        display.innerText = BUFFER_SECONDS;
+        btn.innerText = "KEEP WORKING";
+        btn.disabled = false;
 
-        warningTimer = setTimeout(showWarning, sessionLifetime - warningBuffer);
-        logoutTimer = setTimeout(() => {
-            window.location.href = "{{ route('login') }}?reason=timeout";
-        }, sessionLifetime);
+        // Calculate timing
+        const msUntilWarning = (LIFETIME_MINS * 60 * 1000) - (BUFFER_SECONDS * 1000);
+        
+        // 1. Set Warning trigger
+        warningTimer = setTimeout(triggerWarningUI, msUntilWarning);
+
+        // 2. Set Absolute Logout
+        logoutTimer = setTimeout(forceLogout, LIFETIME_MINS * 60 * 1000);
     }
 
-    function showWarning() {
+    function stopAllLogic() {
+        clearTimeout(warningTimer);
+        clearTimeout(logoutTimer);
+        clearInterval(countdownInterval);
+    }
+
+    function triggerWarningUI() {
         const toast = document.getElementById('timeout-warning');
+        const bar = document.getElementById('timeout-bar');
+        
         toast.classList.remove('d-none');
+        // Small delay to trigger CSS transform animation
         setTimeout(() => toast.classList.add('show-toast'), 50);
 
-        let timeLeft = 120;
-        const countdownEl = document.getElementById('timer-seconds');
-        const barEl = document.getElementById('timeout-bar');
+        let secondsLeft = BUFFER_SECONDS;
+        const display = document.getElementById('timer-display');
         
+        bar.style.transition = 'width 1s linear';
+
         countdownInterval = setInterval(() => {
-            timeLeft--;
-            if (countdownEl) countdownEl.innerText = timeLeft;
-            if (barEl) barEl.style.width = (timeLeft / 120) * 100 + '%';
-            if (timeLeft <= 0) clearInterval(countdownInterval);
+            secondsLeft--;
+            if (display) display.innerText = secondsLeft;
+            if (bar) bar.style.width = (secondsLeft / BUFFER_SECONDS) * 100 + '%';
+
+            if (secondsLeft <= 0) {
+                forceLogout();
+            }
         }, 1000);
+    }
+
+    function executeRestore(e) {
+        if(e) e.stopPropagation();
+        const btn = document.getElementById('restore-session-btn');
+        btn.disabled = true;
+        btn.innerText = "REFRESHING...";
+
+        // Ping the heartbeat route
+        fetch("{{ route('session.heartbeat') }}")
+            .then(res => {
+                if(res.ok) {
+                    initSecurityTimers(); // Reset 20-minute cycle
+                } else {
+                    forceLogout();
+                }
+            })
+            .catch(() => forceLogout());
+    }
+
+    function forceLogout() {
+        stopAllLogic();
+        window.location.href = "{{ route('login') }}?reason=timeout";
     }
 
     function minimizeToast(e) {
@@ -157,12 +220,35 @@
         }
     }
 
-    function resetTimer(e) {
-        if(e) e.stopPropagation();
-        fetch("{{ route('dashboard') }}")
-            .then(() => startTimers())
-            .catch(() => window.location.reload());
-    }
+    // Initialize logic
+    window.onload = initSecurityTimers;
 
-    window.onload = startTimers;
+    /**
+     * MULTI-DEVICE ACTIVITY TRACKING
+     * Resets the 20-minute timer if the user is active.
+     */
+    const activityEvents = ['mousedown', 'touchstart', 'scroll', 'keypress'];
+    let debounceTimer;
+
+    activityEvents.forEach(eventName => {
+        document.addEventListener(eventName, () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const toast = document.getElementById('timeout-warning');
+                // Only reset the background timer if the user isn't currently 
+                // looking at the "Warning" popup.
+                if (toast && toast.classList.contains('d-none')) {
+                    initSecurityTimers();
+                }
+            }, 5000); // Check activity every 5 seconds
+        }, { passive: true });
+    });
+
+    // Detect when browser comes back from "Sleep" or "Background" (Mobile Fix)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            // Ping server to see if we're still logged in
+            fetch("{{ route('session.heartbeat') }}").catch(() => forceLogout());
+        }
+    });
 </script>

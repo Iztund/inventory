@@ -27,6 +27,7 @@ class SubmissionItem extends Model
         'document_path',
         'serial_number',
         'status',
+        'remarks',       // ADDED: To store specific feedback
         'condition',     
         'item_notes',    // Matches the 'item_notes' name in your Blade file
     ];

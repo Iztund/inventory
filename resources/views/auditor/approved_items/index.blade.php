@@ -1,138 +1,151 @@
 @extends('layouts.auditor')
 
-@section('title', 'Verified Asset Registry')
+@section('title', 'Verified Registry')
 
 @section('content')
-<div class="container-fluid py-4 bg-light min-vh-100">
-    
-    {{-- 1. INSTITUTIONAL HEADER (Print Only) --}}
-    <div class="d-none d-print-block mb-5 border-bottom border-dark pb-3">
-        <div class="row align-items-center">
-            <div class="col-8">
-                <h2 class="fw-bold mb-0 text-dark">COLLEGE OF MEDICINE</h2>
-                <h5 class="text-uppercase fw-light mb-2 text-secondary">Inventory Management System</h5>
-                <p class="small mb-0 text-muted">Official Verified Asset Registry Report</p>
-            </div>
-            <div class="col-4 text-end">
-                <div class="small fw-bold text-dark">REF: #REG-{{ date('Ymd') }}</div>
-                <div class="small text-muted">Date: {{ now()->format('d M Y') }}</div>
-            </div>
-        </div>
-    </div>
+<div class="min-h-screen bg-slate-50 py-8">
+    <div class="container mx-auto px-4 max-w-7xl">
+        
+        {{-- 1. HEADER & ACTION BAR --}}
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+            <div class="flex items-center gap-4">
+                <a href="{{ url()->previous() }}" 
+                   class="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shrink-0 group shadow-sm">
+                    <i class="fas fa-chevron-left text-sm group-hover:-translate-x-0.5 transition-transform"></i>
+                </a>
 
-    {{-- 2. ACTION BAR (Web Only) --}}
-    <div class="row mb-4 d-print-none">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-body p-0">
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 bg-white border-start border-5 border-success">
-                        <div class="d-flex align-items-center">
-                            
-                            {{-- RESTORED ANIMATED INDICATOR --}}
-                            <div class="me-3 position-relative d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                                <div class="pulse-ring"></div>
-                                <div class="pulse-dot"></div>
-                            </div>
-                            
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">Verified Asset Registry</h5>
-                                <div class="d-flex align-items-center">
-                                    <span class="text-uppercase fw-bold text-muted" style="font-size: 0.65rem; letter-spacing: 1px;">
-                                        Official Audited Inventory
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 mt-3 mt-md-0">
-                            <button onclick="window.print()" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
-                                <i class="fas fa-print me-2"></i>Print Report
-                            </button>
-                            <a href="{{ route('auditor.reports.export', request()->all()) }}" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
-                                <i class="fas fa-file-excel me-2"></i>Export Excel
-                            </a>
-                        </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                        </span>
+                        <h6 class="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate">
+                            College of Medicine Inventory
+                        </h6>
                     </div>
+                    <h1 class="text-xl md:text-3xl font-black text-slate-900 tracking-tight truncate">
+                        Verified Registry
+                    </h1>
                 </div>
             </div>
+            
+            <a href="{{ route('auditor.reports.export', request()->all()) }}" 
+               class="bg-white border-2 border-emerald-100 rounded-2xl p-3 px-6 shadow-sm flex items-center self-start lg:self-center shrink-0 hover:bg-emerald-50 transition-all group">
+                <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                    <i class="fas fa-file-csv"></i>
+                </div>
+                <div class="ml-3">
+                    <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Reports</div>
+                    <div class="text-xs font-black text-emerald-600 uppercase">Export CSV Data</div>
+                </div>
+            </a>
         </div>
-    </div>
 
-    {{-- 3. FILTERS (Web Only) --}}
-    <div class="row mb-4 d-print-none">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4 bg-white border-top border-primary border-4">
-                <div class="card-body p-4">
-                    <form action="{{ route('auditor.assets.index') }}" method="GET" id="filterForm">
-                        <div class="row g-3">
-                            {{-- Search Bar --}}
-                            <div class="col-12">
-                                <div class="input-group shadow-sm rounded-3 overflow-hidden border">
-                                    <span class="input-group-text bg-white border-0"><i class="fas fa-search text-muted"></i></span>
-                                    <input type="text" name="search" class="form-control border-0 py-2 shadow-none" placeholder="Search Tag, Serial, or Asset Name..." value="{{ request('search') }}">
-                                    <button class="btn btn-dark px-4 fw-bold" type="submit">SEARCH</button>
+        {{-- 2. SEARCH & HIERARCHY FILTERS --}}
+        {{-- 2. SEARCH & HIERARCHY FILTERS --}}
+        <div class="mb-8">
+            <div class="bg-white rounded-[2rem] shadow-sm border-t-4 border-indigo-600 overflow-hidden">
+                <div class="p-6">
+                    <form action="{{ route('auditor.approved_items.index') }}" method="GET" id="filterForm">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            
+                            {{-- Full Width Search --}}
+                            <div class="md:col-span-12">
+                                <div class="flex items-center bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                                    <span class="pl-4 pr-2 text-slate-400"><i class="fas fa-search"></i></span>
+                                    <input type="text" name="search" 
+                                        class="w-full border-0 bg-transparent py-3.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-0" 
+                                        placeholder="Search Reference, Item Name, or Tag Number..." 
+                                        value="{{ request('search') }}">
                                 </div>
                             </div>
 
-                            {{-- Academic Hierarchy --}}
-                            <div class="col-lg-5">
-                                <div class="p-3 rounded-3 bg-light border border-white h-100">
-                                    <h6 class="fw-bold text-primary text-uppercase mb-2 small">Academic Branch</h6>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <select name="faculty_id" id="facultySelect" class="form-select form-select-sm border-0 shadow-sm">
-                                                <option value="">-- Faculty --</option>
-                                                @foreach($faculties as $f)
-                                                    <option value="{{ $f->faculty_id }}" {{ request('faculty_id') == $f->faculty_id ? 'selected' : '' }}>{{ $f->faculty_name }}</option>
+                            {{-- Academic Branch --}}
+                            <div class="md:col-span-4">
+                                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 h-full">
+                                    <h6 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3 italic">Academic Branch</h6>
+                                    <div class="flex flex-col gap-2">
+                                        <select name="faculty_id" id="facultySelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2">
+                                            <option value="">-- Select Faculty --</option>
+                                            @foreach($faculties as $f)
+                                                <option value="{{ $f->faculty_id }}" {{ request('faculty_id') == $f->faculty_id ? 'selected' : '' }}>{{ $f->faculty_name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div id="departmentWrapper" class="{{ request('faculty_id') ? '' : 'hidden' }}">
+                                            <select name="dept_id" id="departmentSelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2">
+                                                <option value="">-- Select Dept --</option>
+                                                @foreach($departments as $d)
+                                                    <option value="{{ $d->dept_id }}" data-parent="{{ $d->faculty_id }}" {{ request('dept_id') == $d->dept_id ? 'selected' : '' }}>{{ $d->dept_name }}</option>
                                                 @endforeach
                                             </select>
-                                        </div>
-                                        <div class="col-6">
-                                            <div id="departmentWrapper" class="{{ request('faculty_id') ? '' : 'd-none' }}">
-                                                <select name="dept_id" id="departmentSelect" class="form-select form-select-sm border-0 shadow-sm">
-                                                    <option value="">-- Dept --</option>
-                                                    @foreach($departments as $d)
-                                                        <option value="{{ $d->dept_id }}" data-parent="{{ $d->faculty_id }}" {{ request('dept_id') == $d->dept_id ? 'selected' : '' }}>{{ $d->dept_name }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Admin Hierarchy --}}
-                            <div class="col-lg-5">
-                                <div class="p-3 rounded-3 bg-light border border-white h-100">
-                                    <h6 class="fw-bold text-info text-uppercase mb-2 small">Admin Branch</h6>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <select name="office_id" id="officeSelect" class="form-select form-select-sm border-0 shadow-sm">
-                                                <option value="">-- Office --</option>
-                                                @foreach($offices as $o)
-                                                    <option value="{{ $o->office_id }}" {{ request('office_id') == $o->office_id ? 'selected' : '' }}>{{ $o->office_name }}</option>
+                            {{-- Admin Branch --}}
+                            <div class="md:col-span-4">
+                                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 h-full">
+                                    <h6 class="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-3 italic">Administrative Offices</h6>
+                                    <div class="flex flex-col gap-2">
+                                        <select name="office_id" id="officeSelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2">
+                                            <option value="">-- Select Office --</option>
+                                            @foreach($offices as $o)
+                                                <option value="{{ $o->office_id }}" {{ request('office_id') == $o->office_id ? 'selected' : '' }}>{{ $o->office_name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div id="unitWrapper" class="{{ request('office_id') ? '' : 'hidden' }}">
+                                            <select name="unit_id" id="unitSelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2">
+                                                <option value="">-- Select Unit --</option>
+                                                @foreach($units as $u)
+                                                    <option value="{{ $u->unit_id }}" data-parent="{{ $u->office_id }}" {{ request('unit_id') == $u->unit_id ? 'selected' : '' }}>{{ $u->unit_name }}</option>
                                                 @endforeach
                                             </select>
-                                        </div>
-                                        <div class="col-6">
-                                            <div id="unitWrapper" class="{{ request('office_id') ? '' : 'd-none' }}">
-                                                <select name="unit_id" id="unitSelect" class="form-select form-select-sm border-0 shadow-sm">
-                                                    <option value="">-- Unit --</option>
-                                                    @foreach($units as $u)
-                                                        <option value="{{ $u->unit_id }}" data-parent="{{ $u->office_id }}" {{ request('unit_id') == $u->unit_id ? 'selected' : '' }}>{{ $u->unit_name }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Category --}}
-                            <div class="col-lg-2">
-                                <div class="p-3 rounded-3 bg-white border h-100">
-                                    <h6 class="fw-bold text-muted text-uppercase mb-2 small">Category</h6>
-                                    <select name="category_id" class="form-select form-select-sm bg-light border-0">
-                                        <option value="">All</option>
+                            {{-- Institute Branch --}}
+                            <div class="md:col-span-4">
+                                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100 h-full">
+                                    <h6 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3 italic">Independent Institutes</h6>
+                                    <select name="institute_id" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2">
+                                        <option value="">-- Select Institute --</option>
+                                        @foreach($institutes as $i)
+                                            <option value="{{ $i->institute_id }}" {{ request('institute_id') == $i->institute_id ? 'selected' : '' }}>{{ $i->institute_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-[8px] text-slate-400 font-bold mt-3 uppercase italic">Research & Specialist Centers</p>
+                                </div>
+                            </div>
+
+                            {{-- Audit Date Range (Wider) --}}
+                            <div class="md:col-span-7">
+                                <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 h-full shadow-lg">
+                                    <h6 class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3 italic">Verification Date Filter</h6>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="relative">
+                                            <label class="absolute -top-2 left-3 bg-slate-900 px-2 text-[8px] font-black text-indigo-400 uppercase">Start Date</label>
+                                            <input type="date" name="date_from" value="{{ request('date_from') }}" 
+                                                class="w-full text-xs font-bold bg-transparent border border-slate-700 text-white rounded-xl py-2.5 focus:ring-indigo-500">
+                                        </div>
+                                        <div class="relative">
+                                            <label class="absolute -top-2 left-3 bg-slate-900 px-2 text-[8px] font-black text-indigo-400 uppercase">End Date</label>
+                                            <input type="date" name="date_to" value="{{ request('date_to') }}" 
+                                                class="w-full text-xs font-bold bg-transparent border border-slate-700 text-white rounded-xl py-2.5 focus:ring-indigo-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Asset Category --}}
+                            <div class="md:col-span-5">
+                                <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 h-full">
+                                    <h6 class="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-3 italic">Asset Classification</h6>
+                                    <select name="category_id" class="w-full text-[11px] font-bold bg-white border-indigo-200 rounded-xl py-2.5">
+                                        <option value="">All Categories</option>
                                         @foreach($categories as $c)
                                             <option value="{{ $c->category_id }}" {{ request('category_id') == $c->category_id ? 'selected' : '' }}>{{ $c->category_name }}</option>
                                         @endforeach
@@ -140,153 +153,198 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 text-end mt-3">
-                                <a href="{{ route('auditor.assets.index') }}" class="btn btn-link text-muted fw-bold text-decoration-none small me-3">RESET</a>
-                                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">APPLY</button>
+                            {{-- Actions --}}
+                            <div class="md:col-span-12 flex items-center justify-end gap-4 border-t border-slate-100 pt-6">
+                                <a href="{{ route('auditor.approved_items.index') }}" class="text-[10px] font-black text-slate-400 hover:text-rose-500 uppercase tracking-widest transition-colors no-underline">
+                                    <i class="fas fa-sync-alt me-1"></i> Clear Filters
+                                </a>
+                                <button type="submit" class="bg-indigo-600 text-white px-12 py-3 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl">
+                                    Filter Verified Records
+                                </button>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- 4. TABLE --}}
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="bg-dark text-white">
-                    <tr class="small text-uppercase">
-                        <th class="ps-4 py-3">Asset Tag</th>
-                        <th>Item Details</th>
-                        <th>Ownership</th>
-                        <th class="text-center">Condition</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-end pe-4 d-print-none">Manage</th>
-                    </tr>
-                </thead>
-                <tbody class="text-dark small">
-                    @forelse($assets as $asset)
-                    <tr class="border-bottom">
-                        <td class="ps-4 font-monospace fw-bold text-primary">{{ $asset->asset_tag ?: 'NO TAG' }}</td>
-                        <td>
-                            <div class="fw-bold">{{ $asset->item_name }}</div>
-                            <small class="text-muted">SN: {{ $asset->serial_number ?: 'N/A' }}</small>
-                        </td>
-                        <td>
-                            <div class="fw-bold">
-                                @if($asset->unit) {{ $asset->unit->unit_name }}
-                                @elseif($asset->department) {{ $asset->department->dept_name }}
-                                @elseif($asset->office) {{ $asset->office->office_name }}
-                                @else {{ $asset->faculty->faculty_name ?? 'Registry' }} @endif
+        {{-- 3. DATA TABLE & MOBILE CARDS --}}
+        <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+            {{-- Stats Bar --}}
+            <div class="bg-slate-50 border-b border-slate-100 px-6 md:px-8 py-4 flex flex-wrap gap-4 md:gap-8">
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Registry Valuation</span>
+                    <span class="text-sm md:text-lg font-black text-slate-900">₦{{ number_format($submissions->sum(fn($s) => $s->items->sum(fn($i) => ($i->cost ?? 0) * $i->quantity)), 2) }}</span>
+                </div>
+                <div>
+                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Items</span>
+                    <span class="text-sm md:text-lg font-black text-indigo-600">{{ $submissions->sum(fn($s) => $s->items->count()) }} Units</span>
+                </div>
+            </div>
+
+            {{-- MOBILE VIEW: Visible on small screens, hidden on desktop --}}
+            <div class="block md:hidden divide-y divide-slate-100">
+                @forelse($submissions as $submission)
+                    @php 
+                        $items = $submission->items;
+                        $u = $submission->submittedBy;
+                    @endphp
+                    <div class="p-5 flex flex-col gap-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-black text-indigo-600 italic">#{{ str_pad($submission->submission_id, 4, '0', STR_PAD_LEFT) }}</span>
+                                <h3 class="text-[11px] font-black text-slate-800 uppercase mt-1 leading-tight">
+                                    {{ $items->pluck('item_name')->implode(', ') }}
+                                </h3>
                             </div>
-                        </td>
-                        <td class="text-center">
-                            @php $item = $asset->submissionItems()->latest()->first(); @endphp
-                            <span class="badge rounded-pill px-3 py-2 {{ ($item?->condition == 'Good') ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }} border-0 shadow-none">
-                                {{ $item?->condition ?? 'Good' }}
-                            </span>
-                        </td>
-                        <td class="text-center fw-bold">{{ strtoupper($asset->status) }}</td>
-                        <td class="text-end pe-4 d-print-none">
-                            <a href="{{ route('auditor.assets.show', $asset->asset_id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Details</a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="6" class="text-center py-5">No Verified Records.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+                            <div class="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] font-black">
+                                ₦{{ number_format($items->sum(fn($i) => ($i->cost ?? 0) * $i->quantity), 0) }}
+                            </div>
+                        </div>
 
-    {{-- 5. SIGNATURE FOOTER (Print Only) --}}
-    <div class="d-none d-print-block mt-5 pt-5">
-        <div class="row text-center mt-5">
-            <div class="col-4">
-                <hr class="border-dark border-2 mb-2 mx-4">
-                <p class="small fw-bold">Inventory Officer</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="block text-[8px] font-black text-slate-400 uppercase">Location</span>
+                                <p class="text-[10px] font-bold text-slate-700 truncate">
+                                    @if($u->faculty) {{ $u->faculty->faculty_name }}
+                                    @elseif($u->office) {{ $u->office->office_name }}
+                                    @else {{ $u->institute->institute_name ?? 'N/A' }} @endif
+                                </p>
+                            </div>
+                            <div>
+                                <span class="block text-[8px] font-black text-slate-400 uppercase">Outcome</span>
+                                <div class="flex gap-2">
+                                    <span class="text-[10px] font-black text-emerald-600">{{ $items->where('status', 'approved')->count() }}✓</span>
+                                    <span class="text-[10px] font-black text-rose-500">{{ $items->where('status', 'rejected')->count() }}✗</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a href="{{ route('auditor.approved_items.show', $submission->submission_id) }}" 
+                        class="w-full bg-slate-100 text-slate-900 py-2.5 rounded-xl text-center text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                            View Full Details
+                        </a>
+                    </div>
+                @empty
+                    <div class="p-10 text-center font-black text-slate-300 uppercase text-xs">No entries found</div>
+                @endforelse
             </div>
-            <div class="col-4">
-                <hr class="border-dark border-2 mb-2 mx-4">
-                <p class="small fw-bold">Auditor-in-Charge</p>
+
+            {{-- DESKTOP VIEW: Hidden on mobile, visible on medium screens and up --}}
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-left table-fixed min-w-[1000px]">
+                    <thead>
+                        <tr class="bg-slate-900 text-white">
+                            <th class="w-20 ps-8 py-4 text-[10px] font-black uppercase tracking-widest">Ref ID</th>
+                            <th class="w-48 px-4 py-4 text-[10px] font-black uppercase tracking-widest">Item Description</th>
+                            <th class="w-40 px-4 py-4 text-[10px] font-black uppercase tracking-widest">Origin</th>
+                            <th class="w-40 px-4 py-4 text-[10px] font-black uppercase tracking-widest">Submitted By</th>
+                            <th class="w-32 px-4 py-4 text-[10px] font-black uppercase tracking-widest">Auditor</th>
+                            <th class="w-24 px-4 py-4 text-[10px] font-black uppercase tracking-widest text-center">Outcome</th>
+                            <th class="w-24 pe-8 py-4 text-[10px] font-black uppercase tracking-widest text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($submissions as $submission)
+                            @php 
+                                $items = $submission->items;
+                                $u = $submission->submittedBy;
+                                $auditor = $submission->reviewedBy;
+                            @endphp
+                            <tr class="hover:bg-indigo-50/50 transition-colors group">
+                                <td class="ps-8 py-5 font-black text-indigo-600 text-xs italic">
+                                    #{{ str_pad($submission->submission_id, 4, '0', STR_PAD_LEFT) }}
+                                </td>
+                                <td class="px-4 py-5">
+                                    <div class="text-[11px] font-black text-slate-800 uppercase truncate" 
+                                        title="{{ $items->pluck('item_name')->implode(', ') }}">
+                                        {{ $items->pluck('item_name')->implode(', ') }}
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="text-[9px] text-slate-400 font-bold italic">
+                                            Total: ₦{{ number_format($items->sum(fn($i) => ($i->cost ?? 0) * $i->quantity), 2) }}
+                                        </div>
+                                        @if($items->count() > 1)
+                                            <span class="bg-indigo-100 text-indigo-600 text-[8px] px-1.5 py-0.5 rounded-md font-black">
+                                                {{ $items->count() }} ITEMS
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-4 py-5">
+                                    <div class="flex flex-col truncate">
+                                        @if($u->faculty)
+                                            <span class="text-[10px] font-black text-slate-700 uppercase truncate">{{ $u->faculty->faculty_name }}</span>
+                                            <span class="text-[9px] text-slate-600 font-bold italic truncate">{{ $u->department->dept_name ?? 'General' }}</span>
+                                        @elseif($u->office)
+                                            <span class="text-[10px] font-black text-slate-700 uppercase truncate">{{ $u->office->office_name }}</span>
+                                            <span class="text-[9px] text-slate-600 font-bold italic truncate">{{ $u->unit->unit_name ?? 'General' }}</span>
+                                        @elseif($u->institute)
+                                            <span class="text-[10px] font-black text-slate-700 uppercase truncate">{{ $u->institute->institute_name }}</span>
+                                            <span class="text-[9px] text-slate-600 font-bold italic">Institute</span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-4 py-5">
+                                    <div class="text-[10px] font-black text-slate-800 truncate">{{ $u->profile->full_name ?? $u->username }}</div>
+                                    <div class="text-[9px] text-slate-700 font-medium truncate italic">{{ $u->email }}</div>
+                                </td>
+                                <td class="px-4 py-5">
+                                    <div class="text-[10px] font-black text-slate-700 uppercase truncate">
+                                        {{ $auditor->username ?? 'System' }}
+                                    </div>
+                                    <span class="text-[8px] text-emerald-500 font-black uppercase tracking-tighter">Verified</span>
+                                </td>
+                                <td class="px-4 py-5 text-center">
+                                    <div class="inline-flex items-center bg-slate-50 border border-slate-200 rounded-lg px-2 py-0.5 gap-1.5">
+                                        <span class="text-[9px] font-black text-emerald-600">{{ $items->where('status', 'approved')->count() }}✓</span>
+                                        <span class="text-[9px] font-black text-rose-500">{{ $items->where('status', 'rejected')->count() }}✗</span>
+                                    </div>
+                                </td>
+                                <td class="pe-8 py-5 text-end">
+                                    <a href="{{ route('auditor.approved_items.show', $submission->submission_id) }}" 
+                                    class="inline-block bg-slate-900 text-white px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-            <div class="col-4">
-                <hr class="border-dark border-2 mb-2 mx-4">
-                <p class="small fw-bold">Date Certified</p>
-            </div>
+        </div>
+
+        <div class="mt-8">
+            {{ $submissions->links() }}
         </div>
     </div>
 </div>
 
-<style>
-    /* CSS Pulse Animation using modern Bootstrap context */
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #198754; /* Bootstrap success green */
-        border-radius: 50%;
-        z-index: 2;
-    }
-
-    .pulse-ring {
-        position: absolute;
-        width: 24px;
-        height: 24px;
-        background-color: rgba(25, 135, 84, 0.4);
-        border-radius: 50%;
-        animation: ripple 1.5s infinite ease-out;
-        z-index: 1;
-    }
-
-    @keyframes ripple {
-        0% { transform: scale(0.5); opacity: 1; }
-        100% { transform: scale(1.5); opacity: 0; }
-    }
-
-    @media print {
-        .bg-light { background-color: white !important; }
-        .card { border: none !important; box-shadow: none !important; }
-        .table { border: 1px solid #000 !important; }
-    }
-</style>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const facultySelect = document.getElementById('facultySelect');
-    const departmentWrapper = document.getElementById('departmentWrapper');
-    const departmentSelect = document.getElementById('departmentSelect');
-    const deptOptions = Array.from(departmentSelect.options);
+    const initFilter = (parentID, wrapperID, childID) => {
+        const parent = document.getElementById(parentID);
+        const wrapper = document.getElementById(wrapperID);
+        const child = document.getElementById(childID);
+        if(!parent || !child) return;
+        const options = Array.from(child.options);
 
-    const officeSelect = document.getElementById('officeSelect');
-    const unitWrapper = document.getElementById('unitWrapper');
-    const unitSelect = document.getElementById('unitSelect');
-    const unitOptions = Array.from(unitSelect.options);
+        const runFilter = () => {
+            const val = parent.value;
+            if(wrapper) wrapper.classList.toggle('hidden', !val);
+            child.innerHTML = '';
+            child.appendChild(options[0]);
+            options.forEach(opt => {
+                if(opt.getAttribute('data-parent') === val) child.appendChild(opt);
+            });
+        };
+        parent.addEventListener('change', runFilter);
+        if(parent.value) runFilter();
+    };
 
-    facultySelect.addEventListener('change', function () {
-        const selectedId = this.value;
-        departmentWrapper.classList.toggle('d-none', !selectedId);
-        filterDropdown(departmentSelect, deptOptions, 'data-parent', selectedId);
-    });
-
-    officeSelect.addEventListener('change', function () {
-        const selectedId = this.value;
-        unitWrapper.classList.toggle('d-none', !selectedId);
-        filterDropdown(unitSelect, unitOptions, 'data-parent', selectedId);
-    });
-
-    function filterDropdown(selectElement, allOptions, dataAttr, parentId) {
-        selectElement.innerHTML = '';
-        selectElement.appendChild(allOptions[0]);
-        allOptions.forEach(option => {
-            if (option.getAttribute(dataAttr) === parentId) {
-                selectElement.appendChild(option);
-            }
-        });
-    }
-
-    if(facultySelect.value) facultySelect.dispatchEvent(new Event('change'));
-    if(officeSelect.value) officeSelect.dispatchEvent(new Event('change'));
+    initFilter('facultySelect', 'departmentWrapper', 'departmentSelect');
+    initFilter('officeSelect', 'unitWrapper', 'unitSelect'); // Fixed Unit logic
+    initFilter('categorySelect', 'subcategoryWrapper', 'subcategorySelect');
 });
 </script>
 @endsection

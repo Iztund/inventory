@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@yield('title', 'Auditor Portal') - COMIS</title>
-     <link rel="icon" type="image/png" href="{{ asset('build/assets/images/logo.png') }}">
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('build/assets/images/logo.png') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="{{ asset('build/assets/css/styles.css') }}" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
@@ -30,7 +30,7 @@
         }
     </script>
 </head>
-<body class="sb-nav-fixed bg-slate-100">
+<body class="sb-nav-fixed bg-slate-200">
     
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-audit-navy border-b border-slate-700 shadow-sm">
         <a class="navbar-brand ps-3 flex items-center space-x-2 animate-shimmer-fast" href="{{ route('auditor.dashboard') }}">
@@ -71,63 +71,70 @@
 
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark bg-audit-navy">
-                <div class="sb-sidenav-menu">
-                    <div class="nav pt-3 px-2">
+            <!-- SLIMMER, NON-SCROLLABLE SIDEBAR -->
+            <nav class="sb-sidenav accordion sb-sidenav-dark bg-audit-navy w-48 h-screen overflow-hidden flex flex-col">
+                <div class="sb-sidenav-menu flex-grow overflow-hidden">
+                    <div class="nav pt-1 px-2 space-y-2">
                         
-                        <div class="sb-sidenav-menu-heading text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ps-3">Control Panel</div>
-                        <a class="nav-link rounded py-2.5 mb-1 {{ request()->routeIs('auditor.dashboard') ? 'active bg-indigo-600 text-white shadow-md' : '' }}" href="{{ route('auditor.dashboard') }}">
-                            <div class="sb-nav-link-icon"><i class="fas fa-chart-line"></i></div> 
-                            <span class="text-sm">Main Dashboard</span>
+                        <div class="sb-sidenav-menu-heading text-slate-200 text-[9px] font-bold uppercase tracking-[0.15em] mb-0.5 ps-2">Control Panel</div>
+                        <a class="nav-link rounded py-1 mb-0.5 text-xs {{ request()->routeIs('auditor.dashboard') ? 'active bg-indigo-600 text-white shadow-sm' : 'text-slate-100 hover:bg-slate-800/80' }}" href="{{ route('auditor.dashboard') }}">
+                            <div class="sb-nav-link-icon text-sm"><i class="fas fa-chart-line"></i></div> 
+                            <span>Main Dashboard</span>
                         </a>
 
-                        <div class="sb-sidenav-menu-heading text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 mt-4 ps-3">Verification</div>
+                        <div class="sb-sidenav-menu-heading text-slate-300 text-[9px] font-bold uppercase tracking-[0.15em] mb-0.5 mt-2 ps-2">Verification</div>
                         
-                        <a class="nav-link rounded py-2.5 mb-1 {{ request()->routeIs('auditor.submissions.index') ? 'active bg-indigo-600 text-white' : '' }}" href="{{ route('auditor.submissions.index') }}">
-                            <div class="sb-nav-link-icon"><i class="fas fa-list-check"></i></div> 
-                            <span class="text-sm">Pending Reviews</span>
-                            @if(isset($stats['pending']) && $stats['pending'] > 0)
-                                <span class="badge bg-danger ms-auto rounded-pill text-[10px]">{{ $stats['pending'] }}</span>
+                        <a class="nav-link rounded py-1 mb-0.5 text-xs {{ request()->routeIs('auditor.submissions.index') ? 'active bg-indigo-600 text-white shadow-sm' : 'text-slate-100 hover:bg-slate-800/80' }}" href="{{ route('auditor.submissions.index') }}">
+                            <div class="sb-nav-link-icon text-sm"><i class="fas fa-list-check"></i></div> 
+                            <span>Pending Reviews</span>
+                            @if(($stats['pending'] ?? 0) > 0)
+                                <span class="badge bg-danger ms-auto rounded-pill px-1.5 py-0.5 text-[8px] shadow-sm animate-pulse">
+                                    {{ $stats['pending'] }}
+                                </span>
                             @endif
                         </a>
 
-                        <a class="nav-link rounded py-2.5 mb-1 {{ request()->routeIs('auditor.assets.index') ? 'active bg-indigo-600 text-white' : '' }}" href="{{ route('auditor.assets.index') }}">
-                            <div class="sb-nav-link-icon"><i class="fas fa-clock-rotate-left"></i></div> 
-                            <span class="text-sm">Approved Items</span>
+                        <a class="nav-link rounded py-1 mb-0.5 text-xs {{ request()->routeIs('auditor.approved_items.index') ? 'active bg-indigo-600 text-white shadow-sm' : 'text-slate-100 hover:bg-slate-800/80' }}" href="{{ route('auditor.approved_items.index') }}">
+                            <div class="sb-nav-link-icon text-sm"><i class="fas fa-clock-rotate-left"></i></div> 
+                            <span>Approved Items</span>
+                            @if(isset($stats['approved']) && $stats['approved'] > 0)
+                                <span class="badge bg-slate-700 ms-auto rounded-pill px-1.5 py-0.5 text-[8px]">
+                                    {{ $stats['approved'] }}
+                                </span>
+                            @endif
                         </a>
                         
-                        <div class="sb-sidenav-menu-heading text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 mt-4 ps-3">Master Registry</div>
+                        <div class="sb-sidenav-menu-heading text-slate-500 text-[9px] font-bold uppercase tracking-[0.15em] mb-0.5 mt-1 ps-2">Master Registry</div>
                         
-                        <a class="nav-link rounded py-2.5 mb-1 {{ request()->routeIs('auditor.registry.index') ? 'active bg-indigo-600 text-white' : '' }}" href="{{ route('auditor.registry.index') }}">
-                            <div class="sb-nav-link-icon"><i class="fas fa-database"></i></div> 
-                            <span class="text-sm">Central Registry</span>
+                        <a class="nav-link rounded py-1 mb-0.5 text-xs {{ request()->routeIs('auditor.registry.index') ? 'active bg-indigo-600 text-white shadow-sm' : 'text-slate-100 hover:bg-slate-800/80' }}" href="{{ route('auditor.registry.index') }}">
+                            <div class="sb-nav-link-icon text-sm"><i class="fas fa-database"></i></div> 
+                            <span>Central Registry</span>
                         </a>
-
-                        <a class="nav-link rounded py-2.5 mb-1 collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseEntities">
-                            <div class="sb-nav-link-icon"><i class="fas fa-sitemap"></i></div> 
-                            <span class="text-sm">College Entities</span>
-                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                        </a>
-                        <div class="collapse px-3" id="collapseEntities" data-bs-parent="#sidenavAccordion">
-                            <nav class="sb-sidenav-menu-nested nav flex flex-col border-l border-slate-700 ms-2 ps-3 mt-1">
-                                <a class="nav-link py-1 text-[12px] text-slate-400 hover:text-indigo-400" href="#">Faculties</a>
-                                <a class="nav-link py-1 text-[12px] text-slate-400 hover:text-indigo-400" href="#">Departments</a>
-                                <a class="nav-link py-1 text-[12px] text-slate-400 hover:text-indigo-400" href="#">Offices & Units</a>
-                                <a class="nav-link py-1 text-[12px] text-slate-400 hover:text-indigo-400" href="#">Institutes</a>
-                            </nav>
-                        </div>
                     </div>
                 </div>
 
-                <div class="sb-sidenav-footer bg-black/30 p-3 border-t border-slate-800 mt-auto">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-slate-500 text-[8px] uppercase font-black leading-none mb-1">Terminal Active</span>
-                            <span class="text-indigo-400 text-[10px] font-bold truncate">
-                                {{ Auth::user()->profile->first_name ?? Auth::user()->username }} 
-                                <span class="text-slate-600 font-normal">[{{ Auth::user()->username }}]</span>
-                            </span>
+                <!-- Modern Logged As Section -->
+                <div class="sb-sidenav-footer bg-gradient-to-t from-black/50 to-transparent p-2.5 border-t border-slate-700/40 mt-auto">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-2 border border-white/10 shadow-lg hover:shadow-xl transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex-shrink-0">
+                                <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-md text-sm">
+                                    {{ strtoupper(substr(Auth::user()->profile->first_name ?? Auth::user()->username, 0, 1)) }}
+                                </div>
+                                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-audit-navy animate-pulse"></div>
+                            </div>
+
+                            <div class="min-w-0">
+                                <div class="text-white text-xs font-bold truncate leading-tight">
+                                    {{ Auth::user()->full_name ?? Auth::user()->username }}
+                                </div>
+                                <div class="text-indigo-300 text-[9px] font-medium truncate">
+                                    {{ Auth::user()->username }}
+                                </div>
+                                <div class="text-[8px] text-emerald-400 font-black uppercase mt-0.5 tracking-widest">
+                                    Active
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,7 +149,7 @@
             <footer class="py-3 bg-white mt-auto border-t border-slate-200">
                 <div class="container-fluid px-4">
                     <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                        <div>COMIS &copy; {{ date('Y') }}</div>
+                        <div>COMIS © {{ date('Y') }}</div>
                         <div class="flex items-center space-x-2">
                             <div class="w-1 h-1 bg-slate-300 rounded-full"></div>
                             <span>College of Medicine</span>

@@ -1,265 +1,306 @@
 @extends('layouts.admin')
 
-@section('title', 'Manage Departments | Academic Structure')
+@section('title', 'Manage Departments | College of Medicine')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('build/assets/css/dashboard_admin/management.css') }}" />
-<link rel="stylesheet" href="{{ asset('build/assets/css/dashboard_admin/department/index.css') }}" />
-
-<div class="container-fluid px-4 py-4">
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-7">
-            <div class="d-flex align-items-center mb-1">
-                <a href="{{ route('admin.units-management.index') }}" class="btn btn-sm btn-outline-secondary me-3 rounded-circle shadow-sm" 
-                   title="Go Back" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <h2 class="fw-bold text-dark mb-0 responsive-title">Department Administration</h2>
-            </div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 bg-transparent p-0 ms-5 responsive-breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('admin.units-management.index') }}" class="text-decoration-none text-muted">Structure</a></li>
-                    <li class="breadcrumb-item active fw-semibold text-primary">Departments</li>
-                </ol>
-            </nav>
+<div class="container-fluid px-4">
+    {{-- Success/Error Alerts with Auto-Hide ID --}}
+    @if(session('success') || session('error'))
+    <div id="status-alert" class="alert {{ session('success') ? 'alert-success' : 'alert-danger' }} border-0 shadow-sm d-flex align-items-center mt-4 mb-0 animate__animated animate__fadeInDown" 
+         role="alert" 
+         style="border-left: 5px solid {{ session('success') ? '#10b981' : '#ef4444' }} !important; position: relative; z-index: 1050;">
+        <i class="fas {{ session('success') ? 'fa-check-circle' : 'fa-exclamation-circle' }} me-3 fs-4"></i>
+        <div>
+            <strong class="d-block">{{ session('success') ? 'Success!' : 'Error Occurred' }}</strong>
+            <span class="small">{{ session('success') ?? session('error') }}</span>
         </div>
-        <div class="col-md-5 text-md-end mt-3 mt-md-0">
-            <a href="{{ route('admin.departments.create') }}" class="btn btn-primary shadow-sm px-4 rounded-3 btn-responsive">
-                <i class="fas fa-plus-circle me-2"></i><span class="btn-text">Add New Department</span>
-            </a>
-        </div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-
-    {{-- Orphan Warning Alert (Using Global Count from Controller) --}}
-    @if(isset($orphanCount) && $orphanCount > 0)
-        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-start rounded-4 mb-4 responsive-alert" role="alert">
-            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3 alert-icon" style="width: 40px; height: 40px; flex-shrink: 0;">
-                <i class="fas fa-ghost"></i>
-            </div>
-            <div class="flex-grow-1">
-                <h6 class="alert-heading fw-bold mb-1">Hidden Departments Detected</h6>
-                <p class="mb-2 small text-dark">There are <strong>{{ $orphanCount }}</strong> active departments linked to <strong>inactive Faculties</strong>. Inventory staff cannot see these in selection menus.</p>
-                @if(request('status') != 'hidden')
-                    <a href="{{ route('admin.departments.index', ['status' => 'hidden']) }}" class="btn btn-sm btn-dark rounded-pill px-3">View All</a>
-                @endif
-            </div>
-        </div>
     @endif
 
-    {{-- Search & Status Filter Card --}}
-    <div class="card border-0 shadow-sm mb-4 rounded-3">
-        <div class="card-body p-3">
-            <form action="{{ route('admin.departments.index') }}" method="GET" class="row g-2">
-                <div class="col-12 col-md-7">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
-                               type="text" placeholder="Search name or code..." name="q" value="{{ request('q') }}">
+    <div class="min-vh-100 py-4">
+        <div style="max-width:1600px;" class="mx-auto">
+
+            {{-- Header --}}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-5">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ route('admin.units-management.index') }}" 
+                    class="btn btn-white border border-slate-200 rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
+                    style="width:44px; height:44px;"
+                    title="Back to Dashboard">
+                        <i class="fas fa-arrow-left text-slate-400"></i>
+                    </a>
+                    <div>
+                        <h1 class="fw-black text-slate-900 mb-1" style="font-size:1.75rem; letter-spacing:-0.02em;">Department Administration</h1>
+                        <p class="text-slate-600 mb-0" style="font-size:0.88rem;">Manage academic departments and faculty assignments</p>
                     </div>
                 </div>
-                <div class="col-12 col-md-3">
-                    <select name="status" class="form-select shadow-none">
-                        <option value="">All Visibility Statuses</option>
-                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Visible & Active</option>
-                        <option value="hidden" {{ request('status') == 'hidden' ? 'selected' : '' }}>Hidden (Orphaned)</option>
-                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Archived/Inactive</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-2 d-grid">
-                    <button class="btn btn-primary rounded-3 fw-medium" type="submit">Apply Filter</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    {{-- Data Table Card --}}
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center border-bottom gap-2">
-            <h6 class="m-0 fw-bold text-dark"><i class="fas fa-sitemap me-2 text-primary"></i>Registry</h6>
-            <div class="d-flex flex-wrap gap-2">
-                @if(request()->filled('status') || request()->filled('q'))
-                    <a href="{{ route('admin.departments.index') }}" class="badge bg-light text-muted border text-decoration-none">Clear Filters</a>
-                @endif
-                <span class="badge bg-primary-subtle text-primary rounded-pill px-3">{{ $departments->total() }} Total</span>
-            </div>
-        </div>
-        <div class="card-body p-0">
-            {{-- Desktop Table View --}}
-            <div class="table-responsive d-none d-lg-block">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light-subtle text-muted small text-uppercase">
-                        <tr>
-                            <th class="ps-4 py-3">Department Info</th>
-                            <th>Parent Faculty</th>
-                            <th>Head of Dept</th>
-                            <th class="text-center">Assets</th>
-                            <th class="text-center">Visibility</th>
-                            <th class="text-end pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="border-top-0">
-                        @forelse ($departments as $departmentItem)
-                        @php
-                            $isParentInactive = ($departmentItem->faculty && $departmentItem->faculty->is_active !== 'active');
-                            $isHidden = ($departmentItem->is_active == 'active' && $isParentInactive);
-                        @endphp
-                        <tr class="{{ $isHidden ? 'bg-warning bg-opacity-10' : '' }}">
-                            <td class="ps-4">
-                                <div>
-                                    <div class="fw-bold text-dark mb-0">
-                                        {{ $departmentItem->dept_name }}
-                                        @if($isHidden) <i class="fas fa-eye-slash text-warning ms-1" title="Hidden from Users"></i> @endif
-                                    </div>
-                                    <code class="text-primary small fw-semibold">{{ $departmentItem->dept_code ?? 'NO CODE' }}</code>
-                                </div>
-                            </td>
-                            <td>
-                                @if($departmentItem->faculty)
-                                    <span class="small fw-medium {{ $isParentInactive ? 'text-danger' : 'text-muted' }}">
-                                        {{ $departmentItem->faculty->faculty_name }}
-                                        @if($isParentInactive)
-                                            <span class="d-block text-danger" style="font-size: 0.65rem;">
-                                                <i class="fas fa-exclamation-triangle me-1"></i> Faculty Inactive
-                                            </span>
-                                        @endif
-                                    </span>
-                                @else
-                                    <span class="text-muted small italic">Unassigned</span>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    
-                                    <span class="small text-dark">
-                                        {{ $departmentItem->deptHead->profile->full_name ?? $departmentItem->deptHead->username ?? 'Not Set' }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-white text-dark border px-2">{{ $departmentItem->assets_count ?? 0 }}</span>
-                            </td>
-                            <td class="text-center">
-                                @if($isHidden)
-                                    <span class="badge rounded-pill bg-warning text-dark border px-3">Hidden</span>
-                                @else
-                                    <span class="badge rounded-pill {{ $departmentItem->is_active == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} border px-3">
-                                        {{ ucfirst($departmentItem->is_active) }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group shadow-sm rounded-2 overflow-hidden border">
-                                    <a href="{{ route('admin.departments.edit', $departmentItem->dept_id) }}" class="btn btn-sm btn-white px-3"><i class="fas fa-edit text-primary"></i></a>
-                                    <form action="{{ route('admin.departments.destroy', $departmentItem->dept_id) }}" method="POST" class="d-inline">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-white border-start px-3" onclick="return confirm('Delete department?')">
-                                            <i class="fas fa-trash-alt text-danger"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-5">
-                                <i class="fas fa-search fa-3x text-light mb-3"></i>
-                                <p class="text-muted">No departments found matching your search.</p>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <a href="{{ route('admin.departments.create') }}" 
+                   class="btn text-white fw-black d-flex align-items-center gap-2 rounded-3 shadow-lg"
+                   style="background:linear-gradient(135deg, #f59e0b, #d97706); font-size:0.82rem; letter-spacing:0.05em; text-transform:uppercase; padding:0.75rem 1.8rem; border:none; transition:transform 0.2s;">
+                    <i class="fas fa-plus-circle"></i> Add Department
+                </a>
             </div>
 
-            {{-- Mobile Card View --}}
-            <div class="d-lg-none mobile-cards">
-                @forelse ($departments as $departmentItem)
-                @php
-                    $isParentInactive = ($departmentItem->faculty && $departmentItem->faculty->is_active !== 'active');
-                    $isHidden = ($departmentItem->is_active == 'active' && $isParentInactive);
-                @endphp
-                <div class="mobile-card {{ $isHidden ? 'mobile-card-warning' : '' }} p-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="flex-grow-1">
-                            <h6 class="fw-bold text-dark mb-1">
-                                {{ $departmentItem->dept_name }}
-                                @if($isHidden) <i class="fas fa-eye-slash text-warning ms-1" title="Hidden from Users"></i> @endif
-                            </h6>
-                            <code class="text-primary small fw-semibold">{{ $departmentItem->dept_code ?? 'NO CODE' }}</code>
+            {{-- Orphan Warning Alert --}}
+            @if(isset($orphanCount) && $orphanCount > 0)
+                <div class="rounded-4 border-start border-4 border-warning bg-white shadow-sm p-3 mb-4 d-flex align-items-center justify-content-between animate__animated animate__headShake">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-orange-50 text-orange-600 rounded-circle d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                            <i class="fas fa-exclamation-triangle"></i>
                         </div>
                         <div>
-                            @if($isHidden)
-                                <span class="badge rounded-pill bg-warning text-dark border px-2 small">Hidden</span>
-                            @else
-                                <span class="badge rounded-pill {{ $departmentItem->is_active == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} border px-2 small">
-                                    {{ ucfirst($departmentItem->is_active) }}
-                                </span>
+                            <h6 class="fw-bold text-slate-900 mb-0">{{ $orphanCount }} Hidden Departments</h6>
+                            <p class="text-slate-500 mb-0 small">Linked to inactive faculties. Staff cannot select these in inventory menus.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('admin.departments.index', ['status' => 'hidden']) }}" class="btn btn-sm btn-dark px-3 rounded-pill fw-bold" style="font-size: 0.75rem;">VIEW HIDDEN</a>
+                </div>
+            @endif
+
+            {{-- Stats Cards --}}
+            <div class="row g-4 mb-5">
+                <div class="col-12 col-md-4">
+                    <div class="position-relative overflow-hidden rounded-4 p-4 border border-indigo-100 shadow-sm"
+                        style="background:linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);">
+                        <div class="position-relative d-flex align-items-center gap-3">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-indigo-600" style="width:56px; height:56px;">
+                                <i class="fas fa-building text-white" style="font-size:1.4rem;"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Total Departments</div>
+                                <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $departments->total() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="position-relative overflow-hidden rounded-4 p-4 border border-emerald-100 shadow-sm"
+                        style="background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                        <div class="position-relative d-flex align-items-center gap-3">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-emerald-600" style="width:56px; height:56px;">
+                                <i class="fas fa-check-circle text-white" style="font-size:1.4rem;"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Active & Visible</div>
+                                <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $department_active_count }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="position-relative overflow-hidden rounded-4 p-4 border border-cyan-100 shadow-sm"
+                        style="background:linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);">
+                        <div class="position-relative d-flex align-items-center gap-3">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-cyan-600" style="width:56px; height:56px;">
+                                <i class="fas fa-user-tie text-white" style="font-size:1.4rem;"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Assigned Heads</div>
+                                <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $assignedHeadsCount }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Search & Filter --}}
+            <div class="rounded-4 mb-4 p-3 bg-white border border-slate-200 shadow-sm">
+                <form action="{{ route('admin.departments.index') }}" method="GET" class="row g-2 align-items-center">
+                    {{-- Search Input --}}
+                    <div class="col-12 col-md-4">
+                        <div class="input-group position-relative">
+                            <span class="input-group-text bg-slate-50 border-slate-200 text-slate-400">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" name="q" value="{{ request('q') }}"
+                                class="form-control border-slate-200 bg-slate-50"
+                                style="padding:0.7rem; font-size:0.9rem;"
+                                placeholder="Search department name or code...">
+                            
+                            @if(request('q'))
+                                <a href="{{ route('admin.departments.index', request()->except('q')) }}" 
+                                class="position-absolute end-0 top-50 translate-middle-y me-5 text-orange-500 hover-orange-600 text-decoration-none"
+                                style="z-index: 10;">
+                                    <i class="fas fa-times-circle"></i>
+                                </a>
                             @endif
                         </div>
                     </div>
 
-                    <div class="mobile-info-row mb-2">
-                        <span class="mobile-label"><i class="fas fa-building me-1"></i>Faculty:</span>
-                        <span class="mobile-value">
-                            @if($departmentItem->faculty)
-                                <span class="{{ $isParentInactive ? 'text-danger' : 'text-muted' }}">
-                                    {{ $departmentItem->faculty->faculty_name }}
-                                    @if($isParentInactive)
-                                        <span class="text-danger small"><i class="fas fa-exclamation-triangle"></i> Inactive</span>
-                                    @endif
-                                </span>
-                            @else
-                                <span class="text-muted">Unassigned</span>
-                            @endif
-                        </span>
+                    {{-- Faculty Filter (New) --}}
+                    <div class="col-12 col-md-3">
+                        <select name="faculty_id" class="form-select border-slate-200 bg-slate-50" style="padding:0.7rem; font-size:0.9rem;">
+                            <option value="">All Faculties</option>
+                            @foreach($faculties as $faculty)
+                                <option value="{{ $faculty->faculty_id }}" {{ request('faculty_id') == $faculty->faculty_id ? 'selected' : '' }}>
+                                    {{ $faculty->faculty_name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    <div class="mobile-info-row mb-2">
-                        <span class="mobile-label"><i class="fas fa-user-tie me-1"></i>Head:</span>
-                        <span class="mobile-value">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-xs bg-secondary-subtle text-secondary rounded-circle me-2 d-flex align-items-center justify-content-center fw-bold" 
-                                     style="width:24px; height:24px; font-size: 0.65rem;">
-                                    {{ strtoupper(substr($departmentItem->deptHead->username ?? 'U', 0, 1)) }}
-                                </div>
-                                <span class="small">{{ $departmentItem->deptHead->profile->full_name ?? $departmentItem->deptHead->username ?? 'Not Set' }}</span>
-                            </div>
-                        </span>
+                    {{-- Status Filter --}}
+                    <div class="col-12 col-md-2">
+                        <select name="status" class="form-select border-slate-200 bg-slate-50" style="padding:0.7rem; font-size:0.9rem;">
+                            <option value="">All Statuses</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="hidden" {{ request('status') == 'hidden' ? 'selected' : '' }}>Hidden (Orphaned)</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Archived</option>
+                        </select>
                     </div>
 
-                    <div class="mobile-info-row mb-3">
-                        <span class="mobile-label"><i class="fas fa-boxes me-1"></i>Assets:</span>
-                        <span class="mobile-value">
-                            <span class="badge bg-white text-dark border">{{ $departmentItem->assets_count ?? 0 }}</span>
-                        </span>
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('admin.departments.edit', $departmentItem->dept_id) }}" class="btn btn-sm btn-outline-primary flex-fill">
-                            <i class="fas fa-edit me-1"></i>Edit
-                        </a>
-                        <form action="{{ route('admin.departments.destroy', $departmentItem->dept_id) }}" method="POST" class="flex-fill">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Delete department?')">
-                                <i class="fas fa-trash-alt me-1"></i>Delete
+                    {{-- Action Buttons --}}
+                    <div class="col-12 col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-dark w-100 fw-black" 
+                                    style="padding:0.7rem; font-size:0.82rem; background:#0f172a; letter-spacing:0.03em;">
+                                APPLY FILTER
                             </button>
-                        </form>
+
+                            @if(request()->anyFilled(['q', 'status', 'faculty_id']))
+                                <a href="{{ route('admin.departments.index') }}" 
+                                class="btn btn-orange-light d-flex align-items-center justify-content-center px-3 border-orange-200"
+                                style="padding:0.7rem; background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa;">
+                                    <i class="fas fa-undo-alt"></i>
+                                </a>
+                            @endif
+                        </div>
                     </div>
-                </div>
-                @empty
-                <div class="text-center py-5">
-                    <i class="fas fa-search fa-3x text-light mb-3"></i>
-                    <p class="text-muted">No departments found matching your search.</p>
-                </div>
-                @endforelse
+                </form>
             </div>
-        </div>
-        <div class="card-footer bg-white py-3">
-            {{ $departments->appends(request()->query())->links('pagination::bootstrap-5') }}
+
+            {{-- Table --}}
+            <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="ps-4 py-3 text-slate-500 fw-bold uppercase" style="font-size:0.75rem;">Department Details</th>
+                                <th class="py-3 text-slate-500 fw-bold uppercase" style="font-size:0.75rem;">Parent Faculty</th>
+                                <th class="py-3 text-slate-500 fw-bold uppercase" style="font-size:0.75rem;">Head of Dept</th>
+                                <th class="py-3 text-slate-500 fw-bold uppercase text-center" style="font-size:0.75rem;">Status</th>
+                                <th class="pe-4 py-3 text-slate-500 fw-bold uppercase text-end" style="font-size:0.75rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($departments as $dept)
+                            @php
+                                $isParentInactive = ($dept->faculty && $dept->faculty->is_active !== 'active');
+                                $isHidden = ($dept->is_active == 'active' && $isParentInactive);
+                            @endphp
+                            <tr class="{{ $isHidden ? 'bg-orange-50 bg-opacity-50' : '' }}">
+                                <td class="ps-4 py-4">
+                                    <div class="fw-bold text-slate-900 mb-0" style="font-size:0.92rem;">
+                                        {{ $dept->dept_name }}
+                                        @if($isHidden) <i class="fas fa-eye-slash text-orange-500 ms-1" title="Hidden from Users"></i> @endif
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <code class="text-amber-600 fw-medium" style="font-size:0.7rem;">#{{ str_pad($dept->dept_id, 4, '0', STR_PAD_LEFT) }}</code>
+                                        <span class="badge bg-slate-100 text-slate-600 border border-slate-200" style="font-size:0.7rem;">{{ $dept->dept_code ?? 'N/A' }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if($dept->faculty)
+                                        <div class="text-slate-700 fw-medium" style="font-size:0.85rem;">{{ $dept->faculty->faculty_name }}</div>
+                                        @if($isParentInactive)
+                                            <span class="badge bg-danger-subtle text-danger" style="font-size: 0.65rem;">FACULTY INACTIVE</span>
+                                        @endif
+                                    @else
+                                        <span class="text-slate-400 small italic">Unassigned</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-orange-50 border border-orange-100" style="width:38px; height:38px;">
+                                            <i class="fas fa-user-circle text-orange-600"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-slate-800" style="font-size:0.85rem;">{{ $dept->deptHead->full_name ?? $dept->deptHead->username ?? 'Not Assigned' }}</div>
+                                            <div class="text-slate-500" style="font-size:0.72rem;">{{ $dept->deptHead->email ?? '' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    @if($isHidden)
+                                        <span class="badge bg-orange-100 text-orange-700 border border-orange-200 px-3 py-2">Hidden</span>
+                                    @else
+                                        <span class="badge {{ $dept->is_active == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} border px-3 py-2">
+                                            {{ ucfirst($dept->is_active) }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group shadow-sm">
+                                        <a href="{{ route('admin.departments.edit', $dept->dept_id) }}" class="btn btn-white btn-sm px-3 border-slate-200">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        <button type="button" 
+                                                onclick="handleDelete('{{ $dept->dept_id }}', '{{ $dept->dept_name }}')" 
+                                                class="btn btn-white btn-sm px-3 border-slate-200 text-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+
+                                        <form id="delete-form-{{ $dept->dept_id }}" action="{{ route('admin.departments.destroy', $dept->dept_id) }}" method="POST" class="d-none">
+                                            @csrf @method('DELETE')
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-slate-400 italic">No departments found in the registry.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if($departments->hasPages())
+                <div class="p-4 bg-slate-50 border-top border-slate-100">
+                    {{ $departments->links() }}
+                </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .text-orange-500 { color: #f97316 !important; }
+    .hover-orange-600:hover { color: #ea580c !important; }
+    .btn-orange-light:hover { background-color: #ffedd5 !important; color: #c2410c !important; }
+    .text-orange-600 { color: #d97706 !important; }
+    .bg-orange-50 { background-color: #fffbeb !important; }
+    .border-orange-100 { border-color: #fef3c7 !important; }
+    .btn-white { background: #fff; color: #64748b; }
+    .btn-white:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+    .table thead th { font-weight: 800; background: #f8fafc; }
+    .table tbody tr:hover { background-color: #fffcf8; }
+    .fw-black { font-weight: 900 !important; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alert = document.getElementById('status-alert');
+        if (alert) {
+            setTimeout(() => {
+                alert.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+                alert.style.opacity = "0";
+                alert.style.transform = "translateY(-20px)";
+                setTimeout(() => { alert.remove(); }, 600);
+            }, 4000);
+        }
+    });
+
+    function handleDelete(id, name) {
+        if (confirm(`Are you sure you want to delete the department "${name}"?`)) {
+            document.getElementById(`delete-form-${id}`).submit();
+        }
+    }
+</script>
 @endsection

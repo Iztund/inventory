@@ -1,184 +1,282 @@
 @extends('layouts.admin')
 
-@section('title', 'Manage Faculties | Academic Structure')
+@section('title', 'Manage Faculties | College of Medicine')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('build/assets/css/dashboard_admin/management.css') }}" />
-
-<div class="container-fluid px-4 py-4">
-    {{-- Header Section: Solid Desktop & Mobile Layout --}}
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-7 col-12">
-            <div class="d-flex align-items-center mb-1">
-                <a href="{{ url()->previous() }}" class="btn btn-sm btn-outline-secondary me-3 rounded-circle shadow-sm" 
-                    title="Go Back" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <h2 class="fw-bold text-dark mb-0">Faculty Administration</h2>
-            </div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 bg-transparent p-0 ms-5 d-none d-md-flex">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('admin.units-management.index') }}" class="text-decoration-none text-muted">Structure</a></li>
-                    <li class="breadcrumb-item active fw-semibold text-primary">Faculties</li>
-                </ol>
-            </nav>
+<div class="container-fluid px-4">
+    {{-- Success/Error Alerts with Auto-Hide ID --}}
+    @if(session('success') || session('error'))
+    <div id="status-alert" class="alert {{ session('success') ? 'alert-success' : 'alert-danger' }} border-0 shadow-sm d-flex align-items-center mt-4 mb-0 animate__animated animate__fadeInDown" 
+         role="alert" 
+         style="border-left: 5px solid {{ session('success') ? '#10b981' : '#ef4444' }} !important; position: relative; z-index: 1050;">
+        <i class="fas {{ session('success') ? 'fa-check-circle' : 'fa-exclamation-circle' }} me-3 fs-4"></i>
+        <div>
+            <strong class="d-block">{{ session('success') ? 'Success!' : 'Error Occurred' }}</strong>
+            <span class="small">{{ session('success') ?? session('error') }}</span>
         </div>
-        <div class="col-md-5 text-md-end mt-3 mt-md-0">
-            <a href="{{ route('admin.faculties.create') }}" class="btn btn-primary shadow-sm px-4 rounded-3 w-100 w-md-auto">
-                <i class="fas fa-plus-circle me-2"></i><span class="btn-text">Add New Faculty</span>
-            </a>
-        </div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-
-    {{-- Alerts --}}
-    @if (session('success') || session('error'))
-        <div class="alert {{ session('success') ? 'alert-success' : 'alert-danger' }} alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
-            <i class="fas {{ session('success') ? 'fa-check-circle' : 'fa-exclamation-triangle' }} me-2"></i>
-            {{ session('success') ?? session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
     @endif
 
-    {{-- Search Card: Fixed Grid Columns --}}
-    <div class="card border-0 shadow-sm mb-4 rounded-3">
-        <div class="card-body p-3">
-            <form action="{{ route('admin.faculties.index') }}" method="GET" class="row g-2">
-                {{-- Search Input (6 columns on desktop) --}}
-                <div class="col-lg-6 col-md-5 col-12">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted ps-3">
-                            <i class="fas fa-search"></i>
-                        </span>
-                        <input class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
-                               type="text" name="q" placeholder="Search faculty name or code..." value="{{ request('q') }}">
-                        @if(request()->filled('q'))
-                            <a href="{{ route('admin.faculties.index') }}" class="input-group-text bg-white border-start-0 text-danger pe-3">
-                                <i class="fas fa-times-circle"></i>
-                            </a>
-                        @endif
+    <div class="min-vh-100 py-4">
+        <div style="max-width:1600px;" class="mx-auto">
+
+            {{-- Header --}}
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-5">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ route('admin.units-management.index') }}" 
+                    class="btn btn-white border border-slate-200 rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
+                    style="width:44px; height:44px;"
+                    title="Back to Dashboard">
+                        <i class="fas fa-arrow-left text-slate-400"></i>
+                    </a>
+                    <div>
+                        <h1 class="fw-black text-slate-900 mb-1" style="font-size:1.75rem; letter-spacing:-0.02em;">Faculty Administration</h1>
+                        <p class="text-slate-600 mb-0" style="font-size:0.88rem;">Academic structure oversight for College of Medicine</p>
                     </div>
                 </div>
-                {{-- Status Dropdown (4 columns on desktop) --}}
-                <div class="col-lg-4 col-md-4 col-12">
-                    <select name="status" class="form-select shadow-none">
-                        <option value="">All Visibility Statuses</option>
-                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Visible & Active</option>
-                        <option value="hidden" {{ request('status') == 'hidden' ? 'selected' : '' }}>Hidden (Orphaned)</option>
-                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Archived/Inactive</option>
-                    </select>
-                </div>
-                {{-- Filter Button (2 columns on desktop) --}}
-                <div class="col-lg-2 col-md-3 col-12 d-grid">
-                    <button class="btn btn-dark rounded-3 fw-medium" type="submit">Filter Results</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    {{-- Data Table Card --}}
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-            <h6 class="m-0 fw-bold text-dark"><i class="fas fa-university me-2 text-primary"></i>Registered Faculties</h6>
-            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">{{ $faculties->total() }} Total</span>
-        </div>
-        
-        <div class="card-body p-0">
-            {{-- DESKTOP VIEW --}}
-            <div class="table-responsive d-none d-lg-block">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light-subtle">
-                        <tr>
-                            <th class="ps-4 py-3" style="width: 30%">Faculty Info</th>
-                            <th>Dean of Faculty</th>
-                            <th class="text-center">Departments</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-end pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($faculties as $facultyItem)
-                        <tr>
-                            <td class="ps-4">
-                                <div class="fw-bold text-dark mb-0 text-truncate" style="max-width: 250px;">{{ $facultyItem->faculty_name }}</div>
-                                <code class="text-primary small fw-semibold">{{ $facultyItem->faculty_code ?? 'NO CODE' }}</code>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-xs bg-primary-subtle text-primary rounded-circle me-2 d-flex align-items-center justify-content-center fw-bold" style="width:32px; height:32px; font-size: 0.75rem;">
-                                        {{ strtoupper(substr($facultyItem->dean->username ?? 'D', 0, 1)) }}
+                <a href="{{ route('admin.faculties.create') }}" 
+                   class="btn text-white fw-black d-flex align-items-center gap-2 rounded-3 shadow-lg"
+                   style="background:linear-gradient(135deg, #f59e0b, #d97706); font-size:0.82rem; letter-spacing:0.05em; text-transform:uppercase; padding:0.75rem 1.8rem; border:none; transition:transform 0.2s;">
+                    <i class="fas fa-plus-circle"></i> Add Faculty
+                </a>
+            </div>
+
+            {{-- Stats Cards with Glassmorphism --}}
+            <div class="row g-4 mb-5">
+                <div class="col-12 col-md-4">
+                    <div class="position-relative overflow-hidden rounded-4 p-4 border border-indigo-100 shadow-sm"
+                        style="background:linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);">
+                        <div class="position-absolute" 
+                            style="top:-20px; right:-20px; width:100px; height:100px; background:radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%); border-radius:50%;"></div>
+                        <div class="position-relative d-flex align-items-center gap-3">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-indigo-600"
+                                style="width:56px; height:56px; box-shadow:0 4px 14px rgba(79,70,229,0.3);">
+                                <i class="fas fa-university text-white" style="font-size:1.4rem;"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Total Faculties</div>
+                                <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $faculties->total() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="position-relative overflow-hidden rounded-4 p-4 border border-emerald-100 shadow-sm"
+                        style="background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                        <div class="position-absolute" 
+                            style="top:-20px; right:-20px; width:100px; height:100px; background:radial-gradient(circle, rgba(5,150,105,0.15) 0%, transparent 70%); border-radius:50%;"></div>
+                        <div class="position-relative d-flex align-items-center gap-3">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-emerald-600"
+                                style="width:56px; height:56px; box-shadow:0 4px 14px rgba(5,150,105,0.3);">
+                                <i class="fas fa-check-circle text-white" style="font-size:1.4rem;"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Active</div>
+                                <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $faculties->where('is_active', 'active')->count() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="position-relative overflow-hidden rounded-4 p-4 border border-cyan-100 shadow-sm"
+                        style="background:linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);">
+                        <div class="position-absolute" 
+                            style="top:-20px; right:-20px; width:100px; height:100px; background:radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%); border-radius:50%;"></div>
+                        <div class="position-relative d-flex align-items-center gap-3">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center bg-cyan-600"
+                                style="width:56px; height:56px; box-shadow:0 4px 14px rgba(6,182,212,0.3);">
+                                <i class="fas fa-building text-white" style="font-size:1.4rem;"></i>
+                            </div>
+                            <div>
+                                <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Departments</div>
+                                <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $faculties->sum('departments_count') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Search & Filter --}}
+            <div class="rounded-4 mb-4 p-3 bg-white border border-slate-200 shadow-sm">
+                <form action="{{ route('admin.faculties.index') }}" method="GET" class="row g-2 align-items-center">
+                    <div class="col-12 col-md-5">
+                        <div class="input-group position-relative">
+                            <span class="input-group-text bg-slate-50 border-slate-200 text-slate-400">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" name="q" value="{{ request('q') }}"
+                                class="form-control border-slate-200 bg-slate-50"
+                                style="padding:0.7rem; font-size:0.9rem;"
+                                placeholder="Search faculty name or code...">
+                            
+                            @if(request('q'))
+                                <a href="{{ route('admin.faculties.index', request()->except('q')) }}" 
+                                class="position-absolute end-0 top-50 translate-middle-y me-5 text-orange-500 hover-orange-600 text-decoration-none"
+                                style="z-index: 10;">
+                                    <i class="fas fa-times-circle"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <select name="status" class="form-select border-slate-200 bg-slate-50" style="padding:0.7rem; font-size:0.9rem;">
+                            <option value="">All Statuses</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Archived</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-dark w-100 fw-black" 
+                                    style="padding:0.7rem; font-size:0.82rem; background:#0f172a; letter-spacing:0.03em;">
+                                APPLY FILTER
+                            </button>
+
+                            @if(request()->anyFilled(['q', 'status']))
+                                <a href="{{ route('admin.faculties.index') }}" 
+                                class="btn btn-orange-light d-flex align-items-center justify-content-center px-3 border-orange-200"
+                                style="padding:0.7rem; background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa;">
+                                    <i class="fas fa-undo-alt"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Table --}}
+            <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="ps-4 py-3 text-slate-500 fw-bold uppercase" style="font-size:0.75rem;">Faculty Details</th>
+                                <th class="py-3 text-slate-500 fw-bold uppercase" style="font-size:0.75rem;">Dean of Faculty</th>
+                                <th class="py-3 text-slate-500 fw-bold uppercase text-center" style="font-size:0.75rem;">Departments</th>
+                                <th class="py-3 text-slate-500 fw-bold uppercase text-center" style="font-size:0.75rem;">Status</th>
+                                <th class="pe-4 py-3 text-slate-500 fw-bold uppercase text-end" style="font-size:0.75rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($faculties as $faculty)
+                            <tr>
+                                <td class="ps-4 py-4">
+                                    <div class="fw-bold text-slate-900 mb-0" style="font-size:0.92rem;">{{ $faculty->faculty_name }}</div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {{-- ADDED ZEROS HERE --}}
+                                        <code class="text-amber-600 fw-medium" style="font-size:0.7rem;">#{{ str_pad($faculty->faculty_id, 4, '0', STR_PAD_LEFT) }}</code>
+                                        <span class="badge bg-slate-100 text-slate-600 border border-slate-200" style="font-size:0.7rem;">{{ $faculty->faculty_code ?? 'N/A' }}</span>
                                     </div>
-                                    <span class="small fw-semibold text-dark">{{ $facultyItem->dean->profile->full_name ?? $facultyItem->dean->username ?? 'Unassigned' }}</span>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-light text-dark fw-bold border px-3">{{ $facultyItem->departments_count ?? 0 }}</span>
-                            </td>
-                            <td class="text-center">
-                                <span class="badge rounded-pill {{ $facultyItem->is_active == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} border px-3">
-                                    {{ ucfirst($facultyItem->is_active) }}
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group shadow-sm rounded-2 overflow-hidden border">
-                                    <a href="{{ route('admin.faculties.edit', $facultyItem->faculty_id) }}" class="btn btn-sm btn-white"><i class="fas fa-edit text-primary"></i></a>
-                                    <form action="{{ route('admin.faculties.destroy', $facultyItem->faculty_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this faculty?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-white border-start"><i class="fas fa-trash-alt text-danger"></i></button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                            <tr><td colspan="5" class="text-center py-5 text-muted">No faculties found.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-orange-50 border border-orange-100" 
+                                             style="width:38px; height:38px;">
+                                            <i class="fas fa-user-tie text-orange-600" style="color:#d97706;"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-slate-800" style="font-size:0.85rem;">{{ $faculty->dean->full_name ?? 'Unassigned' }}</div>
+                                            <div class="text-slate-500" style="font-size:0.72rem;">{{ $faculty->dean->email ?? 'no-email@med.edu' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-black text-slate-700">{{ $faculty->departments_count }}</span>
+                                </td>
+                                <td class="text-center">
+                                    @if($faculty->is_active === 'active')
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">Active</span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">Inactive</span>
+                                    @endif
+                                </td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group shadow-sm">
+                                        <a href="{{ route('admin.faculties.edit', $faculty->faculty_id) }}" 
+                                        class="btn btn-white btn-sm px-3 border-slate-200">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        {{-- Delete Button --}}
+                                        <button type="button" 
+                                                onclick="handleDelete('{{ $faculty->faculty_id }}', '{{ $faculty->faculty_name }}')" 
+                                                class="btn btn-white btn-sm px-3 border-slate-200 text-danger hover:bg-red-50">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
 
-            {{-- MOBILE VIEW --}}
-            <div class="d-lg-none">
-                @forelse ($faculties as $facultyItem)
-                    <div class="p-3 border-bottom">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="fw-bold text-dark">{{ $facultyItem->faculty_name }}</span>
-                            <span class="badge rounded-pill {{ $facultyItem->is_active == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">{{ ucfirst($facultyItem->is_active) }}</span>
-                        </div>
-                        <div class="row g-0 small text-muted">
-                            <div class="col-6">Code: <span class="text-dark fw-medium">{{ $facultyItem->faculty_code ?? 'N/A' }}</span></div>
-                            <div class="col-6 text-end">Depts: <span class="text-dark fw-medium">{{ $facultyItem->departments_count ?? 0 }}</span></div>
-                        </div>
-                        <div class="mt-3 d-flex gap-2">
-                            <a href="{{ route('admin.faculties.edit', $facultyItem->faculty_id) }}" class="btn btn-sm btn-outline-primary w-50 rounded-3">Edit</a>
-                            <form action="{{ route('admin.faculties.destroy', $facultyItem->faculty_id) }}" method="POST" class="w-50">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-3" onclick="return confirm('Delete?')">Delete</button>
-                            </form>
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-4 text-center text-muted">No faculties found.</div>
-                @endforelse
-            </div>
-        </div>
-
-        <div class="card-footer bg-white py-3">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                <p class="small text-muted mb-0">Showing <strong>{{ $faculties->firstItem() }}</strong> to <strong>{{ $faculties->lastItem() }}</strong></p>
-                <div class="small">{{ $faculties->links('pagination::bootstrap-5') }}</div>
+                                        {{-- Hidden Form for this specific faculty --}}
+                                        <form id="delete-form-{{ $faculty->faculty_id }}" 
+                                            action="{{ route('admin.faculties.destroy', $faculty->faculty_id) }}" 
+                                            method="POST" 
+                                            class="d-none">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-slate-400 italic">No faculties found in the medical registry.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                
+                @if($faculties->hasPages())
+                <div class="p-4 bg-slate-50 border-top border-slate-100">
+                    {{ $faculties->links() }}
+                </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .bg-light-subtle { background-color: #f9fafb !important; }
-    .bg-success-subtle { background-color: #ecfdf5 !important; color: #065f46 !important; border: 1px solid #10b98133 !important; }
-    .bg-danger-subtle { background-color: #fef2f2 !important; color: #991b1b !important; border: 1px solid #ef444433 !important; }
-    .bg-primary-subtle { background-color: #eff6ff !important; color: #1e40af !important; }
-    .btn-white { background-color: #ffffff; color: #374151; }
-    .btn-white:hover { background-color: #f3f4f6; }
-    /* Fix for mobile pagination size */
-    .pagination { margin-bottom: 0; flex-wrap: wrap; justify-content: center; }
+    .text-orange-500 { color: #f97316 !important; }
+    .hover-orange-600:hover { color: #ea580c !important; }
+    .btn-orange-light:hover { background-color: #ffedd5 !important; color: #c2410c !important; }
+    .text-orange-600 { color: #d97706 !important; }
+    .bg-orange-50 { background-color: #fffbeb !important; }
+    .border-orange-100 { border-color: #fef3c7 !important; }
+    .btn-white { background: #fff; color: #64748b; }
+    .btn-white:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+    .table thead th { font-weight: 800; background: #f8fafc; }
+    .table tbody tr:hover { background-color: #fffcf8; }
 </style>
+
+{{-- AUTO HIDE SCRIPT --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alert = document.getElementById('status-alert');
+        if (alert) {
+            setTimeout(() => {
+                // Using standard Bootstrap transition
+                alert.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+                alert.style.opacity = "0";
+                alert.style.transform = "translateY(-20px)";
+                
+                // Remove from DOM after transition
+                setTimeout(() => {
+                    alert.remove();
+                }, 600);
+            }, 4000); // 4 Seconds display
+        }
+    });
+    function handleDelete(id, name) {
+    // Using a standard confirm for now, or you can use SweetAlert2
+    if (confirm(`Are you sure you want to delete the "${name}"? This action cannot be undone.`)) {
+        // Find the specific form and submit it
+        document.getElementById(`delete-form-${id}`).submit();
+    }
+}
+</script>
 @endsection

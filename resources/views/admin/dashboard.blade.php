@@ -3,271 +3,311 @@
 @section('title', 'Admin Overview')
 @section('active_link', 'dashboard')
 
-@push('styles')
-<style>
-    :root {
-        --med-primary: #2563eb;
-        --med-success: #10b981;
-        --med-warning: #f59e0b;
-        --med-danger: #ef4444;
-        --glass-bg: rgba(255, 255, 255, 0.9);
-    }
-
-    body { 
-        background-color: #f1f5f9;
-        background-image: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0, transparent 50%), 
-                          radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.05) 0, transparent 50%);
-        min-height: 100vh;
-    }
-
-    .page-title { font-weight: 800; color: #0f172a; letter-spacing: -0.03em; }
-
-    /* Beautiful Glass Card Effect */
-    .beauty-card {
-        background: var(--glass-bg);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        border-radius: 24px;
-        padding: 1.5rem;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-        height: 100%;
-    }
-    
-    .beauty-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
-        border-color: var(--med-primary);
-    }
-
-    /* Floating Icon Box */
-    .icon-box {
-        width: 56px; height: 56px;
-        border-radius: 18px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.4rem;
-        margin-bottom: 1.25rem;
-        box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
-    }
-
-    /* User Access Gradients */
-    .bg-gradient-dark { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; }
-    .bg-gradient-warning { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #451a03; }
-
-    /* Organizational Units Pills */
-    .unit-box {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 1rem;
-        text-align: center;
-        transition: 0.3s ease;
-    }
-    .unit-box:hover { border-color: var(--med-primary); background: #f8fafc; transform: scale(1.02); }
-
-    .section-label {
-        font-size: 0.7rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: #64748b;
-        margin-bottom: 1.25rem;
-        display: block;
-    }
-
-    /* Sync Button Animation */
-    .spin-icon { animation: fa-spin 1s infinite linear; }
-</style>
-@endpush
-
 @section('content')
-<div class="container-fluid py-5 px-lg-5">
+<div class="container-fluid px-4 py-4">
     
-    {{-- Top Header --}}
-    <div class="row align-items-center mb-5">
-        <div class="col-md-8">
-            <h1 class="page-title mb-1">Intelligence Dashboard</h1>
-            <p class="text-muted fw-medium">College of Medicine Central Inventory Hub</p>
-        </div>
-        <div class="col-md-4 text-md-end">
-            <button id="syncButton" class="btn btn-white border-0 shadow-sm rounded-pill px-4 py-2 fw-bold text-primary" onclick="triggerSync()">
-                <i class="fas fa-sync-alt me-2" id="syncIcon"></i><span id="syncText">Sync Data</span>
-            </button>
-        </div>
-    </div>
-
-    {{-- CORE METRICS --}}
-    <span class="section-label">Inventory Overview</span>
-    <div class="row g-4 mb-5">
-        <div class="col-xl-4 col-md-6">
-            <div class="beauty-card">
-                <div class="icon-box" style="background: #eff6ff; color: var(--med-primary);">
-                    <i class="fas fa-microscope"></i>
-                </div>
-                <div class="h6 text-muted fw-bold mb-1">Total Assets</div>
-                <div class="h2 fw-bold mb-0 text-dark">{{ $totalAssets ?? 0 }}</div>
-                <div class="mt-3 small text-success fw-bold">
-                    <i class="fas fa-check-circle me-1"></i> Registry Healthy
-                </div>
+    {{-- 1. Welcome Section --}}
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 md:p-10 mb-8 border-b-4 border-emerald-500 shadow-xl">
+        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/5 rounded-full"></div>
+        <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-emerald-500/10 rounded-full"></div>
+        
+        <div class="row align-items-center relative z-10">
+            <div class="col-lg-8">
+                <h6 class="text-emerald-400 font-black uppercase tracking-[0.2em] text-xs mb-3">System Administration</h6>
+                <h1 class="text-3xl md:text-4xl font-black text-white mb-2">
+                    Welcome back, {{ Auth::user()->profile->first_name ?? Auth::user()->username }}
+                </h1>
+                <p class="text-slate-400 font-medium mb-0 flex items-center">
+                    <i class="fas fa-shield-check text-emerald-500 me-2"></i>
+                    College of Medicine Inventory System • Central Control
+                </p>
             </div>
-        </div>
-
-        <div class="col-xl-4 col-md-6">
-            <div class="beauty-card" style="border-bottom: 4px solid var(--med-danger);">
-                <div class="icon-box" style="background: #fef2f2; color: var(--med-danger);">
-                    <i class="fas fa-bell"></i>
+            <div class="col-lg-4 text-lg-end d-none d-lg-block">
+                <div class="inline-block bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl min-w-[200px]">
+                    <div class="text-[12px] text-emerald-400 font-black uppercase tracking-widest mb-1">
+                        Pending Review
+                    </div>
+                    <div class="text-3xl font-black text-white mb-0">
+                        {{ number_format($pendingSubmissions ?? 0) }} 
+                        <span class="text-sm text-slate-300 font-bold uppercase tracking-tighter">Requests</span>
+                    </div>
                 </div>
-                <div class="h6 text-muted fw-bold mb-1">Needs Review</div>
-                <div class="h2 fw-bold mb-0 text-danger">{{ $pendingSubmissions ?? 0 }}</div>
-                <a href="{{ route('admin.submissions.pending') }}" class="stretched-link mt-3 d-block small fw-bold text-decoration-none text-danger">
-                    Process Requests <i class="fas fa-arrow-right ms-1"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-xl-4 col-md-12">
-            <div class="beauty-card">
-                <div class="icon-box" style="background: #f0fdf4; color: var(--med-success);">
-                    <i class="fas fa-clipboard-list"></i>
-                </div>
-                <div class="h6 text-muted fw-bold mb-1">Total Requests</div>
-                <div class="h2 fw-bold mb-0 text-dark">{{ $totalSubmissions ?? 0 }}</div>
-                <div class="mt-3 small text-muted">Historical log entries</div>
             </div>
         </div>
     </div>
 
-    {{-- USER METRICS --}}
-    <span class="section-label">User Access Control</span>
-    <div class="row g-4 mb-5">
+    {{-- 2. Core Metrics Grid (6 cards in 2 rows) --}}
+    <div class="row g-4 mb-8">
+        @php
+            $coreMetrics = [
+                ['Total Assets Registered', $totalAssets ?? 0, 'fa-microscope', 'text-blue-600', 'bg-blue-50', 'Registry Healthy'],
+                ['Needs Review', $pendingSubmissions ?? 0, 'fa-bell', 'text-rose-500', 'bg-rose-50', 'Urgent Action'],
+                ['Approved Items', $approvedSubmissions ?? 0, 'fa-check-circle', 'text-emerald-500', 'bg-emerald-50', 'Processed'],
+                ['Rejected Items', $rejectedSubmissions ?? 0, 'fa-times-circle', 'text-red-500', 'bg-red-50', 'Denied'],
+                ['Total Requests', $totalSubmissions ?? 0, 'fa-clipboard-list', 'text-indigo-500', 'bg-indigo-50', 'Historical Log'],
+                ['Asset Categories', $totalCategories ?? 0, 'fa-tags', 'text-amber-500', 'bg-amber-50', 'Classification'],
+            ];
+        @endphp
+        
+        @foreach($coreMetrics as [$label, $val, $icon, $textColor, $bgColor, $subtitle])
+        <div class="col-6 col-lg-4">
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-[11px] font-black text-slate-800 uppercase tracking-wider">{{ $label }}</span>
+                    <div class="w-8 h-8 rounded-lg {{ $bgColor }} flex items-center justify-center">
+                        <i class="fas {{ $icon }} {{ $textColor }} text-xs"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-black text-slate-900 mb-1">{{ number_format($val) }}</div>
+                <div class="text-[9px] font-bold text-slate-600 uppercase">{{ $subtitle }}</div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+
+    {{-- 3. User Access Control --}}
+    <div class="flex items-center space-x-2 mb-4">
+        <div class="h-1 w-8 bg-emerald-600 rounded-full"></div>
+        <h6 class="font-black text-slate-900 uppercase tracking-widest text-[11px] mb-0">User Access Control</h6>
+    </div>
+
+    <div class="row g-4 mb-8">
         <div class="col-md-6">
-            <div class="beauty-card bg-gradient-dark border-0">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 shadow-lg border border-slate-700">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="h6 opacity-75 fw-bold mb-1 text-uppercase small">Active Users</div>
-                        <div class="display-6 fw-bold">{{ $totalActiveUsers ?? 0 }}</div>
+                        <div class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Active Users</div>
+                        <div class="text-4xl font-black text-white">{{ $totalActiveUsers ?? 0 }}</div>
+                        <div class="text-emerald-400 text-xs font-bold mt-2">
+                            <i class="fas fa-check-circle me-1"></i> System Access Enabled
+                        </div>
                     </div>
-                    <div class="icon-box bg-white bg-opacity-10 text-white mb-0">
-                        <i class="fas fa-user-check"></i>
+                    <div class="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+                        <i class="fas fa-user-check text-2xl"></i>
                     </div>
                 </div>
             </div>
         </div>
+        
         <div class="col-md-6">
-            <div class="beauty-card bg-gradient-warning border-0">
+            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 shadow-lg">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="h6 opacity-75 fw-bold mb-1 text-uppercase small text-dark">Inactive / Disabled</div>
-                        <div class="display-6 fw-bold text-dark">{{ $totalInactiveUsers ?? 0 }}</div>
+                        <div class="text-[10px] text-amber-900 font-black uppercase tracking-widest mb-2">Inactive / Disabled</div>
+                        <div class="text-4xl font-black text-slate-900">{{ $totalInactiveUsers ?? 0 }}</div>
+                        <div class="text-amber-900 text-xs font-bold mt-2">
+                            <i class="fas fa-user-lock me-1"></i> Access Restricted
+                        </div>
                     </div>
-                    <div class="icon-box bg-black bg-opacity-10 text-dark mb-0">
-                        <i class="fas fa-user-lock"></i>
+                    <div class="w-14 h-14 rounded-xl bg-black/10 flex items-center justify-center text-slate-900">
+                        <i class="fas fa-user-slash text-2xl"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- ORGANIZATIONAL UNITS --}}
-    <span class="section-label">Organizational Structure</span>
-    <div class="row row-cols-1 row-cols-md-5 g-3 mb-5">
-        <div class="col">
-            <div class="unit-box">
-                <div class="h4 fw-bold text-primary mb-0">{{ $totalFaculties ?? 0 }}</div>
-                <div class="small text-muted fw-bold uppercase" style="font-size: 0.6rem;">Faculties</div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="unit-box">
-                <div class="h4 fw-bold text-success mb-0">{{ $totalDepartments ?? 0 }}</div>
-                <div class="small text-muted fw-bold uppercase" style="font-size: 0.6rem;">Departments</div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="unit-box">
-                <div class="h4 fw-bold text-warning mb-0">{{ $totalInstitutes ?? 0 }}</div>
-                <div class="small text-muted fw-bold uppercase" style="font-size: 0.6rem;">Institutes</div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="unit-box border-info">
-                <div class="h4 fw-bold text-info mb-0">{{ $totalOffices ?? 0 }}</div>
-                <div class="small text-muted fw-bold uppercase" style="font-size: 0.6rem;">Offices</div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="unit-box">
-                <div class="h4 fw-bold text-dark mb-0">{{ $totalUnits ?? 0 }}</div>
-                <div class="small text-muted fw-bold uppercase" style="font-size: 0.6rem;">Admin Units</div>
-            </div>
-        </div>
+    {{-- 4. Organizational Structure --}}
+    <div class="flex items-center space-x-2 mb-4">
+        <div class="h-1 w-8 bg-blue-600 rounded-full"></div>
+        <h6 class="font-black text-slate-900 uppercase tracking-widest text-[11px] mb-0">Organizational Structure</h6>
     </div>
 
-    {{-- CHARTS & RECENT HISTORY --}}
+    <div class="row row-cols-2 row-cols-md-5 g-3 mb-8">
+        @php
+            $orgUnits = [
+                ['Faculties', $totalFaculties ?? 0, 'bg-blue-50', 'text-blue-600'],
+                ['Departments', $totalDepartments ?? 0, 'bg-emerald-50', 'text-emerald-600'],
+                ['Institutes', $totalInstitutes ?? 0, 'bg-amber-50', 'text-amber-600'],
+                ['Offices', $totalOffices ?? 0, 'bg-cyan-50', 'text-cyan-600'],
+                ['Admin Units', $totalUnits ?? 0, 'bg-slate-50', 'text-slate-600'],
+            ];
+        @endphp
+        
+        @foreach($orgUnits as [$label, $count, $bg, $text])
+        <div class="col">
+            <div class="bg-white border border-slate-200 rounded-xl p-4 text-center transition-all hover:border-slate-400 hover:-translate-y-1 shadow-sm">
+                <div class="text-2xl font-black {{ $text }} mb-1">{{ $count }}</div>
+                <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">{{ $label }}</div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+
+    {{-- 5. Charts & Activity Grid --}}
     <div class="row g-4">
+        {{-- Verification Status Chart --}}
         <div class="col-xl-7">
-            <div class="beauty-card">
-                <h6 class="fw-800 mb-4 small text-uppercase text-muted">Submission Verification Status</h6>
-                <canvas id="submissionsChart" style="max-height: 250px;"></canvas>
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-2 h-6 bg-blue-600 rounded-full"></div>
+                        <h5 class="font-black text-slate-900 m-0">Submission Verification Status</h5>
+                    </div>
+                </div>
+                <div class="p-5">
+                    <canvas id="submissionsChart" style="max-height: 280px;"></canvas>
+                </div>
             </div>
         </div>
-        <div class="col-xl-5">
-            <div class="beauty-card p-0 overflow-hidden">
-                <div class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center bg-light bg-opacity-50">
-                    <h6 class="fw-800 mb-0 small text-uppercase text-muted">Recent Activity</h6>
-                    <a href="{{ route('admin.submissions.pending') }}" class="small fw-bold text-primary text-decoration-none">Review Queue</a>
+
+        {{-- Recent Activity --}}
+        <div class="col-xl-12"> {{-- Increased to full width for table visibility --}}
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-2 h-6 bg-indigo-600 rounded-full"></div>
+                        <h5 class="font-black text-slate-900 m-0 text-lg">System-Wide Recent Activity</h5>
+                    </div>
+                    <a href="{{ route('admin.submissions.index') }}" class="btn btn-sm bg-white border-slate-200 text-slate-600 font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">
+                        View Full Logs <i class="fas fa-list ms-2"></i>
+                    </a>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <tbody>
+                
+                <div class="overflow-x-auto">
+                    <table class="table table-hover align-middle mb-0 d-none d-md-table">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="ps-5 py-3 text-[10px] font-black text-slate-700 uppercase tracking-widest border-0">ID / Item</th>
+                                <th class="py-3 text-[10px] font-black text-slate-700 uppercase tracking-widest border-0">Submitter</th>
+                                <th class="py-3 text-[10px] font-black text-slate-700 uppercase tracking-widest border-0">Origin</th>
+                                <th class="py-3 text-[10px] font-black text-slate-700 uppercase tracking-widest border-0">Status</th>
+                                <th class="py-3 text-[10px] font-black text-slate-700 uppercase tracking-widest border-0">Audit Details</th>
+                                <th class="pe-5 text-end py-3 text-[10px] font-black text-slate-700 uppercase tracking-widest border-0">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
                             @forelse($recentSubmissions as $r)
-                            <tr onclick="window.location='{{ route('admin.submissions.show', $r->submission_id) }}'" style="cursor: pointer;">
-                                <td class="ps-4 py-3">
-                                    <div class="small fw-bold text-dark">#{{ $r->submission_id }}</div>
-                                    <div class="text-muted" style="font-size: 0.65rem;">{{ $r->submittedBy->department->dept_name ?? 'Unit' }}</div>
+                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                <td class="ps-5 py-4">
+                                    <div class="font-black text-indigo-600 text-sm">#{{ str_pad($r->submission_id, 4, '0', STR_PAD_LEFT) }}</div>
+                                    <div class="text-xs text-slate-900 font-bold truncate max-w-[200px]">
+                                        {{ $r->items->first()->item_name ?? 'Batch Submission' }}
+                                        @if($r->items->count() > 1)
+                                            <span class="text-slate-600 font-normal text-[10px] italic">+{{ $r->items->count() - 1 }} others</span>
+                                        @endif
+                                    </div>
                                 </td>
-                                <td class="text-end pe-4 py-3">
-                                    <span class="badge rounded-pill {{ $r->status === 'pending' ? 'bg-warning text-dark' : 'bg-success' }}" style="font-size: 0.6rem;">
-                                        {{ ucfirst($r->status) }}
+
+                                <td>
+                                    <div class="text-[12px] text-slate-700">{{ $r->submittedBy->profile->full_name ?? $r->submittedBy->username ?? 'Unknown User' }}</div>
+                                </td>
+
+                                <td>
+                                    <div class="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                                        {{ 
+                                            $r->submittedBy->unit->unit_name ?? 
+                                            $r->submittedBy->department->dept_name ?? 
+                                            $r->submittedBy->institute->institute_name ?? 
+                                            $r->submittedBy->faculty->faculty_name ?? 
+                                            $r->submittedBy->office->office_name ?? 
+                                            'COMUI CENTRAL' 
+                                        }}
+                                    </div>
+                                    {{-- Optional: Add a small sub-label if it's a sub-entity --}}
+                                    @if($r->submittedBy->unit || $r->submittedBy->department)
+                                        <div class="text-[9px] text-slate-600 font-bold italic">
+                                            via {{ $r->submittedBy->faculty->faculty_name ?? $r->submittedBy->office->office_name ?? 'Central' }}
+                                        </div>
+                                    @endif
+                                </td>
+
+                                <td>
+                                    @php
+                                        $statusConfig = [
+                                            'pending' => ['bg-amber-100/50', 'text-amber-700', 'border-amber-200'],
+                                            'approved' => ['bg-emerald-100/50', 'text-emerald-700', 'border-emerald-200'],
+                                            'rejected' => ['bg-rose-100/50', 'text-rose-700', 'border-rose-200'],
+                                        ];
+                                        $classes = $statusConfig[$r->status] ?? $statusConfig['pending'];
+                                    @endphp
+                                    <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border {{ implode(' ', $classes) }}">
+                                        {{ $r->status }}
                                     </span>
+                                </td>
+
+                                <td>
+                                    @if($r->status !== 'pending')
+                                        <div class="text-[10px] font-bold text-slate-700">By {{ $r->reviewedby->profile->full_name ?? $r->reviewedby->username ?? 'System' }}</div>
+                                        <div class="text-[9px] text-slate-600 uppercase">{{ $r->updated_at->format('M d, Y • h:i A') }}</div>
+                                    @else
+                                        <span class="text-[10px] text-slate-600 italic">Waiting for Audit...</span>
+                                    @endif
+                                </td>
+
+                                <td class="pe-5 text-end">
+                                    <a href="{{ route('admin.submissions.show', $r->submission_id) }}" class="btn btn-sm border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-600 bg-white rounded-lg transition-all shadow-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="2" class="text-center py-5 text-muted small">No items pending review</td></tr>
                             @endforelse
                         </tbody>
                     </table>
+
+                    <div class="d-md-none">
+                        @foreach($recentSubmissions as $r)
+                        <div class="p-4 border-b border-slate-100">
+                            <div class="flex justify-between mb-2">
+                                <span class="font-black text-indigo-600">#{{ str_pad($r->submission_id, 4, '0', STR_PAD_LEFT) }}</span>
+                                <span class="text-[10px] text-slate-400 uppercase font-bold">{{ $r->submitted_at->diffForHumans() }}</span>
+                            </div>
+                            <div class="text-sm font-bold text-slate-900 mb-1">{{ $r->items->first()->item_name ?? 'Inventory Batch' }}</div>
+                            <div class="text-xs text-slate-500 mb-3">Submitted by {{ $r->submittedBy->profile->full_name ?? 'Staff' }}</div>
+                            <a href="{{ route('admin.submissions.show', $r->submission_id) }}" class="btn btn-sm w-full bg-slate-100 text-slate-600 font-bold">View Details</a>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    @if($recentSubmissions->isEmpty())
+                        <div class="py-20 text-center">
+                            <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-folder-open text-slate-300 text-2xl"></i>
+                            </div>
+                            <p class="text-slate-400 font-bold uppercase text-xs tracking-widest">No activity found in logs</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
+    </div>
+
+    {{-- 6. Quick Actions (3 cards only) --}}
+    <div class="row g-4 mt-6">
+        @php
+            $quickActions = [
+                ['Manage Users', 'admin.users.index', 'fa-users-cog', 'bg-blue-600', 'Control user access and permissions'],
+                ['Review Requests', 'admin.submissions.pending', 'fa-tasks', 'bg-rose-600', 'Process pending submissions'],
+                ['Generate Reports', 'admin.reports.index', 'fa-chart-bar', 'bg-emerald-600', 'Export inventory reports'],
+            ];
+        @endphp
+        
+        @foreach($quickActions as [$title, $route, $icon, $bg, $desc])
+        <div class="col-md-6 col-xl-4">
+            <a href="{{ route($route) }}" class="block bg-white border border-slate-200 rounded-xl p-4 hover:border-slate-400 transition-all hover:-translate-y-1 shadow-sm no-underline group">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 {{ $bg }} rounded-lg flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
+                        <i class="fas {{ $icon }}"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="font-black text-slate-900 text-sm mb-1">{{ $title }}</div>
+                        <div class="text-[10px] text-slate-500 font-medium">{{ $desc }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        @endforeach
     </div>
 </div>
 
 <script>
-    // 1. Setup chart data from PHP
+    // Chart data from PHP
     window.statusCounts = {!! json_encode([
         (int) ($pendingSubmissions ?? 0), 
         (int) ($approvedSubmissions ?? 0), 
         (int) ($rejectedSubmissions ?? 0)
     ]) !!};
-
-    // 2. Sync Button functionality
-    function triggerSync() {
-        const btn = document.getElementById('syncButton');
-        const icon = document.getElementById('syncIcon');
-        const text = document.getElementById('syncText');
-
-        // Start animation
-        icon.classList.add('spin-icon');
-        text.innerText = 'Updating...';
-        btn.style.pointerEvents = 'none';
-        btn.style.opacity = '0.7';
-
-        // Refresh the page after 1 second
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
-    }
 </script>
 @endsection
 

@@ -5,155 +5,219 @@
 @section('content')
 <link rel="stylesheet" href="{{ asset('build/assets/css/dashboard_admin/management.css') }}" />
 
-<div class="container-fluid px-4 py-4">
-    <div class="row mb-4 align-items-center">
-        <div class="col-md-7">
-            <div class="d-flex align-items-center mb-1">
-                <a href="javascript:void(0);" 
-                   onclick="window.history.back();" 
-                   class="btn btn-sm btn-outline-secondary me-3 rounded-circle shadow-sm" 
-                   title="Go Back"
-                   style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <h2 class="fw-bold text-dark mb-0">Unit Administration</h2>
-            </div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0 bg-transparent p-0 ms-5">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('admin.units-management.index') }}">Academic Structure</a></li>
-                    <li class="breadcrumb-item active">Manage Units</li>
-                </ol>
-            </nav>
+{{-- Success/Error Messages --}}
+@if(session('success') || session('error'))
+    <div id="status-alert" class="alert {{ session('success') ? 'alert-success' : 'alert-danger' }} border-0 shadow-sm d-flex align-items-center mt-4 mb-0 animate__animated animate__fadeInDown" 
+         role="alert" 
+         style="border-left: 5px solid {{ session('success') ? '#10b981' : '#ef4444' }} !important; position: relative; z-index: 1050; margin-left: 1.5rem; margin-right: 1.5rem;">
+        <i class="fas {{ session('success') ? 'fa-check-circle' : 'fa-exclamation-circle' }} me-3 fs-4"></i>
+        <div>
+            <strong class="d-block">{{ session('success') ? 'Success!' : 'Error Occurred' }}</strong>
+            <span class="small">{{ session('success') ?? session('error') }}</span>
         </div>
-        <div class="col-md-5 text-md-end mt-3 mt-md-0">
-            <a href="{{ route('admin.units.create') }}" class="btn btn-primary shadow-sm px-4">
-                <i class="fas fa-plus-circle me-2"></i>Add New Unit
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+<div class="min-vh-100 py-4">
+    <div style="max-width:1600px;" class="mx-auto px-4">
+
+        {{-- Header --}}
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-5">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ route('admin.units-management.index') }}" 
+                   class="btn btn-white border border-slate-200 rounded-circle shadow-sm d-flex align-items-center justify-content-center" 
+                   style="width:44px; height:44px;"
+                   title="Back to Dashboard">
+                    <i class="fas fa-arrow-left text-slate-400"></i>
+                </a>
+                <div>
+                    <h1 class="fw-black text-slate-900 mb-1" style="font-size:1.75rem; letter-spacing:-0.02em;">Unit Administration</h1>
+                    <p class="text-slate-600 mb-0" style="font-size:0.88rem;">Manage functional units and operational subdivisions</p>
+                </div>
+            </div>
+
+            <a href="{{ route('admin.units.create') }}" 
+               class="btn text-white fw-black d-flex align-items-center gap-2 rounded-3 shadow-lg"
+               style="background:linear-gradient(135deg, #f59e0b, #d97706); font-size:0.82rem; letter-spacing:0.05em; text-transform:uppercase; padding:0.75rem 1.8rem; border:none; transition:transform 0.2s;">
+                <i class="fas fa-plus-circle"></i> Add New Unit
             </a>
         </div>
-    </div>
 
-    {{-- Feedback Messages --}}
-    @if (session('success') || session('error'))
-        <div class="alert {{ session('success') ? 'alert-success' : 'alert-danger' }} border-0 shadow-sm rounded-4 mb-4 p-3 d-flex justify-content-between align-items-center fade show" role="alert" id="status-alert">
-            <div>
-                <i class="fas {{ session('success') ? 'fa-check-circle' : 'fa-exclamation-triangle' }} me-2"></i>
-                {{ session('success') ?? session('error') }}
+        @if(isset($orphanCount) && $orphanCount > 0)
+            <div class="rounded-4 border-start border-4 border-warning bg-white shadow-sm p-3 mb-4 d-flex align-items-center justify-content-between animate__animated animate__headShake">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-orange-50 text-orange-600 rounded-circle d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-slate-900 mb-0">{{ $orphanCount }} Hidden Departments</h6>
+                        <p class="text-slate-500 mb-0 small">Linked to inactive faculties. Staff cannot select these in inventory menus.</p>
+                    </div>
+                </div>
+                <a href="{{ route('admin.units.index', ['status' => 'hidden']) }}" class="btn btn-sm btn-dark px-3 rounded-pill fw-bold" style="font-size: 0.75rem;">VIEW HIDDEN</a>
             </div>
-            <button type="button" class="btn-close small" data-bs-dismiss="alert" aria-label="Close"></button>
+        @endif
+
+        {{-- Stats Cards --}}
+        <div class="row g-4 mb-5">
+            {{-- Total Units --}}
+            <div class="col-12 col-md-4">
+                <div class="position-relative overflow-hidden rounded-4 p-4 border border-indigo-100 shadow-sm"
+                    style="background:linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);">
+                    <div class="position-relative d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-indigo-600" style="width:56px; height:56px;">
+                            <i class="fas fa-microchip text-white" style="font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Total Units</div>
+                            <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $units->total() }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Active Units --}}
+            <div class="col-12 col-md-4">
+                <div class="position-relative overflow-hidden rounded-4 p-4 border border-emerald-100 shadow-sm"
+                    style="background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+                    <div class="position-relative d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-emerald-600" style="width:56px; height:56px;">
+                            <i class="fas fa-toggle-on text-white" style="font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Active Units</div>
+                            <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $unit_active_count }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Assigned Unit Heads --}}
+            <div class="col-12 col-md-4">
+                <div class="position-relative overflow-hidden rounded-4 p-4 border border-cyan-100 shadow-sm"
+                    style="background:linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);">
+                    <div class="position-relative d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-cyan-600" style="width:56px; height:56px;">
+                            <i class="fas fa-user-shield text-white" style="font-size:1.4rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Assigned Heads</div>
+                            <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $assignedHeadsCount }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <script>
-            // Automatically hide the alert after 4 seconds
-            setTimeout(function() {
-                let alert = document.getElementById('status-alert');
-                if (alert) {
-                    let bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }
-            }, 4000);
-        </script>
-    @endif
-
-    {{-- Search/Filter Card --}}
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body p-3">
-            <form action="{{ request()->url() }}" method="GET" class="row g-2">
-                <div class="col-md-10">
+        {{-- Filter Section --}}
+        <div class="rounded-4 bg-white border border-slate-200 shadow-sm p-3 mb-4">
+            <form action="{{ request()->url() }}" method="GET" class="row g-2 align-items-center">
+                {{-- Search Input --}}
+                <div class="col-md-4">
                     <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted">
+                        <span class="input-group-text bg-slate-50 border-slate-200 text-slate-400">
                             <i class="fas fa-search"></i>
                         </span>
-                        <input class="form-control border-start-0 border-end-0 ps-0" 
-                               type="text" 
-                               placeholder="Search by unit name or code..." 
-                               name="q" 
-                               value="{{ request('q') }}">
+                        <input type="text" name="q" value="{{ request('q') }}" class="form-control border-slate-200 bg-slate-50" placeholder="Search name or code...">
+                    </div>
+                </div>
+
+                {{-- Office Filter --}}
+                <div class="col-md-3">
+                    <select name="office_id" class="form-select border-slate-200 bg-slate-50">
+                        <option value="">All Parent Offices</option>
+                        @foreach($offices as $office)
+                            <option value="{{ $office->office_id }}" {{ request('office_id') == $office->office_id ? 'selected' : '' }}>
+                                {{ $office->office_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Status Filter (Added) --}}
+                <div class="col-md-2">
+                    <select name="status" class="form-select border-slate-200 bg-slate-50">
+                        <option value="">All Status</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="hidden" {{ request('status') == 'hidden' ? 'selected' : '' }}>Hidden (Orphaned)</option>
+                    </select>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-dark w-100 fw-black uppercase" style="letter-spacing:0.05em; font-size:0.8rem; padding:0.7rem;">
+                            Filter
+                        </button>
                         
-                        @if(request()->filled('q'))
-                            <a href="{{ request()->url() }}" 
-                               class="input-group-text bg-white border-start-0 text-danger" 
-                               style="text-decoration: none;" 
-                               title="Clear Search">
-                                <i class="fas fa-times-circle"></i>
+                        @if(request()->anyFilled(['q', 'office_id', 'status']))
+                            <a href="{{ request()->url() }}" class="btn btn-orange-light border-orange-200 d-flex align-items-center justify-content-center px-3" 
+                            style="background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa;" title="Clear All">
+                                <i class="fas fa-undo"></i>
                             </a>
                         @endif
                     </div>
                 </div>
-                <div class="col-md-2 d-grid">
-                    <button class="btn btn-primary" type="submit">Filter</button>
-                </div>
             </form>
         </div>
-    </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 fw-bold text-primary"><i class="fas fa-microchip me-2"></i>Unit List</h6>
-            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">{{ $units->total() }} Units Registered</span>
-        </div>
-        <div class="card-body p-0">
+        {{-- Table Card --}}
+        <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
+                    <thead class="bg-slate-50">
                         <tr>
-                            <th class="ps-4">Unit Identity</th>
-                            <th>Parent (Office/Dept)</th>
-                            <th>Unit Head</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-end pe-4">Actions</th>
+                            <th class="ps-4 py-3 text-slate-600 fw-bold uppercase" style="font-size:0.75rem;">Unit Identity</th>
+                            <th class="py-3 text-slate-600 fw-bold uppercase text-nowrap" style="font-size:0.75rem;">Parent Entity</th>
+                            <th class="px-1 py-3 text-slate-600 fw-bold uppercase text-nowrap" style="font-size:0.75rem;">Unit Head</th>   
+                            <th class="text-center py-3 text-slate-600 fw-bold uppercase" style="font-size:0.75rem;">Status</th>
+                            <th class="pe-4 py-3 text-slate-600 fw-bold uppercase text-end" style="font-size:0.75rem;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($units as $unitItem)
                         <tr>
                             <td class="ps-4">
-                                <div class="fw-bold text-dark">{{ $unitItem->unit_name }}</div>
-                                <code class="small text-primary">{{ $unitItem->unit_code ?? 'N/A' }}</code>
+                                <div class="fw-bold text-slate-900 mb-0 text-xs">{{ $unitItem->unit_name }}</div>
+                                <code class="text-orange-600 small fw-bold">{{ $unitItem->unit_code }}</code>
                             </td>
                             <td>
-                                {{-- Office Relationship check --}}
                                 @if($unitItem->office)
-                                    <span class="badge bg-success-subtle text-success border fw-normal">
-                                        <i class="fas fa-building-user me-1"></i> {{ $unitItem->office->office_name }}
+                                    <span class="badge bg-slate-100 text-slate-700 border border-slate-200 fw-medium">
+                                        <i class="fas fa-building me-1"></i> {{ $unitItem->office->office_name }}
                                     </span>
-                                @elseif($unitItem->department)
-                                    <span class="badge bg-info-subtle text-info border fw-normal">
-                                        <i class="fas fa-graduation-cap me-1"></i> {{ $unitItem->department->dept_name }}
+                                @elseif($unitItem->unit)
+                                    <span class="badge bg-blue-50 text-blue-700 border border-blue-100 fw-medium">
+                                        <i class="fas fa-university me-1"></i> {{ $unitItem->unit->unit_name }}
                                     </span>
                                 @else
-                                    <span class="text-muted small">Independent Unit</span>
+                                    <span class="text-slate-400 small italic">Independent</span>
                                 @endif
                             </td>
                             <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-xs bg-light text-dark rounded-circle me-2 d-flex align-items-center justify-content-center border" style="width:28px; height:28px; font-size: 0.7rem;">
-                                        <i class="fas fa-user-tie"></i>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div>
+                                        <div class="fw-bold text-slate-800 d-flex flex-nowrap" style="font-size:0.7rem; white-space: nowrap;">{{ $unitItem->supervisor->full_name ?? $unitItem->supervisor->username ?? 'Not Assigned' }}</div>
+                                        <div class="text-slate-500" style="font-size:0.72rem;">{{ $unitItem->supervisor->email ?? '' }}</div>
                                     </div>
-                                    <span class="small fw-medium">
-                                        {{-- Updated to use the 'supervisor' relationship from your model --}}
-                                        {{ $unitItem->supervisor->profile->full_name ?? $unitItem->supervisor->username ?? 'Not Assigned' }}
-                                    </span>
                                 </div>
                             </td>
                             <td class="text-center">
-                                <span class="badge rounded-pill {{ $unitItem->is_active == 'active' ? 'bg-success text-white' : 'bg-secondary text-white' }} px-3" style="font-size: 0.7rem;">
+                                <span class="badge {{ $unitItem->is_active == 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' }} border px-3 py-2">
                                     {{ strtoupper($unitItem->is_active) }}
                                 </span>
                             </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group">
-                                    <a href="{{ route('admin.units.edit', $unitItem->unit_id) }}" 
-                                       class="btn btn-sm btn-outline-info border-0" title="Edit">
-                                        <i class="fas fa-edit"></i>
+                            <td class="pe-4 text-end">
+                                <div class="btn-group shadow-sm">
+                                    <a href="{{ route('admin.units.edit', $unitItem->unit_id) }}" class="btn btn-white btn-sm px-3 border-slate-200" title="Edit Unit">
+                                        <i class="fas fa-edit text-slate-600"></i>
                                     </a>
-                                    <form action="{{ route('admin.units.destroy', $unitItem->unit_id) }}" 
-                                          method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0" 
-                                                onclick="return confirm('Delete {{ $unitItem->unit_name }}?');">
-                                            <i class="fas fa-trash-alt"></i>
+                                    <form action="{{ route('admin.units.destroy', $unitItem->unit_id) }}" method="POST" class="d-inline">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-white btn-sm px-3 border-slate-200 text-danger" onclick="return confirm('Delete Unit?')">
+                                            <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -161,34 +225,47 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-5">
-                                <div class="text-muted">
-                                    <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
-                                    <p>No functional units found.</p>
-                                    <a href="{{ route('admin.units.index') }}" class="btn btn-sm btn-link">Reset Search</a>
-                                </div>
-                            </td>
+                            <td colspan="5" class="text-center py-5 text-slate-600 italic">No units registered in the system.</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-        </div>
-        <div class="card-footer bg-white py-3 border-0">
-            <div class="d-flex justify-content-between align-items-center">
-                <p class="small text-muted mb-0">
-                    Showing {{ $units->firstItem() }} to {{ $units->lastItem() }} of {{ $units->total() }} records
-                </p>
-                {{ $units->links('pagination::bootstrap-5') }}
-            </div>
+            @if($units->hasPages())
+                <div class="p-1 bg-slate-20 border-top border-slate-100">
+                    {{ $units->links('pagination::bootstrap-5') }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
 
 <style>
-    .bg-success-subtle { background-color: #e1f7ef !important; color: #0d6832 !important; }
-    .bg-info-subtle { background-color: #e0f2fe !important; color: #0369a1 !important; }
-    .table thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6c757d; border-top: 0; }
-    .avatar-xs { flex-shrink: 0; }
+    .fw-black { font-weight: 900 !important; }
+    .btn-white { background: #fff; }
+    .btn-white:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .bg-emerald-100 { background-color: #d1fae5 !important; }
+    .text-emerald-700 { color: #047857 !important; }
+    .text-orange-600 { color: #ea580c !important; }
+    .uppercase { text-transform: uppercase; }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alert = document.getElementById('status-alert');
+        if (alert) {
+            setTimeout(() => {
+                alert.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+                alert.style.opacity = "0";
+                alert.style.transform = "translateY(-20px)";
+                setTimeout(() => { alert.remove(); }, 600);
+            }, 4000);
+        }
+    });
+
+    function handleDelete(id, name) {
+        if (confirm(`Are you sure you want to delete the unit "${name}"?`)) {
+            document.getElementById(`delete-form-${id}`).submit();
+        }
+    }
+</script>
 @endsection

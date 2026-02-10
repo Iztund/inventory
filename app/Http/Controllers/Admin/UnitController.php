@@ -13,29 +13,70 @@ use Illuminate\View\View;
 class UnitController extends Controller
 {
     public function index(Request $request): View
-    {
-        $query = Unit::query();
+{
+    // 1. Fetch data for the filter dropdowns (Active only)
+    $offices = Office::where('is_active', 'active')
+                ->orderBy('office_name', 'asc')
+                ->get();
 
-        if ($q = $request->input('q')) {
-            $query->where('unit_name', 'LIKE', '%' . $q . '%')
-                  ->orWhere('unit_code', 'LIKE', '%' . $q . '%');
-        }
+    // 2. Build base query with essential relationships
+    $query = Unit::with(['office', 'supervisor.profile']);
 
-        // Eager load 'office' and 'supervisor' as defined in your Model
-        $units = $query->with(['office', 'supervisor.profile'])
-                       ->orderBy('unit_name', 'asc')
-                       ->paginate(15) 
-                       ->appends($request->query()); 
 
-        return view('admin.manage_units.units', compact('units'));
+    // 3. Handle Search (Logical Grouping)
+    if ($request->filled('q')) {
+        $search = $request->input('q');
+        $query->where(function ($q) use ($search) {
+            $q->where('unit_name', 'LIKE', "%{$search}%")
+              ->orWhere('unit_code', 'LIKE', "%{$search}%");
+        });
     }
+
+    // 4. Handle Parent Filtering
+    if ($request->filled('office_id')) {
+        $query->where('office_id', $request->office_id);
+    }
+    // 5. Handle Status Filtering (Hidden/Orphaned logic)
+    if ($request->status == 'hidden') {
+        $query->where('is_active', 'active')
+              ->whereHas('office', function($q) {
+                  $q->where('is_active', '!=', 'active');
+              });
+    } elseif ($request->status == 'active') {
+        $query->where('is_active', 'active')
+              ->whereHas('office', function($q) {
+                  $q->where('is_active', 'active');
+              });
+    } elseif ($request->status == 'inactive') {
+        $query->where('is_active', 'inactive');
+    }
+    $unit_active_count = Unit::where('is_active', 'active')
+                        ->whereHas('office', function($q) {
+                         $q->where('is_active', 'active');
+                             })->count();
+
+    $assignedHeadsCount = Unit::whereNotNull('unit_head_id')->count();
+
+     // 
+    // 5. Finalize Results
+    $units = $query->orderBy('unit_name', 'asc')
+                   ->paginate(15)
+                   ->withQueryString(); // Replaces ->appends($request->query()) in modern Laravel
+
+    // 6. Return view with all necessary collections
+    return view('admin.manage_units.units', compact('units', 'offices', 
+    'unit_active_count', 'assignedHeadsCount'));
+}
 
     public function create(): View
     {
         $unit = new Unit();
         $offices = Office::where('is_active', 'active')->orderBy('office_name')->get();
+        $activeUnitUsers = User::where('status', 'active')
+                        ->whereHas('office') 
+                        ->get();
 
-        return view('admin.manage_units.units_create', compact('unit', 'offices'));
+        return view('admin.manage_units.units_create', compact('unit', 'offices', 'activeUnitUsers'));
     }
 
     public function store(Request $request): RedirectResponse

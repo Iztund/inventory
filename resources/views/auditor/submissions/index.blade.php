@@ -1,6 +1,6 @@
 @extends('layouts.auditor')
 
-@section('title', 'Verification Queue')
+@section('title', 'Pending Verifications - Auditor Dashboard')
 
 @section('content')
 <div class="min-h-screen bg-slate-50 py-8">
@@ -27,7 +27,7 @@
                         </h6>
                     </div>
                     <h1 class="text-xl md:text-3xl font-black text-slate-900 tracking-tight truncate">
-                        Verification Queue
+                        Pending Verifications
                     </h1>
                 </div>
             </div>
@@ -60,9 +60,9 @@
                                 <div class="flex items-center bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                                     <span class="pl-4 pr-2 text-slate-400"><i class="fas fa-search"></i></span>
                                     <input type="text" name="search" 
-                                           class="w-full border-0 bg-transparent py-3.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-0" 
-                                           placeholder="Search Reference, Submitter, or Item..." 
-                                           value="{{ request('search') }}">
+                                        class="w-full border-0 bg-transparent py-3.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-0" 
+                                        placeholder="Search Reference, Submitter, or Item..." 
+                                        value="{{ request('search') }}">
                                     @if(request('search'))
                                         <a href="{{ route('auditor.submissions.index') }}" class="px-3 text-slate-300 hover:text-rose-500 transition-colors">
                                             <i class="fas fa-times-circle text-lg"></i>
@@ -75,11 +75,11 @@
                             </div>
 
                             {{-- Academic Branch --}}
-                            <div class="col-span-12 lg:col-span-4">
+                            <div class="col-span-12 lg:col-span-3">
                                 <div class="p-4 rounded-2xl bg-slate-50 border border-white h-full">
-                                    <h6 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">Academic Branch</h6>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <select name="faculty_id" id="facultySelect" class="text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2 focus:ring-indigo-500/10">
+                                    <h6 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3 italic">Academic Branch</h6>
+                                    <div class="flex flex-col gap-2">
+                                        <select name="faculty_id" id="facultySelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2 focus:ring-indigo-500/10">
                                             <option value="">-- Faculty --</option>
                                             @foreach($faculties as $f)
                                                 <option value="{{ $f->faculty_id }}" {{ request('faculty_id') == $f->faculty_id ? 'selected' : '' }}>{{ $f->faculty_name }}</option>
@@ -98,11 +98,11 @@
                             </div>
 
                             {{-- Admin Branch --}}
-                            <div class="col-span-12 lg:col-span-4">
+                            <div class="col-span-12 lg:col-span-3">
                                 <div class="p-4 rounded-2xl bg-slate-50 border border-white h-full">
-                                    <h6 class="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-3">Admin Branch</h6>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <select name="office_id" id="officeSelect" class="text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2 focus:ring-indigo-500/10">
+                                    <h6 class="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-3 italic">Admin Branch</h6>
+                                    <div class="flex flex-col gap-2">
+                                        <select name="office_id" id="officeSelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2 focus:ring-indigo-500/10">
                                             <option value="">-- Office --</option>
                                             @foreach($offices as $o)
                                                 <option value="{{ $o->office_id }}" {{ request('office_id') == $o->office_id ? 'selected' : '' }}>{{ $o->office_name }}</option>
@@ -120,22 +120,60 @@
                                 </div>
                             </div>
 
-                            {{-- Institute --}}
-                            <div class="col-span-12 lg:col-span-4">
+                            {{-- Institute Branch --}}
+                            <div class="col-span-12 lg:col-span-3">
                                 <div class="p-4 rounded-2xl bg-slate-50 border border-white h-full">
-                                    <h6 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3">Research/Institute</h6>
+                                    <h6 class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3 italic">Research Units</h6>
                                     <select name="institute_id" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2 focus:ring-indigo-500/10">
                                         <option value="">-- Select Institute --</option>
                                         @foreach($institutes as $i)
                                             <option value="{{ $i->institute_id }}" {{ request('institute_id') == $i->institute_id ? 'selected' : '' }}>{{ $i->institute_name }}</option>
                                         @endforeach
                                     </select>
+                                    <p class="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-tighter italic">Independent Institutes</p>
                                 </div>
                             </div>
 
+                           <div class="col-span-12 lg:col-span-3">
+                                <div class="p-4 rounded-2xl bg-indigo-900 border border-indigo-800 h-full shadow-lg transition-all duration-300">
+                                    <h6 class="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-3 italic">Asset Classification</h6>
+                                    <div class="flex flex-col gap-2">
+                                        
+                                        {{-- Main Category --}}
+                                        <select name="category_id" id="categorySelect" class="w-full text-[11px] font-bold bg-white border-0 rounded-xl py-2 focus:ring-2 focus:ring-indigo-400 cursor-pointer">
+                                            <option value="">-- Select Category --</option>
+                                            @foreach($categories as $c)
+                                                <option value="{{ $c->category_id }}" {{ request('category_id') == $c->category_id ? 'selected' : '' }}>
+                                                    {{ $c->category_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        {{-- Subcategory Wrapper with Fade-In Effect --}}
+                                        <div id="subcategoryWrapper" class="transition-all duration-500 {{ request('category_id') ? 'opacity-100 scale-100' : 'hidden opacity-0 scale-95' }}">
+                                            <select name="sub_id" id="subcategorySelect" class="w-full text-[11px] font-bold bg-white border-0 rounded-xl py-2 focus:ring-2 focus:ring-indigo-400 shadow-inner">
+                                                <option value="">-- Choose Subcategory --</option>
+                                                @foreach($subcategories as $s)
+                                                    <option value="{{ $s->subcategory_id }}" 
+                                                            data-parent="{{ $s->category_id }}" 
+                                                            {{ request('sub_id') == $s->subcategory_id ? 'selected' : '' }}>
+                                                        {{ $s->subcategory_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Actions --}}
                             <div class="col-span-12 flex items-center justify-end gap-4 mt-2 border-t border-slate-100 pt-4">
-                                <a href="{{ route('auditor.submissions.index') }}" class="text-[10px] font-black text-slate-400 hover:text-rose-500 uppercase tracking-widest transition-colors">RESET</a>
-                                <button type="submit" class="bg-indigo-600 text-white px-10 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all">APPLY FILTERS</button>
+                                <a href="{{ route('auditor.submissions.index') }}" class="text-[10px] font-black text-slate-400 hover:text-rose-500 uppercase tracking-widest transition-colors no-underline">
+                                    <i class="fas fa-undo-alt me-1"></i> RESET ALL
+                                </a>
+                                <button type="submit" class="bg-indigo-600 text-white px-10 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200">
+                                    APPLY SEARCH PARAMETERS
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -149,9 +187,9 @@
                 <table class="w-full text-left">
                     <thead>
                         <tr class="bg-slate-900 text-white">
-                            <th class="ps-8 py-4 text-[10px] font-black uppercase tracking-widest">Reference</th>
-                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Main Item</th>
-                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Location Hierarchy</th>
+                            <th class="ps-8 py-4 text-[10px] font-black uppercase tracking-widest">Ref Number</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Item</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Item Location</th>
                             <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Submitted By</th>
                             <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-center">Qty</th>
                             <th class="pe-8 py-4 text-[10px] font-black uppercase tracking-widest text-end">Action</th>
@@ -237,8 +275,8 @@
 </div>
 
 <script>
-// Logic to handle the dynamic dropdowns for Dept/Unit
 document.addEventListener('DOMContentLoaded', function () {
+    // 1. SELECTORS
     const facultySelect = document.getElementById('facultySelect');
     const departmentWrapper = document.getElementById('departmentWrapper');
     const departmentSelect = document.getElementById('departmentSelect');
@@ -249,6 +287,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const unitSelect = document.getElementById('unitSelect');
     const unitOptions = Array.from(unitSelect.options);
 
+    // Added: Asset Classification Selectors
+    const categorySelect = document.getElementById('categorySelect');
+    const subcategoryWrapper = document.getElementById('subcategoryWrapper');
+    const subcategorySelect = document.getElementById('subcategorySelect');
+    const subOptions = Array.from(subcategorySelect.options);
+
+    // 2. EVENT LISTENERS
     facultySelect.addEventListener('change', function () {
         const selectedId = this.value;
         departmentWrapper.classList.toggle('hidden', !selectedId);
@@ -261,9 +306,32 @@ document.addEventListener('DOMContentLoaded', function () {
         filterDropdown(unitSelect, unitOptions, 'data-parent', selectedId);
     });
 
+    // Added: Category Change Listener
+    categorySelect.addEventListener('change', function () {
+        const selectedId = this.value;
+        
+        if (selectedId) {
+            // Show the wrapper with animation classes
+            subcategoryWrapper.classList.remove('hidden');
+            setTimeout(() => {
+                subcategoryWrapper.classList.remove('opacity-0', 'scale-95');
+                subcategoryWrapper.classList.add('opacity-100', 'scale-100');
+            }, 10);
+        } else {
+            // Hide the wrapper
+            subcategoryWrapper.classList.add('hidden', 'opacity-0', 'scale-95');
+            subcategorySelect.value = '';
+        }
+        
+        filterDropdown(subcategorySelect, subOptions, 'data-parent', selectedId);
+    });
+
+    // 3. UTILITY FILTER FUNCTION
     function filterDropdown(selectElement, allOptions, dataAttr, parentId) {
         selectElement.innerHTML = '';
+        // Re-add the placeholder (e.g., "-- Choose Subcategory --")
         selectElement.appendChild(allOptions[0]);
+        
         allOptions.forEach(option => {
             if (option.getAttribute(dataAttr) === parentId) {
                 selectElement.appendChild(option);
@@ -271,8 +339,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 4. INITIAL STATE (On Page Load/Refresh)
     if(facultySelect.value) facultySelect.dispatchEvent(new Event('change'));
     if(officeSelect.value) officeSelect.dispatchEvent(new Event('change'));
+    
+    // Trigger category change if one is already selected (from a previous search)
+    if(categorySelect.value) {
+        // Run the filter immediately
+        filterDropdown(subcategorySelect, subOptions, 'data-parent', categorySelect.value);
+        // Ensure the correct subcategory is selected after the filter runs
+        subcategorySelect.value = "{{ request('sub_id') }}";
+    }
 });
 </script>
 @endsection

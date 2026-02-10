@@ -20,6 +20,7 @@ class Office extends Model
         'office_code',
         'office_head_id', // Links to the User model (Office Head)
         'is_active',
+        'office_address',
     ];
 
     /**
@@ -40,11 +41,11 @@ class Office extends Model
     }
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'dept_id', 'dept_id');
+        return $this->hasMany(User::class, 'office_id', 'office_id');
     }
 
      public function userProfiles(): HasMany
     {
-        return $this->hasMany(UserProfile::class, 'dept_id', 'dept_id');
+        return $this->hasMany(UserProfile::class, 'office_id', 'office_id');
     }
 }

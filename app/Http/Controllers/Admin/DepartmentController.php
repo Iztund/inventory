@@ -17,56 +17,80 @@ class DepartmentController extends Controller
      * Display a listing of departments with smart filtering for Hidden/Orphaned units.
      */
     public function index(Request $request): View
-    {
-        // 1. Build the base query with counts for assets (if relationship exists)
-        $query = Department::with(['faculty', 'deptHead.profile'])
-                 ->withCount('assets'); // Assumes assets() relationship in Department Model
+{
+    // 1. Fetch faculties for the filter dropdown
+    // We only want active faculties to show in the filter list
+    $faculties = Faculty::where('is_active', 'active')
+                    ->orderBy('faculty_name', 'asc')
+                    ->get();
 
-        // 2. Handle Search with Logical Grouping
-        // This prevents the 'orWhere' from bypassing the status filters below
-        if ($request->filled('q')) {
-            $search = $request->q;
-            $query->where(function ($q) use ($search) {
-                $q->where('dept_name', 'like', "%{$search}%")
-                  ->orWhere('dept_code', 'like', "%{$search}%");
-            });
-        }
+    // 2. Build the base query
+    $query = Department::with(['faculty', 'deptHead.profile'])
+             ->withCount('assets'); 
 
-        // 3. Handle Status Filtering (The "Hidden" logic)
-        if ($request->status == 'hidden') {
-            // "Hidden" = Active Dept + Inactive Parent Faculty
-            $query->where('is_active', 'active')
-                  ->whereHas('faculty', function($q) {
-                      $q->where('is_active', '!=', 'active');
-                  });
-        } elseif ($request->status == 'active') {
-            // "Active" = Active Dept + Active Parent Faculty
-            $query->where('is_active', 'active')
-                  ->whereHas('faculty', function($q) {
-                      $q->where('is_active', 'active');
-                  });
-        } elseif ($request->status == 'inactive') {
-            $query->where('is_active', 'inactive');
-        }
-
-        // 4. Calculate Orphan Count for the warning alert (ignores search/pagination)
-        // This ensures the Blade knows if there's an orphan even if not on Page 1
-        $orphanCount = Department::where('is_active', 'active')
-            ->whereHas('faculty', function($q) {
-                $q->where('is_active', '!=', 'active');
-            })->count();
-
-        $departments = $query->paginate(15)->withQueryString();
-
-        return view('admin.manage_depts.depts', compact('departments', 'orphanCount'));
+    // 3. Handle Search with Logical Grouping
+    if ($request->filled('q')) {
+        $search = $request->q;
+        $query->where(function ($q) use ($search) {
+            $q->where('dept_name', 'like', "%{$search}%")
+              ->orWhere('dept_code', 'like', "%{$search}%");
+        });
     }
 
+    // 4. Handle Faculty Filtering
+    if ($request->filled('faculty_id')) {
+        $query->where('faculty_id', $request->faculty_id);
+    }
+
+    // 5. Handle Status Filtering (The "Hidden" logic)
+    if ($request->status == 'hidden') {
+        $query->where('is_active', 'active')
+              ->whereHas('faculty', function($q) {
+                  $q->where('is_active', '!=', 'active');
+              });
+    } elseif ($request->status == 'active') {
+        $query->where('is_active', 'active')
+              ->whereHas('faculty', function($q) {
+                  $q->where('is_active', 'active');
+              });
+    } elseif ($request->status == 'inactive') {
+        $query->where('is_active', 'inactive');
+    }
+
+    // 6. Calculate counts for the dashboard cards
+    $orphanCount = Department::where('is_active', 'active')
+        ->whereHas('faculty', function($q) {
+            $q->where('is_active', '!=', 'active');
+        })->count();
+
+    $department_active_count = Department::where('is_active', 'active')
+        ->whereHas('faculty', function($q) {
+            $q->where('is_active', 'active');
+        })->count();
+
+    $assignedHeadsCount = Department::whereNotNull('dept_head_id')->count();
+
+    // 7. Finalize pagination
+    $departments = $query->orderBy('dept_name', 'asc')
+                         ->paginate(15)
+                         ->withQueryString();
+
+    return view('admin.manage_depts.depts', compact(
+        'departments', 
+        'faculties', 
+        'orphanCount', 
+        'department_active_count',
+        'assignedHeadsCount'
+    ));
+}
     public function create(): View
     {
         $department = new Department();
         // Only show active faculties when creating new depts
         $faculties = Faculty::where('is_active', 'active')->orderBy('faculty_name')->get();
-        $activeUsers = User::where('status', 'active')->get();
+        $activeUsers = User::where('status', 'active')
+                        ->WhereHas('faculty')
+                        ->get();
 
         return view('admin.manage_depts.depts_create', compact('department', 'faculties', 'activeUsers'));
     }
@@ -154,40 +178,6 @@ class DepartmentController extends Controller
             return back()->with('error', 'Database restriction prevents deletion.');
         }
     }
-
-    // ... searchHeads and searchDepartments remain similar but ensure is_active checks match the UI
-
-
-    /**
-     * AJAX search for users to assign as department head.
-     * Route: admin.departments.searchHeads
-     */
-    public function searchHeads(Request $request)
-            {
-                $q = $request->query('q');
-
-                if (!$q) {
-                    return response()->json([]);  // Prevent preload
-                }
-
-                $users = User::with('profile')
-                    ->where('status', 'active')
-                    ->where(function ($query) use ($q) {
-                        $query->where('username', 'like', "%{$q}%")
-                            ->orWhereHas('profile', function ($query) use ($q) {
-                                $query->where('full_name', 'like', "%{$q}%");
-                            });
-                    })
-                    ->take(50)
-                    ->get();
-
-                return response()->json($users->map(function($user) {
-                    return [
-                        'id' => $user->user_id,
-                        'text' => ($user->profile->full_name ?? $user->username) . ' (' . $user->email . ')',
-                    ];
-                }));
-            }
 
     // In DepartmentController.php
 

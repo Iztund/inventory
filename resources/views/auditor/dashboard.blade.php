@@ -3,238 +3,256 @@
 @section('title', 'Auditor Dashboard')
 
 @section('content')
-<div class="container-fluid px-4 py-4">
-    
-    {{-- 1. Welcome Section --}}
-    <div class="relative overflow-hidden rounded-3xl bg-audit-navy p-8 md:p-10 mb-8 border-b-4 border-amber-500 shadow-xl">
-        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white/5 rounded-full"></div>
-        <div class="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-indigo-500/10 rounded-full"></div>
-        
-        <div class="row align-items-center relative z-10">
-            <div class="col-lg-8">
-                <h6 class="text-amber-500 font-black uppercase tracking-[0.2em] text-xs mb-3">Internal Audit Dashboard</h6>
-                <h1 class="text-3xl md:text-4xl font-black text-white mb-2">
+<div class="container-fluid px-3 sm:px-4 lg:px-6 py-4 lg:py-6 max-w-7xl mx-auto">
+
+    <div class="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-audit-navy p-6 lg:p-10 mb-6 lg:mb-8 border-b-4 border-amber-500 shadow-2xl">
+        <div class="absolute -top-16 -right-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div>
+                <h6 class="text-amber-400 font-black uppercase tracking-widest text-xs lg:text-sm mb-2">
+                    Internal Audit Terminal
+                </h6>
+                <h1 class="text-2xl lg:text-4xl font-black text-white mb-2">
                     Welcome back, {{ Auth::user()->profile->first_name ?? Auth::user()->username }}
                 </h1>
-                <p class="text-slate-400 font-medium mb-0 flex items-center">
-                    <i class="fas fa-circle-check text-emerald-500 me-2"></i>
-                    College of Medicine Inventory System • Compliance Monitoring
+                <p class="text-slate-300 text-sm lg:text-base flex items-center">
+                    <i class="fas fa-shield-check text-emerald-400 me-2"></i>
+                    COMIS • Real-time Compliance Monitoring
                 </p>
             </div>
-            <div class="col-lg-4 text-lg-end d-none d-lg-block">
-                <div class="inline-block bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl animate-pulse min-w-[200px]">
-                    <div class="text-[12px] text-amber-400 font-black uppercase tracking-widest mb-1">
-                        Action Required
-                    </div>
-                    <div class="text-3xl font-black text-white mb-0">
-                        {{ number_format($stats['pending'] ?? 0) }} 
-                        <span class="text-sm text-slate-300 font-bold uppercase tracking-tighter">Items</span>
-                    </div>
+
+            <div class="bg-white/10 backdrop-blur-lg border border-white/20 px-6 py-4 rounded-2xl animate-pulse text-center lg:text-right min-w-[180px]">
+                <div class="text-xs text-amber-300 font-black uppercase tracking-widest mb-1">
+                    Action Required
+                </div>
+                <div class="text-3xl lg:text-4xl font-black text-white">
+                    {{ number_format($stats['pending'] ?? 0) }}
+                    <span class="text-sm lg:text-lg font-bold text-slate-300">Pending</span>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- 2. Stats Grid --}}
-    <div class="row g-4 mb-8">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
         @foreach([
-            ['Total Registry', $stats['total'], 'fa-database', 'text-audit-indigo', 'bg-indigo-50'],
-            ['Awaiting Review', $stats['pending'], 'fa-hourglass-half', 'text-amber-500', 'bg-amber-50'],
-            ['Approved Items', $stats['approved'], 'fa-check-double', 'text-emerald-500', 'bg-emerald-50'],
-            ['Rejected', $stats['rejected'], 'fa-ban', 'text-rose-500', 'bg-rose-50']
-        ] as [$label, $val, $icon, $textColor, $bgColor])
-        <div class="col-6 col-md-3">
-            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">{{ $label }}</span>
-                    <div class="w-8 h-8 rounded-lg {{ $bgColor }} flex items-center justify-center">
-                        <i class="fas {{ $icon }} {{ $textColor }} text-xs"></i>
-                    </div>
+            ['Total Assets', $stats['total'] ?? 0, 'fa-database', 'bg-indigo-50 text-audit-indigo'],
+            ['Pending Review', $stats['pending'] ?? 0, 'fa-hourglass-half', 'bg-amber-50 text-amber-600'],
+            ['Approved', $stats['approved'] ?? 0, 'fa-check-double', 'bg-emerald-50 text-emerald-600'],
+            ['Rejected', $stats['rejected'] ?? 0, 'fa-ban', 'bg-rose-50 text-rose-600']
+        ] as [$title, $val, $icon, $class])
+        <div class="bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-slate-200 hover:shadow-md transition-all">
+            <div class="flex justify-between items-start mb-3">
+                <span class="text-xs lg:text-sm font-bold text-slate-700 uppercase tracking-wide">{{ $title }}</span>
+                <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-lg {{ $class }} flex items-center justify-center">
+                    <i class="fas {{ $icon }} text-lg lg:text-xl"></i>
                 </div>
-                <div class="text-2xl font-black text-audit-navy">{{ number_format($val ?? 0) }}</div>
             </div>
+            <div class="text-2xl lg:text-3xl font-black text-audit-navy">{{ number_format($val) }}</div>
         </div>
         @endforeach
     </div>
 
-    {{-- 3. Organizational Unit Breakdown (Kept as requested) --}}
-    <div class="flex items-center space-x-2 mb-4">
-        <div class="h-1 w-8 bg-audit-indigo rounded-full"></div>
-        <h6 class="font-black text-audit-navy uppercase tracking-widest text-[11px] mb-0">By Organizational Unit</h6>
-    </div>
+    <div class="mb-6 lg:mb-8">
+        <div class="flex items-center mb-4">
+            <div class="h-1 w-8 lg:w-10 bg-audit-indigo rounded-full mr-3"></div>
+            <h6 class="font-black text-audit-navy uppercase tracking-widest text-sm lg:text-base">By Organizational Unit</h6>
+        </div>
 
-    <div class="row g-4 mb-8">
-        @php
-            $entityConfigs = [
-                ['Academic Units', 'faculties', 'fa-graduation-cap', 'bg-indigo-50', 'text-indigo-600', 'Faculties & Depts'],
-                ['Administrative', 'offices', 'fa-building', 'bg-emerald-50', 'text-emerald-600', 'Offices & Units'],
-                ['Research', 'institutes', 'fa-microscope', 'bg-amber-50', 'text-amber-600', 'Institutes']
-            ];
-        @endphp
-
-        @foreach($entityConfigs as [$title, $key, $icon, $bg, $text, $sub])
-        <div class="col-lg-4 col-md-6">
-            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <div class="flex items-center space-x-4 mb-4 pb-4 border-b border-slate-100">
-                    <div class="w-12 h-12 {{ $bg }} {{ $text }} rounded-xl flex items-center justify-center text-lg shadow-sm">
-                        <i class="fas {{ $icon }}"></i>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+            @foreach([
+                ['Academic Units', 'faculties', 'fa-graduation-cap', 'bg-indigo-50', 'text-indigo-600'],
+                ['Admin & Support', 'offices', 'fa-building', 'bg-emerald-50', 'text-emerald-600'],
+                ['Research Institutes', 'institutes', 'fa-microscope', 'bg-amber-50', 'text-amber-600']
+            ] as [$title, $key, $icon, $bg, $color])
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
+                <div class="flex items-center mb-4 pb-3 border-b">
+                    <div class="w-12 h-12 {{ $bg }} {{ $color }} rounded-xl flex items-center justify-center mr-3">
+                        <i class="fas {{ $icon }} text-xl"></i>
                     </div>
-                    <div>
-                        <div class="font-black text-audit-navy leading-none mb-1">{{ $title }}</div>
-                        <div class="text-slate-400 text-[10px] uppercase font-bold tracking-tight">{{ $sub }}</div>
-                    </div>
+                    <h6 class="font-black text-audit-navy text-base">{{ $title }}</h6>
                 </div>
-                
-                <div class="space-y-3">
-                    @foreach(['pending' => ['text-amber-600', 'Pending'], 'rejected' => ['text-rose-600', 'Rejected'], 'approved' => ['text-emerald-600', 'Approved'], 'total' => ['text-audit-navy', 'Total Items']] as $statKey => $meta)
-                        <div class="flex justify-between items-center py-1 border-b border-dashed border-slate-100 last:border-0">
-                            <span class="text-slate-500 text-xs font-medium">{{ $meta[1] }}</span>
-                            <span class="{{ $meta[0] }} font-black text-sm">{{ $entityBreakdown[$key][$statKey] ?? 0 }}</span>
-                        </div>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    @foreach(['pending' => ['text-amber-600', 'Pending'], 'approved' => ['text-emerald-600', 'Approved'], 'rejected' => ['text-rose-600', 'Rejected'], 'total' => ['text-audit-navy', 'Total']] as $k => $v)
+                    <div class="p-3 bg-slate-50 rounded-lg">
+                        <div class="text-xs text-slate-600">{{ $v[1] }}</div>
+                        <div class="{{ $v[0] }} font-black text-xl">{{ $entityBreakdown[$key][$k] ?? 0 }}</div>
+                    </div>
                     @endforeach
                 </div>
             </div>
+            @endforeach
         </div>
-        @endforeach
     </div>
 
-    {{-- 4. Queue Table (Updated with Item Breakdown) --}}
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-slate-100 bg-white flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-2 h-6 bg-audit-indigo rounded-full"></div>
-                <h5 class="font-black text-audit-navy m-0">Priority Review Queue</h5>
-            </div>
-            <a href="{{ route('auditor.registry.index') }}" class="btn btn-outline-primary btn-sm rounded-lg px-4 font-bold text-[11px] uppercase tracking-wider">
-                Explore Central Registry
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 lg:p-5 border-b bg-slate-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h5 class="font-black text-audit-navy text-lg lg:text-xl tracking-tight uppercase">Priority Review Queue</h5>
+            <a href="{{ route('auditor.registry.index') }}" class="btn btn-outline-primary btn-sm rounded-full px-5 py-2 text-xs lg:text-sm font-bold uppercase w-full sm:w-auto text-center">
+                Central Registry →
             </a>
         </div>
-        
-        <div class="table-responsive">
-            <table class="table align-middle m-0 border-0">
-                <thead class="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                        <th class="ps-5 text-[10px] font-black text-slate-500 uppercase">Reference</th>
-                        <th class="ps-5 text-[10px] font-black text-slate-500 uppercase">Origin Entity</th>
-                        <th class="text-[10px] font-black text-slate-500 uppercase">Item Name</th>
-                        <th class="text-[10px] font-black text-slate-500 uppercase">Item Breakdown</th>
-                        <th class="text-[10px] font-black text-slate-500 uppercase">Total Value</th>
-                        <th class="text-[10px] font-black text-slate-500 uppercase text-center">Batch Status</th>
-                        <th class="text-[10px] font-black text-slate-500 uppercase">Audit Priority</th>
-                        <th class="pe-5 text-end text-[10px] font-black text-slate-500 uppercase">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse($recentSubmissions as $sub)
+
+        <div class="rounded-xl border border-slate-200 bg-white shadow-md overflow-hidden">
+            {{-- Desktop Table View (Visible on md and up) --}}
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-900 text-white">
+                        <tr>
+                            <th class="ps-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Ref ID</th>
+                            <th class="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Inventory Details</th>
+                            <th class="py-4 text-[10px] font-black uppercase tracking-widest text-center text-slate-400">Status / Metrics</th>
+                            <th class="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Batch Value</th>
+                            <th class="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Audit Trail</th>
+                            <th class="py-4 text-[10px] font-black uppercase tracking-widest text-right pe-6 text-slate-400">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        
+                        @forelse($recentSubmissions as $sub)
+                            @php
+                                $items = $sub->items;
+                                $itemsCount = $items->count();
+                                $approved = $items->where('status', 'approved')->count();
+                                $rejected = $items->where('status', 'rejected')->count();
+                                $pending = $items->where('status', 'pending')->count();
+                                $isPendingBatch = $sub->status === 'pending';
+                                $totalVal = $items->sum(fn($i) => ($i->unit_cost ?? $i->cost ?? 0) * $i->quantity);
+                                $user = $sub->submittedBy;
+                                $daysOld = (int) $sub->created_at->diffInDays(now());
+                                $priorityClass = $daysOld >= 3 ? 'bg-rose-500' : ($daysOld >= 1 ? 'bg-amber-400' : 'bg-blue-500');
+                            @endphp
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="ps-6 py-5">
+                                    <div class="font-black text-slate-900 text-sm">#{{ str_pad($sub->submission_id, 5, '0', STR_PAD_LEFT) }}</div>
+                                    <div class="text-[9px] text-slate-700 font-bold uppercase tracking-tighter">{{ $sub->created_at->format('d M Y') }}</div>
+                                </td>
+                                <td class="py-5">
+                                    <div class="text-xs font-black text-indigo-600 uppercase tracking-tight truncate max-w-[200px]" title="{{ $items->pluck('item_name')->implode(', ') }}">
+                                        {{ $items->pluck('item_name')->implode(', ') }}
+                                    </div>
+                                    <div class="text-[10px] font-bold text-slate-700 mt-0.5">
+                                        <i class="fas fa-user text-[8px] me-1 text-slate-400"></i>
+                                        {{ $user->name ?? $user->username ?? 'Staff' }}
+                                    </div>
+                                    @if($isPendingBatch)
+                                        <span class="inline-block mt-2 px-2 py-0.5 rounded text-[8px] font-black uppercase text-white {{ $priorityClass }}">
+                                            {{ $daysOld >= 15 ? 'Critical' : ($daysOld >= 5 ? 'High' : 'Normal') }} ({{ $daysOld }}days)
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-5 text-center">
+                                    @if($isPendingBatch)
+                                        <span class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-600 border border-amber-100 px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                                            {{ $pending }} Items to Review
+                                        </span>
+                                    @else
+                                        <div class="inline-flex items-center bg-emerald-50 rounded-lg p-1 border border-emerald-100 gap-2 text-[10px] font-black">
+                                            <span class="text-emerald-600 px-1.5">{{ $approved }} ✓</span>
+                                            <div class="w-px h-3 bg-emerald-200"></div>
+                                            <span class="text-rose-600 px-1.5">{{ $rejected }} ✗</span>
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="py-5">
+                                    <div class="text-sm font-black text-slate-900">₦{{ number_format($totalVal, 2) }}</div>
+                                    <div class="text-[9px] text-slate-600 font-bold uppercase tracking-widest">{{ $itemsCount }} Items</div>
+                                </td>
+                                <td class="py-5">
+                                    @if(!$isPendingBatch)
+                                        <div class="text-[11px] font-black text-slate-800 uppercase">{{ $sub->auditor_display_name }}</div>
+                                        <div class="text-[10px] text-slate-600 font-bold mt-1 uppercase">{{ $sub->updated_at->format('d/m/y H:i') }}</div>
+                                    @else
+                                        <span class="text-[9px] font-black text-slate-600 uppercase italic">Pending Audit</span>
+                                    @endif
+                                </td>
+                                <td class="pe-6 py-5 text-right">
+                                    <a href="{{ route($sub->routeName, $sub->routeParam) }}" class="inline-flex items-center {{ $isPendingBatch ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600' }} px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest">
+                                        {{ $isPendingBatch ? 'Audit' : 'View' }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-center py-10">No data found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+           {{-- Mobile Card View (Separated by Spacing & Status Accents) --}}
+            <div class="md:hidden bg-slate-50 p-3 space-y-4"> {{-- Container: light gray bg + vertical spacing --}}
+                @foreach($recentSubmissions as $sub)
                     @php
                         $items = $sub->items;
-                        $itemsCount = $items->count();
-                        $approvedCount = $items->where('status', 'approved')->count();
-                        $rejectedCount = $items->where('status', 'rejected')->count();
-                        $pendingCount = $items->where('status', 'pending')->count();
-
-                        $totalVal = $items->sum(fn($i) => ($i->unit_cost ?? $i->cost ?? 0) * $i->quantity);
+                        $isPendingBatch = $sub->status === 'pending';
                         $daysOld = (int) $sub->created_at->diffInDays(now());
-
-                        $pText = $daysOld >= 7 ? 'High' : ($daysOld >= 3 ? 'Medium' : 'Low');
-                        $pClass = $daysOld >= 7 ? 'bg-rose-50 text-rose-700 border-rose-100' : ($daysOld >= 3 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-blue-50 text-blue-700 border-blue-100');
-
-                        // Entity Logic
-                        $eName = 'System'; $eIcon = 'fa-building'; $eType = 'General';
-                        if($sub->submittedBy->institute_id) { $eName = $sub->submittedBy->institute->institute_name; $eType = 'Institute'; $eIcon = 'fa-microscope'; }
-                        elseif($sub->submittedBy->unit_id) { $eName = $sub->submittedBy->unit->unit_name; $eType = 'Unit'; $eIcon = 'fa-sitemap'; }
-                        elseif($sub->submittedBy->office_id) { $eName = $sub->submittedBy->office->office_name; $eType = 'Office'; $eIcon = 'fa-building'; }
-                        elseif($sub->submittedBy->department_id) { $eName = $sub->submittedBy->department->dept_name; $eType = 'Dept'; $eIcon = 'fa-university'; }
-                        elseif($sub->submittedBy->faculty_id) { $eName = $sub->submittedBy->faculty->faculty_name; $eType = 'Faculty'; $eIcon = 'fa-graduation-cap'; }
+                        
+                        // Logic for the color-coded side bar
+                        $accentColor = $isPendingBatch 
+                            ? ($daysOld >= 3 ? 'border-l-rose-500' : 'border-l-amber-500') 
+                            : 'border-l-emerald-500';
+                        
+                        $priorityText = $daysOld >= 3 ? 'Critical' : ($daysOld >= 1 ? 'High' : 'Normal');
                     @endphp
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="ps-5 py-4">
-                            <div class="font-black text-audit-navy">#{{ str_pad($sub->submission_id, 4, '0', STR_PAD_LEFT) }}</div>
-                            <div class="text-[10px] text-slate-400 font-bold uppercase">{{ $sub->created_at->format('d M, Y') }}</div>
-                        </td>
-                        <td>
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
-                                    <i class="fas {{ $eIcon }}"></i>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 border-l-4 {{ $accentColor }} overflow-hidden">
+                        {{-- Header: Ref ID & Price --}}
+                        <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
+                            <div>
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Case ID</span>
+                                <div class="font-black text-slate-900 text-sm">#{{ str_pad($sub->submission_id, 5, '0', STR_PAD_LEFT) }}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-black text-indigo-600">₦{{ number_format($items->sum(fn($i) => ($i->unit_cost ?? $i->cost ?? 0) * $i->quantity), 2) }}</div>
+                                <div class="text-[8px] font-bold text-slate-400 uppercase">Est. Value</div>
+                            </div>
+                        </div>
+
+                        {{-- Body: Inventory Items --}}
+                        <div class="p-4">
+                            <div class="mb-3">
+                                <h4 class="text-[11px] font-black text-slate-700 uppercase leading-tight">
+                                    {{ Str::limit($items->pluck('item_name')->implode(', '), 70) }}
+                                </h4>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                    <div class="text-[8px] font-black text-slate-400 uppercase">Originator</div>
+                                    <div class="text-[10px] font-bold text-slate-800 truncate">
+                                        {{ $sub->submittedBy->full_name ?? $sub->submittedBy->username }}
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="text-xs font-black text-slate-700 leading-tight">{{ Str::limit($eName, 22) }}</div>
-                                    <div class="text-[9px] text-slate-400 font-bold uppercase">{{ $eType }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="text-[10px] text-slate-500 font-bold uppercase">
-                                {{ $items->first()->item_name ?? 'N/A' }}
-                                @if($itemsCount > 1)
-                                    <span class="text-indigo-500 font-black">+{{ $itemsCount - 1 }} More</span>
-                                @endif
-                            </div>
-                        <td>
-                            <div class="flex items-center space-x-2 mb-1">
-                                <span class="text-xs font-black text-slate-700">{{ $itemsCount }} Items</span>
-                            </div>
-                            <div class="flex gap-1 items-center">
-                                @if($approvedCount > 0)
-                                    <span class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1 rounded">{{ $approvedCount }} ✓</span>
-                                @endif
-                                @if($rejectedCount > 0)
-                                    <span class="text-[9px] font-black text-rose-600 bg-rose-50 px-1 rounded">{{ $rejectedCount }} ✗</span>
-                                @endif
-                                @if($pendingCount > 0)
-                                    <span class="text-[9px] font-black text-amber-600 bg-amber-50 px-1 rounded">{{ $pendingCount }} ?</span>
-                                @endif
-                            </div>
-                            {{-- Mini Progress Bar --}}
-                            <div class="w-24 h-1 bg-slate-100 rounded-full mt-1 flex overflow-hidden">
-                                <div class="bg-emerald-500 h-full" style="width: {{ ($approvedCount/$itemsCount)*100 }}%"></div>
-                                <div class="bg-rose-500 h-full" style="width: {{ ($rejectedCount/$itemsCount)*100 }}%"></div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="text-xs font-black text-audit-navy">₦{{ number_format($totalVal, 2) }}</div>
-                        </td>
-                        <td class="text-center">
-                            @php
-                                $statusClasses = [
-                                    'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
-                                    'rejected' => 'bg-rose-50 text-rose-700 border-rose-100',
-                                    'pending' => 'bg-amber-50 text-amber-700 border-amber-100',
-                                    'partially approved' => 'bg-indigo-50 text-indigo-700 border-indigo-100'
-                                ];
-                                // Logic for Batch Status
-                                $displayStatus = $sub->status;
-                                if($sub->status == 'pending' && ($approvedCount > 0 || $rejectedCount > 0)) {
-                                    $displayStatus = 'In Progress';
-                                }
-                            @endphp
-                            <span class="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase border {{ $statusClasses[$sub->status] ?? $statusClasses['pending'] }}">
-                                {{ $displayStatus }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="px-3 py-1 rounded-lg border {{ $pClass }} inline-block">
-                                <div class="text-[9px] font-black uppercase tracking-tight">
-                                    {{ $daysOld }} {{ Str::plural('Day', $daysOld) }} • {{ $pText }}
+                                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                    <div class="text-[8px] font-black text-slate-400 uppercase">Status</div>
+                                    @if($isPendingBatch)
+                                        <div class="text-[10px] font-black {{ $daysOld >= 3 ? 'text-rose-600' : 'text-amber-600' }} uppercase">
+                                            {{ $priorityText }} ({{ $daysOld }}d)
+                                        </div>
+                                    @else
+                                        <div class="text-[10px] font-black text-emerald-600 uppercase truncate">
+                                            {{ $sub->auditor_display_name }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
-                        </td>
-                        <td class="pe-5 text-end">
-                            <a href="{{ route('auditor.submissions.show', $sub->submission_id) }}" class="btn btn-dark btn-sm rounded-lg px-3 font-black text-[10px] uppercase shadow-sm">
-                                Inspect
+                        </div>
+
+                        {{-- Footer: Timestamp & Action --}}
+                        <div class="px-4 py-3 bg-slate-50/50 flex items-center justify-between">
+                            <div class="text-[9px] text-slate-500 font-bold uppercase">
+                                <i class="far fa-calendar-alt me-1"></i> {{ $sub->created_at->format('d M Y') }}
+                            </div>
+                            <a href="{{ route($sub->routeName, $sub->routeParam) }}" 
+                            class="inline-flex items-center {{ $isPendingBatch ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-300 text-slate-600' }} px-5 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest shadow-sm active:scale-95 transition-all">
+                                {{ $isPendingBatch ? 'Audit Batch' : 'View Log' }}
                             </a>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="text-center py-20 bg-slate-50/50">
-                            <i class="fas fa-folder-open text-slate-200 text-4xl mb-3 block"></i>
-                            <p class="text-slate-400 font-bold uppercase text-xs tracking-widest">No priority reviews found</p>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+                @endforeach
+
+            </div>
         </div>
     </div>
 </div>

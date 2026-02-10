@@ -1,334 +1,343 @@
 @extends('layouts.auditor')
 
-@php
-    $isSingleAsset = isset($asset);
-    $displayItems = $isSingleAsset ? collect([$latestSnapshot ?? $asset->latestSnapshot]) : $submission->items;
-    $headerRef = $isSingleAsset ? $asset->asset_tag : str_pad($submission->submission_id, 7, '0', STR_PAD_LEFT);
-@endphp
-
-@section('title', 'Batch Verification - REF: #' . $headerRef)
-
 @section('content')
 <div class="container-fluid py-5 bg-slate-50 min-vh-100">
     
-    {{-- Header Section --}}
-    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 px-4">
+    {{-- 1. HEADER --}}
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 px-4">
         <div class="flex items-center">
-            <a href="{{ url()->previous() }}" class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-500 hover:scale-110 transition-all">
+            <a href="{{ url()->previous() == url()->current() ? route('auditor.dashboard') : url()->previous() }}" 
+               class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-slate-200 text-slate-500 hover:scale-110 transition-all text-decoration-none">
                 <i class="fas fa-arrow-left"></i>
             </a>
             <div class="ms-4">
-                <h3 class="font-black text-slate-800 m-0 text-2xl uppercase tracking-tighter">Batch Verification Record</h3>
-                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Reference: #{{ $headerRef }} &bullet; {{ $displayItems->count() }} Total Items
+                <h3 class="font-black text-slate-800 m-0 text-2xl uppercase tracking-tighter italic">Verification Details</h3>
+                <div class="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-1">
+                    Ref ID: #{{ str_pad($submission?->submission_id ?? 'N/A', 7, '0', STR_PAD_LEFT) }} 
+                    &bullet; {{ $submission?->items?->count() ?? 1 }} Item(s)
                 </div>
             </div>
         </div>
-    </div>
+        
+        {{-- MODERNIZED REPORTING OFFICER BADGE --}}
+        <div class="flex items-center gap-4 bg-white/80 backdrop-blur-md p-2 pe-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/50 group hover:border-blue-400 transition-all duration-500">
+            <div class="relative">
+                <div class="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-500">
+                    <i class="fas fa-user-md text-sm"></i>
+                </div>
+                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
+            </div>
 
-    {{-- GENERAL NOTES --}}
-    <div class="row g-4 mb-8 px-4">
-        <div class="col-md-12">
-            <div class="h-full p-6 bg-white border-l-8 border-slate-900 rounded-r-3xl shadow-sm">
-                <h6 class="font-black text-slate-400 uppercase text-[10px] tracking-widest mb-2">General Submission Note</h6>
-                <p class="text-slate-800 font-bold italic m-0 text-lg">
-                    "{{ $submission->note ?? $submission->remarks ?? 'No general notes provided for this batch.' }}"
-                </p>
+            <div class="flex flex-col">
+                <span class="text-[9px] font-black text-blue-600 uppercase tracking-[0.15em] leading-none mb-1">
+                    Reporting Officer
+                </span>
+                <span class="text-[13px] font-black text-slate-800 uppercase italic tracking-tighter">
+                    {{ $submission?->submittedBy?->profile?->full_name ?? $submission?->submittedBy?->username ?? 'System User' }}
+                </span>
             </div>
         </div>
     </div>
 
-    @foreach($displayItems as $item)
+    {{-- 2. GENERAL BATCH NOTE --}}
+    <div class="mx-4 mb-8">
+        <div class="p-5 bg-white border-l-4 border-blue-600 rounded-r-2xl shadow-sm">
+            <h6 class="font-black text-slate-700 uppercase text-[10px] tracking-widest mb-1 italic">General Batch Note:</h6>
+            <p class="text-slate-800 font-bold italic m-0 text-lg leading-relaxed">
+                "{{ $submission?->note ?? 'No general remarks provided for this batch.' }}"
+            </p>
+        </div>
+    </div>
+
+    {{-- 3. ITEMS LOOP - FULL BATCH --}}
+    @forelse($submission?->items ?? [] as $item)
         @php
-            $uID = $item->submission_item_id;
-            $itemAsset = $item->asset; 
-            $displayName = $item->item_name ?? ($itemAsset->item_name ?? 'Unnamed Item');
-            $currentStatus = strtoupper($item->status ?? 'UNKNOWN'); 
-            $isRejected = ($currentStatus === 'REJECTED');
-
-            // Location Logic (Faculties, Departments, Offices, Units, Institutes)
-            $fullLocation = 'College of Medicine';
-            if ($itemAsset) {
-                if ($itemAsset->unit && $itemAsset->office) {
-                    $fullLocation = $itemAsset->office->office_name . ' • ' . $itemAsset->unit->unit_name;
-                } elseif ($itemAsset->department && $itemAsset->faculty) {
-                    $fullLocation = $itemAsset->faculty->faculty_name . ' • ' . $itemAsset->dept_name;
-                } elseif ($itemAsset->institute) {
-                    $fullLocation = $itemAsset->institute->institute_name;
-                } elseif ($itemAsset->office) {
-                    $fullLocation = $itemAsset->office->office_name;
-                } elseif ($itemAsset->faculty) {
-                    $fullLocation = $itemAsset->faculty->faculty_name;
-                }
-            }
-
-            // FIX: Array to String conversion safety
-            $docPath = $item->document_path;
-            if (is_array($docPath)) {
-                $docPath = $docPath[0] ?? null;
-            }
-
-            $theme = [
-                'bg' => $isRejected ? 'bg-rose-600' : 'bg-emerald-600',
-                'text' => $isRejected ? 'text-rose-600' : 'text-emerald-600',
-                'border' => $isRejected ? 'border-rose-600' : 'border-emerald-600',
-                'soft-bg' => $isRejected ? 'bg-rose-50' : 'bg-emerald-50',
-                'pulse' => $isRejected ? 'animate-pulse bg-rose-400' : 'animate-pulse bg-emerald-400'
-            ];
+            $status = strtoupper($item->status ?? 'PENDING');
+            $themeColor = ($status === 'APPROVED') ? 'emerald' : (($status === 'REJECTED') ? 'rose' : 'amber');
+            $asset = $item?->asset;
+            $docs = is_array($item->document_path) ? $item->document_path : json_decode($item->document_path, true) ?? [];
         @endphp
 
-        <div class="row g-4 mb-5 border-b border-slate-200 pb-10 px-3">
-            {{-- Left Identity Column --}}
+        <div class="row g-4 mb-16 px-3">
+            {{-- SIDEBAR --}}
             <div class="col-lg-4">
-                <div class="bg-white rounded-3xl shadow-sm border-t-8 {{ $theme['border'] }} p-8 text-center sticky-top" style="top: 20px; z-index: 10;">
-                    <div class="{{ $theme['soft-bg'] }} w-24 h-24 rounded-full inline-flex items-center justify-center mb-4 border-4 border-white shadow-inner relative mx-auto">
-                        <div class="absolute inset-0 rounded-full {{ $theme['pulse'] }} opacity-20"></div>
-                        <i class="fas {{ $isRejected ? 'fa-circle-xmark' : 'fa-circle-check' }} {{ $theme['text'] }} text-4xl relative z-10"></i>
-                    </div>
-                    
-                    <h4 class="font-black text-slate-800 mb-1 uppercase tracking-tight text-xl">{{ $displayName }}</h4>
-                    <div class="{{ $theme['text'] }} font-black text-xs font-mono mb-4 tracking-widest uppercase">{{ $itemAsset->asset_tag ?? 'NEW ENTRY' }}</div>
-                    
-                    <div class="flex items-center justify-center gap-2 mb-6">
-                        <span class="{{ $theme['bg'] }} text-white px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest shadow-sm">
-                            {{ $currentStatus }}
-                        </span>
-                        {{-- Added Quantity Badge --}}
-                        <span class="bg-slate-800 text-white px-3 py-1 rounded-full font-black text-[9px] uppercase tracking-widest shadow-sm">
-                            QTY: {{ $item->quantity ?? 1 }}
-                        </span>
+                <div class="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden sticky-top" style="top: 20px;">
+                    <div class="bg-slate-900 p-6">
+                        <!-- Inside the bg-slate-900 p-6 section -->
+                        <div class="flex items-center gap-3 mb-2 w-full max-w-full overflow-hidden">
+    
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                <span class="text-slate-200 font-black text-[10px] md:text-[11px] uppercase tracking-wider">Qty</span>
+                                <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-black text-[11px] tracking-normal">
+                                    {{ $item->quantity ?? 1 }}
+                                </span>
+                            </div>
+
+                            <span class="w-[1px] h-3 bg-slate-700 flex-shrink-0"></span>
+
+                            <div class="flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+                                <span class="w-2 h-2 rounded-full bg-{{ $themeColor }}-500 animate-pulse flex-shrink-0"></span>
+                                <span class="text-{{ $themeColor }}-400 font-black text-[10px] md:text-[11px] uppercase tracking-[0.1em] truncate block">
+                                    {{ $status }}
+                                </span>
+                            </div>
+                        </div>
+                        <h4 class="text-white font-black text-2xl m-0 uppercase italic leading-tight">
+                            {{ $item->item_name ?? 'Unnamed Item' }}
+                        </h4>
+                        <p class="text-slate-200 font-mono text-[11px] font-black mt-2 uppercase mb-0">
+                            Asset Tag: {{ $asset?->asset_tag ?? 'NEW_ENTRY' }}
+                        </p>
                     </div>
 
-                    <div class="text-left space-y-4 pt-6 border-t border-slate-100">
-                        <div>
-                            <label class="text-slate-400 font-black uppercase text-[9px] tracking-widest block mb-1">Deployment Location</label>
-                            <p class="text-slate-800 font-bold text-sm m-0 uppercase italic leading-tight">
-                                <i class="fas fa-map-marker-alt {{ $theme['text'] }} me-1"></i> {{ $fullLocation }}
-                            </p>
+                    <div class="p-6">
+                        <h6 class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-4 italic">Organizational Path</h6>
+                        <div class="space-y-3 mb-6">
+                            @php
+                                $paths = [
+                                    ['L' => 'Faculty', 'V' => $asset?->faculty?->faculty_name],
+                                    ['L' => 'Department', 'V' => $asset?->department?->dept_name],
+                                    ['L' => 'Office', 'V' => $asset?->office?->office_name],
+                                    ['L' => 'Unit', 'V' => $asset?->unit?->unit_name],
+                                    ['L' => 'Institute', 'V' => $asset?->institute?->institute_name]
+                                ];
+                            @endphp
+                            @foreach($paths as $path)
+                                @if($path['V'])
+                                    <div class="flex justify-between items-center border-b border-slate-50 pb-2">
+                                        <span class="text-[8px] font-black text-slate-700 uppercase">{{ $path['L'] }}</span>
+                                        <span class="text-[11px] font-black text-slate-700 uppercase italic text-end">{{ $path['V'] }}</span>
+                                    </div>
+                                @endif
+                            @endforeach
                         </div>
 
-                        <div class="p-3 bg-amber-50 rounded-xl border border-amber-100">
-                            <label class="text-amber-600 font-black uppercase text-[8px] tracking-widest block mb-1">Staff Item Note</label>
-                            <p class="text-[11px] text-slate-700 font-bold m-0 italic">
-                                "{{ $item->item_note ?? $item->note ?? 'No item-specific notes.' }}"
+                        <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl">
+                            <span class="text-[9px] font-black text-amber-600 uppercase tracking-widest block mb-1 italic">Item Submission Note</span>
+                            <p class="text-[12px] text-slate-600 font-bold italic leading-relaxed m-0">
+                                "{{ $item->item_note ?? 'No specific notes for this item.' }}"
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Right Details Column --}}
+            {{-- MAIN CONTENT --}}
             <div class="col-lg-8">
-                <div class="{{ $theme['soft-bg'] }} rounded-3xl p-6 mb-6 border-2 border-dashed {{ $theme['border'] }}">
-                    <div class="flex items-start">
-                        <div class="bg-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm text-2xl {{ $theme['text'] }} me-4 shrink-0">
-                            <i class="fas fa-quote-left"></i>
+                {{-- AUDITOR VERDICT --}}
+                <div class="bg-white rounded-[2rem] p-7 mb-4 border-2 border-{{ $themeColor }}-600 shadow-sm overflow-visible">
+                    <div class="flex flex-wrap justify-between items-start gap-4">
+                        <div class="flex-1">
+                            <h6 class="font-black text-slate-700 uppercase text-[10px] tracking-widest m-0 italic">Audit Verdict</h6>
+                            <span class="text-[10px] font-black text-{{ $themeColor }}-700 bg-{{ $themeColor }}-50 px-3 py-1.5 rounded-xl uppercase inline-block mt-2">
+                                Auditor: {{ $item->submission?->reviewedBy?->profile?->full_name ?? $item->submission?->reviewedBy?->username ?? 'Staff Auditor' }}
+                            </span>
                         </div>
-                        <div>
-                            <h6 class="font-black text-slate-800 uppercase text-[10px] tracking-widest mb-1 opacity-60">Auditor Remark</h6>
-                            <p class="text-slate-800 font-bold text-lg italic leading-snug m-0">
-                                "{{ $item->audit->comments ?? 'No auditor remarks for this record.' }}"
-                            </p>
-                        </div>
+                        
+                        <button type="button" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#reEvalModal{{ $item->submission_item_id }}"
+                                class="bg-slate-900 hover:bg-black text-white px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center shadow-xl border-0 relative z-30">
+                            <i class="fas fa-sync-alt me-2 text-blue-400"></i> Re-evaluate
+                        </button>
                     </div>
+                    <p class="text-slate-800 font-black text-2xl italic m-0 tracking-tight mt-4 leading-snug">
+                        "{{ $item->audit?->comments ?? 'Physical state verified.' }}"
+                    </p>
                 </div>
 
+                {{-- TABS --}}
                 <div class="bg-white p-2 rounded-2xl shadow-sm mb-4 border border-slate-200">
                     <ul class="nav nav-pills nav-justified gap-2" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active rounded-xl py-3 font-black uppercase text-[11px] tracking-widest" data-bs-toggle="tab" data-bs-target="#specs-{{ $uID }}">
-                                <i class="fas fa-file-lines me-2"></i> Technical & Value
-                            </button>
+                            <button class="nav-link active rounded-xl py-3 font-black uppercase text-[11px] tracking-widest" data-bs-toggle="tab" data-bs-target="#specs-{{ $item->submission_item_id }}">Asset Details & Evidence</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link rounded-xl py-3 font-black uppercase text-[11px] tracking-widest" data-bs-toggle="tab" data-bs-target="#trail-{{ $uID }}">
-                                <i class="fas fa-history me-2"></i> Audit Trail
-                            </button>
+                            <button class="nav-link rounded-xl py-3 font-black uppercase text-[11px] tracking-widest" data-bs-toggle="tab" data-bs-target="#trail-{{ $item->submission_item_id }}">Audit Trail</button>
                         </li>
                     </ul>
                 </div>
 
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+                <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8">
                     <div class="tab-content">
-                        <div class="tab-pane fade show active" id="specs-{{ $uID }}">
-                            <div class="row g-4">
+                        {{-- TAB 1: SPECS --}}
+                        <div class="tab-pane fade show active" id="specs-{{ $item->submission_item_id }}">
+                            <div class="row g-4 mb-6">
                                 <div class="col-md-4">
-                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-full">
-                                        <small class="text-slate-400 font-black uppercase text-[9px] tracking-widest block mb-1">Main Category</small>
-                                        <span class="text-slate-800 font-bold uppercase">{{ $item->category->category_name ?? 'N/A' }}</span>
+                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-100">
+                                        <small class="text-slate-400 font-black text-[9px] uppercase block mb-2 tracking-widest italic">Serial Number</small>
+                                        <span class="text-slate-800 font-black font-mono text-sm block uppercase">{{ $item->serial_number ?: 'NOT_SPECIFIED' }}</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-full">
-                                        <small class="text-slate-400 font-black uppercase text-[9px] tracking-widest block mb-1">Sub-Category</small>
-                                        <span class="text-slate-800 font-bold uppercase">{{ $item->subcategory->subcategory_name ?? 'N/A' }}</span>
+                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-100">
+                                        <small class="text-slate-400 font-black text-[9px] uppercase block mb-2 tracking-widest italic">Category</small>
+                                        <span class="text-slate-800 font-black text-sm block uppercase leading-tight">{{ $item->category?->category_name ?? 'N/A' }}</span>
                                     </div>
                                 </div>
-                                {{-- Added Quantity Field in Grid --}}
                                 <div class="col-md-4">
-                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-full">
-                                        <small class="text-slate-400 font-black uppercase text-[9px] tracking-widest block mb-1">Quantity</small>
-                                        <span class="text-slate-800 font-black text-lg">{{ $item->quantity ?? 1 }} Units</span>
+                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-100">
+                                        <small class="text-slate-400 font-black text-[9px] uppercase block mb-2 tracking-widest italic">Sub-Category</small>
+                                        <span class="text-slate-600 font-black text-sm block uppercase leading-tight">{{ $item->subcategory?->subcategory_name ?? 'N/A' }}</span>
                                     </div>
                                 </div>
+                            </div>
 
+                            <div class="row g-4 mb-8">
                                 <div class="col-md-6">
-                                    <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 h-full">
-                                        <small class="text-indigo-400 font-black uppercase text-[9px] tracking-widest block mb-1">Item Value (Cost)</small>
-                                        <span class="text-indigo-900 font-black text-xl">
-                                            ₦{{ number_format($item->cost ?? $item->unit_cost ?? 0, 2) }}
+                                    <div class="p-4 bg-slate-900 rounded-2xl text-white h-100 shadow-md">
+                                        <small class="text-slate-500 font-black text-[9px] uppercase block mb-2 tracking-widest italic">Unit Acquisition Cost</small>
+                                        <span class="font-black text-xl text-emerald-400 block">
+                                            ₦{{ number_format($item->cost ?? 0, 2) }}
                                         </span>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
-                                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 h-full">
-                                        <small class="text-slate-400 font-black uppercase text-[9px] tracking-widest block mb-1">Serial Number</small>
-                                        <span class="text-slate-800 font-bold font-mono">{{ $item->serial_number ?: 'N/A' }}</span>
+                                    <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 h-100 shadow-sm">
+                                        <small class="text-emerald-600 font-black text-[9px] uppercase block mb-2 tracking-widest italic">Calculated Value</small>
+                                        <span class="text-emerald-900 font-black text-xl block">
+                                            ₦{{ number_format(($item->cost ?? 0) * ($item->quantity ?? 1), 2) }}
+                                        </span>
                                     </div>
                                 </div>
-
-                                
-                                <<div class="col-md-12">
-    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-        <small class="text-slate-400 font-black uppercase text-[9px] tracking-widest block mb-2">Technical & Support Documents</small>
-        
-        @php
-            // 1. Try to find the document path in different possible locations
-            // Priority: Submission Item -> Latest Snapshot -> Original Asset
-            $rawDocs = $item->document_path 
-                       ?? ($item->snapshot->document_path ?? ($itemAsset->document_path ?? null));
-
-            $docs = [];
-
-            if ($rawDocs) {
-                if (is_array($rawDocs)) {
-                    // Already an array
-                    $docs = $rawDocs;
-                } elseif (is_string($rawDocs)) {
-                    // Try to decode if it's a JSON string
-                    $decoded = json_decode($rawDocs, true);
-                    $docs = is_array($decoded) ? $decoded : [$rawDocs];
-                }
-            }
-        @endphp
-
-        @if(count($docs) > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                @foreach($docs as $index => $path)
-                    <div class="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-blue-300 transition-all">
-                        <div class="flex items-center gap-3 overflow-hidden">
-                            <div class="w-8 h-8 rounded-lg {{ $theme['soft-bg'] }} flex items-center justify-center {{ $theme['text'] }} shrink-0">
-                                <i class="fas fa-file-invoice"></i>
                             </div>
-                            <div class="overflow-hidden">
-                                <p class="text-[10px] font-black text-slate-700 truncate mb-0 uppercase tracking-tighter">
-                                    {{ basename($path) == $path ? 'Document ' . ($index + 1) : basename($path) }}
-                                </p>
-                                <p class="text-[8px] text-slate-400 truncate uppercase">Uploaded File</p>
+                            
+                            <h6 class="font-black text-slate-800 uppercase text-[10px] tracking-widest mb-4 italic border-b pb-2">Verification Evidence</h6>
+                            <div class="row g-3">
+                                @forelse($docs as $doc)
+                                    <div class="col-md-6">
+                                        <a href="{{ asset('storage/' . $doc) }}" target="_blank" class="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white transition-all text-decoration-none group">
+                                            <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                                <i class="fas {{ Str::endsWith($doc, '.pdf') ? 'fa-file-pdf text-red-500' : 'fa-file-image text-blue-500' }} text-lg"></i>
+                                            </div>
+                                            <div class="ms-3">
+                                                <p class="m-0 text-[11px] font-black text-slate-700 uppercase">Evidence_File_{{ $loop->iteration }}</p>
+                                                <small class="text-[9px] text-slate-400 font-bold">CLICK TO VIEW SOURCE</small>
+                                            </div>
+                                        </a>
+                                    </div>
+                                @empty
+                                    <div class="col-12 py-8 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
+                                        <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest m-0 italic">No evidence uploaded for this item.</p>
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
-                        <a href="{{ asset('storage/' . $path) }}" target="_blank" class="ms-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-[9px] uppercase hover:bg-blue-600 transition-colors shrink-0">
-                            View
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="flex items-center gap-2 py-2 opacity-50">
-                <i class="fas fa-file-circle-exclamation text-slate-400"></i>
-                <span class="text-slate-400 italic text-[11px] font-bold tracking-tight uppercase">No documents attached</span>
-            </div>
-        @endif
-    </div>
-</div>
-                            </div>
-                        </div>
-                        {{-- AUDIT TRAIL --}}
-                        <div class="tab-pane fade" id="trail-{{ $uID }}">
-                            <div class="space-y-6">
+
+                        {{-- TAB 2: AUDIT TRAIL --}}
+                        <div class="tab-pane fade" id="trail-{{ $item->submission_item_id }}">
+                            <div class="relative space-y-6 ps-4 border-l-2 border-slate-100 ms-2">
                                 @php
-                                    // 1. Get the record belonging to THIS specific submission attempt
-                                    $currentDecision = $history->firstWhere('submission_item_id', $item->submission_item_id);
-
-                                    // 2. Get previous lifecycle history (linked by asset_id but different submission)
-                                    $pastLifecycle = $history->filter(function($record) use ($item) {
-                                        return $record->asset_id === $item->asset_id && 
-                                            $record->submission_item_id !== $item->submission_item_id;
-                                    })->sortByDesc('created_at');
+                                    $assetHistory = $history->where('submission_item_id', $item->submission_item_id)->sortByDesc('created_at');
                                 @endphp
-
-                                {{-- SECTION: CURRENT DECISION --}}
-                                @if($currentDecision)
-                                    <div class="relative pb-4">
-                                        <div class="text-[10px] font-black text-blue-600 uppercase mb-3 tracking-widest flex items-center gap-2">
-                                            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                                            Current Submission Decision
-                                        </div>
-                                        
-                                        <div class="flex gap-4">
-                                            <div class="shrink-0 text-center w-14 pt-2">
-                                                <div class="font-black text-slate-800 text-xl">{{ $currentDecision->created_at->format('d') }}</div>
-                                                <div class="text-[10px] font-black text-slate-400 uppercase">{{ $currentDecision->created_at->format('M') }}</div>
+                                @forelse($assetHistory as $log)
+                                    @if($loop->first)
+                                        <div class="relative flex gap-4 items-start pb-2">
+                                            <div class="absolute -left-[31px] w-7 h-7 rounded-full bg-blue-600 border-4 border-white shadow-sm flex items-center justify-center">
+                                                <i class="fas fa-check text-[8px] text-white"></i>
                                             </div>
-                                            
-                                            <div class="grow p-4 rounded-2xl border-2 border-blue-100 bg-white shadow-sm">
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest {{ strtoupper($currentDecision->status) === 'REJECTED' ? 'bg-rose-600' : 'bg-emerald-600' }} text-white">
-                                                        {{ $currentDecision->status }}
-                                                    </span>
-                                                    <span class="font-mono text-[9px] font-bold text-slate-400 uppercase">BATCH #{{ str_pad($currentDecision->submission_id, 7, '0', STR_PAD_LEFT) }}</span>
+                                            <div class="grow bg-blue-50 p-5 rounded-[2rem] border border-blue-100 shadow-md">
+                                                <div class="flex justify-between items-center mb-3">
+                                                    <span class="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-tighter italic">Active Verdict</span>
+                                                    <span class="text-[10px] font-black text-blue-400">{{ $log->created_at->format('M d, Y - H:i') }}</span>
                                                 </div>
-                                                
-                                                <p class="text-sm text-slate-800 font-bold italic mb-2">
-                                                    "{{ $currentDecision->audit?->comments ?? ($currentDecision->remarks ?? 'No auditor remarks for this specific record.') }}"
+                                                <p class="text-[14px] font-black italic text-slate-800 mb-0 leading-relaxed bg-white/50 p-3 rounded-xl border border-blue-100">
+                                                    "{{ $log->comments ?? 'No comments' }}"
                                                 </p>
-                                                
-                                                <div class="text-[9px] font-black text-slate-400 uppercase tracking-tighter border-t pt-2 border-slate-50">
-                                                    By: {{ $currentDecision->submission->reviewedBy->profile->first_name ?? 'System Auditor' }}
-                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                @endif
-
-                                {{-- SECTION: HISTORICAL LIFECYCLE --}}
-                                @if($pastLifecycle->count() > 0)
-                                    <div class="pt-4 border-t border-dashed border-slate-200">
-                                        <div class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">
-                                            Asset Lifecycle History
-                                        </div>
-
-                                        <div class="space-y-4">
-                                            @foreach($pastLifecycle as $record)
-                                                <div class="flex gap-4 opacity-60 grayscale-[0.5] hover:grayscale-0 hover:opacity-100 transition-all">
-                                                    <div class="shrink-0 text-center w-14">
-                                                        <div class="font-bold text-slate-500 text-sm">{{ $record->created_at->format('d M') }}</div>
-                                                        <div class="text-[8px] font-bold text-slate-400 uppercase">{{ $record->created_at->format('Y') }}</div>
-                                                    </div>
-                                                    
-                                                    <div class="grow p-3 rounded-xl border bg-slate-50 border-slate-200">
-                                                        <div class="flex justify-between items-center mb-1">
-                                                            <span class="text-[9px] font-black uppercase {{ strtoupper($record->status) === 'REJECTED' ? 'text-rose-600' : 'text-emerald-600' }}">
-                                                                {{ $record->status }}
-                                                            </span>
-                                                            <span class="font-mono text-[8px] text-slate-400">BATCH #{{ $record->submission_id }}</span>
-                                                        </div>
-                                                        <p class="text-xs text-slate-600 italic">"{{ $record->audit?->comments ?? ($record->remarks ?? 'No remarks.') }}"</p>
-                                                    </div>
+                                    @else
+                                        <div class="relative flex gap-4 items-start pb-4 opacity-70">
+                                            <div class="absolute -left-[23px] w-3 h-3 rounded-full bg-slate-300 border-2 border-white mt-2"></div>
+                                            <div class="grow bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Historical: {{ strtoupper($log->status ?? 'PENDING') }}</span>
+                                                    <span class="text-[9px] font-bold text-slate-400">{{ $log->created_at->format('M d, Y') }}</span>
                                                 </div>
-                                            @endforeach
+                                                <p class="text-[11px] font-bold italic text-slate-600 mb-0 leading-relaxed">"{{ $log->comments ?? 'No previous comments' }}"</p>
+                                            </div>
                                         </div>
+                                    @endif
+                                @empty
+                                    <div class="p-6 text-center text-slate-500 italic">
+                                        No audit trail entries yet.
                                     </div>
-                                @elseif(!$currentDecision)
-                                    <div class="text-center py-10 opacity-40 font-black italic uppercase text-[10px]">No historical activity found.</div>
-                                @endif
+                                @endforelse
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    @endforeach
+
+        {{-- RE-EVALUATION MODAL --}}
+        <div class="modal fade" id="reEvalModal{{ $item->submission_item_id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-[2.5rem] border-0 shadow-2xl overflow-hidden">
+                    <form action="{{ route('auditor.submissions.re-evaluate', $submission?->submission_id ?? '') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="item_id" value="{{ $item->submission_item_id }}">
+                        
+                        <div class="bg-slate-900 p-6 text-center">
+                            <h5 class="text-white font-black text-xl uppercase italic tracking-tighter m-0">Re-evaluate</h5>
+                            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">{{ $item->item_name }}</p>
+                        </div>
+                        
+                        <div class="modal-body p-6 bg-white">
+                            <div class="mb-5">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Final Status Decision</label>
+                                
+                                <div class="dropdown">
+                                    <button class="w-full bg-slate-50 border-2 border-slate-100 rounded-full py-3 px-5 flex justify-between items-center dropdown-toggle font-black text-[11px] uppercase tracking-wider" 
+                                            type="button" id="statusDrop-{{ $item->submission_item_id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span id="selectedLabel-{{ $item->submission_item_id }}">{{ $status === 'REJECTED' ? 'Reject' : 'Approve' }}</span>
+                                    </button>
+
+                                    <ul class="dropdown-menu w-full rounded-[2rem] border-0 shadow-xl p-2 mt-2" aria-labelledby="statusDrop-{{ $item->submission_item_id }}">
+                                        <li>
+                                            <button type="button" class="dropdown-item rounded-2xl py-3 font-black text-[10px] uppercase hover:bg-emerald-50 hover:text-emerald-700 transition-all" 
+                                                    onclick="updateStatus('approved', 'Approve', {{ $item->submission_item_id }})">
+                                                <i class="fas fa-check-circle me-2 text-emerald-500"></i> Approve
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button type="button" class="dropdown-item rounded-2xl py-3 font-black text-[10px] uppercase hover:bg-rose-50 hover:text-rose-700 transition-all" 
+                                                    onclick="updateStatus('rejected', 'Reject', {{ $item->submission_item_id }})">
+                                                <i class="fas fa-times-circle me-2 text-rose-500"></i> Reject
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <input type="hidden" name="new_status" id="hiddenStatus-{{ $item->submission_item_id }}" value="{{ strtolower($status) }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-0">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Correction Justification (Min. 10 chars)</label>
+                                <textarea name="correction_remarks" rows="5" class="form-control border-2 border-slate-100 rounded-[1.5rem] font-bold text-sm p-4 shadow-sm focus:border-blue-500" placeholder="Clearly state why the previous decision is being changed..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="p-6 pt-0 bg-white flex gap-3">
+                            <button type="button" class="w-1/2 bg-slate-100 text-slate-500 py-4 rounded-2xl font-black text-[11px] uppercase border-0" data-bs-dismiss="modal">Discard</button>
+                            <button type="submit" class="w-1/2 bg-blue-600 text-white py-4 rounded-2xl font-black text-[11px] uppercase border-0 shadow-lg shadow-blue-200 transition-all hover:scale-105">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @empty
+        <div class="text-center py-20 text-slate-500 font-bold">
+            No items found in this batch.
+        </div>
+    @endforelse
 </div>
+
+<script>
+    function updateStatus(val, label, id) {
+        document.getElementById('hiddenStatus-' + id).value = val;
+        document.getElementById('selectedLabel-' + id).innerText = label;
+    }
+</script>
 @endsection

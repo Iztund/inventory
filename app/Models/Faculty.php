@@ -53,14 +53,14 @@ class Faculty extends Model
     }
     public function users(): HasMany
     {
-        return $this->hasMany(User::class, 'dept_id', 'dept_id');
+        return $this->hasMany(User::class, 'faculty_id', 'faculty_id');
     }
      /**
      * Get all user profiles primarily assigned to this department.
      */
     public function userProfiles(): HasMany
     {
-        return $this->hasMany(UserProfile::class, 'dept_id', 'dept_id');
+        return $this->hasMany(UserProfile::class, 'faculty_id', 'faculty_id');
     }
 
 }

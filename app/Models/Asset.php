@@ -25,6 +25,8 @@ class Asset extends Model
         'location_id',
         'serial_number',
         'item_name',
+        
+        
         'description',
         'purchase_date',
         'purchase_price',
@@ -92,7 +94,10 @@ class Asset extends Model
     /**
      * RELATIONSHIPS: Audit & History
      */
-
+    public function submissionItem()
+        {
+            return $this->belongsTo(SubmissionItem::class, 'submission_item_id', 'submission_item_id');
+        }
     public function submissionItems(): HasMany
     {
         return $this->hasMany(SubmissionItem::class, 'asset_id');
@@ -102,4 +107,30 @@ class Asset extends Model
     {
         return $this->hasMany(SubmissionItem::class, 'asset_id')->with('submission');
     }
+   // app/Models/Asset.php
+
+public function scopeApplyScopeForUser($query, $user)
+{
+    // Admin & Auditor: see all
+    if (in_array((int)$user->role_id, [1, 3])) {
+        return $query;
+    }
+
+    // Staff: scoped by hierarchy priority
+    return $query->where(function($q) use ($user) {
+        if ($user->unit_id) {
+            $q->where('current_unit_id', $user->unit_id);
+        } elseif ($user->department_id) {
+            $q->where('current_dept_id', $user->department_id);
+        } elseif ($user->institute_id) {
+            $q->where('current_institute_id', $user->institute_id);
+        } elseif ($user->office_id) {
+            $q->where('current_office_id', $user->office_id);
+        } elseif ($user->faculty_id) {
+            $q->where('current_faculty_id', $user->faculty_id);
+        } else {
+            $q->whereRaw('1 = 0'); // No assignment, no access
+        }
+    });
+}
 }

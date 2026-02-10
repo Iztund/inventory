@@ -1,233 +1,401 @@
 @extends('layouts.admin')
 
 @section('title', 'System Structure | Inventory Management')
-@section('active_link', 'units-admin')
 
 @section('content')
-<link rel="stylesheet" href="{{ asset('build/assets/css/dashboard_admin/academic_admin.css') }}" />
-<div class="container-fluid py-4 py-lg-5 px-3 px-lg-5" style="background-color: #f8fafc; min-height: 100vh;">
 
-    {{-- Header Section: Restored exact Desktop positioning --}}
-    <div class="d-flex justify-content-between align-items-center mb-4 mb-lg-5">
+<div class="min-vh-100 py-4 px-3 px-lg-5 bg-slate-50">
+<div style="max-width:1600px;" class="mx-auto">
+
+    {{-- Header --}}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-5">
         <div>
-            <h4 class="fw-bold mb-0 text-dark responsive-main-title" style="letter-spacing: -0.02em;">Organizational Structure</h4>
-            <nav aria-label="breadcrumb" class="d-none d-sm-block">
-                <ol class="breadcrumb mb-0 small text-muted bg-transparent p-0">
+            <h1 class="fw-black text-slate-900 mb-1" style="font-size:1.75rem; letter-spacing:-0.02em;">Organizational Structure</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 bg-transparent p-0" style="font-size:0.8rem;">
                     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-primary">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Hierarchy Management</li>
+                    <li class="breadcrumb-item active text-slate-600 fw-bold">Hierarchy Management</li>
                 </ol>
             </nav>
         </div>
+
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <button type="button" class="btn btn-white border border-slate-200 d-flex align-items-center gap-2 rounded-3 shadow-sm"
+                    style="font-size:0.8rem; padding:0.65rem 1.2rem;"
+                    onclick="window.location='{{ route('admin.structure.export') }}'">
+                <i class="fas fa-file-export text-slate-600"></i>
+                <span class="fw-bold text-slate-700">Export</span>
+            </button>
+            
+            <div class="bg-slate-900 text-white px-3 py-2 rounded-3 shadow-sm d-flex align-items-center gap-2" style="font-size:0.8rem;">
+                <i class="fas fa-calendar-alt opacity-75"></i>
+                <span class="fw-bold">{{ now()->format('M d, Y') }}</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Quick Stats Banner --}}
+    <div class="rounded-4 mb-5 p-4 p-md-5 position-relative overflow-hidden" 
+         style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);">
+        {{-- Decorative blobs --}}
+        <div class="position-absolute rounded-circle" 
+             style="top:-60px; right:-70px; width:240px; height:240px; background:radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%); pointer-events:none;"></div>
+        <div class="position-absolute rounded-circle" 
+             style="bottom:-50px; left:5%; width:180px; height:180px; background:radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%); pointer-events:none;"></div>
         
-        <div class="d-flex gap-2 gap-sm-3 align-items-center">
-            <a href="{{ route('admin.structure.export') }}" class="btn btn-white shadow-sm px-3 px-sm-4 rounded-3 fw-medium border bg-white d-inline-flex align-items-center">
-                <i class="fas fa-file-export me-md-2 text-muted"></i>
-                <span class="d-none d-md-inline">Export Structure</span>
-                <span class="d-md-none">Export</span>
-            </a>
-            
-            <div class="bg-dark text-white px-3 py-2 rounded-3 shadow-sm d-flex align-items-center">
-                <i class="fas fa-calendar-alt me-2 opacity-75 d-none d-sm-inline"></i>
-                <span class="small fw-medium">{{ now()->format('M d, Y') }}</span>
-            </div>
-        </div>
-    </div>
-
-    {{-- Top Summary Cards --}}
-    <div class="row g-3 g-lg-4 mb-4 mb-lg-5">
-        {{-- Academic --}}
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-header bg-primary bg-opacity-10 border-0 p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="fw-bold text-primary mb-1 text-uppercase small">Academic</h6>
-                        <p class="text-muted small mb-0 d-none d-lg-block">Faculties & Departments</p>
-                    </div>
-                    <i class="fas fa-graduation-cap text-primary opacity-50 fs-4"></i>
+        <div class="position-relative" style="z-index:1;">
+            <div class="row g-4">
+                <div class="col-6 col-md-3">
+                    <div class="text-slate-400 text-uppercase mb-1" style="font-size:0.65rem; letter-spacing:0.12em; font-weight:700;">Academic</div>
+                    <div class="text-white fw-black" style="font-size:1.8rem; line-height:1;">{{ $summary['total_faculties'] + $summary['total_departments'] }}</div>
+                    <div class="text-slate-400 mt-1" style="font-size:0.75rem;">Faculties & Depts</div>
                 </div>
-                <div class="card-body p-4">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.faculties.index') }}" class="nav-unit-link">
-                            <span class="small fw-bold">Faculties</span>
-                            <span class="badge rounded-pill bg-primary px-3">{{ $summary['total_faculties'] }}</span>
-                        </a>
-                        <a href="{{ route('admin.departments.index') }}" class="nav-unit-link">
-                            <span class="small fw-bold">Departments</span>
-                            <span class="badge rounded-pill bg-primary px-3">{{ $summary['total_departments'] }}</span>
-                        </a>
-                    </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="text-slate-400 text-uppercase mb-1" style="font-size:0.65rem; letter-spacing:0.12em; font-weight:700;">Administrative</div>
+                    <div class="text-white fw-black" style="font-size:1.8rem; line-height:1;">{{ $summary['total_offices'] + $summary['total_units'] }}</div>
+                    <div class="text-slate-400 mt-1" style="font-size:0.75rem;">Offices & Units</div>
                 </div>
-            </div>
-        </div>
-
-        {{-- Administrative --}}
-        <div class="col-12 col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-header bg-success bg-opacity-10 border-0 p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="fw-bold text-success mb-1 text-uppercase small">Administrative</h6>
-                        <p class="text-muted small mb-0 d-none d-lg-block">Offices & Units</p>
-                    </div>
-                    <i class="fas fa-user-shield text-success opacity-50 fs-4"></i>
+                
+                <div class="col-6 col-md-3">
+                    <div class="text-slate-400 text-uppercase mb-1" style="font-size:0.65rem; letter-spacing:0.12em; font-weight:700;">Research</div>
+                    <div class="text-white fw-black" style="font-size:1.8rem; line-height:1;">{{ $summary['total_institutes'] }}</div>
+                    <div class="text-slate-400 mt-1" style="font-size:0.75rem;">Institutes</div>
                 </div>
-                <div class="card-body p-4">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.offices.index') }}" class="nav-unit-link">
-                            <span class="small fw-bold">Offices</span>
-                            <span class="badge rounded-pill bg-success px-3">{{ $summary['total_offices'] }}</span>
-                        </a>
-                        <a href="{{ route('admin.units.index') }}" class="nav-unit-link">
-                            <span class="small fw-bold">Units</span>
-                            <span class="badge rounded-pill bg-success px-3">{{ $summary['total_units'] }}</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Research --}}
-        <div class="col-12 col-md-12 col-xl-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-header bg-info bg-opacity-10 border-0 p-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="fw-bold text-info mb-1 text-uppercase small">Research</h6>
-                        <p class="text-muted small mb-0 d-none d-lg-block">Institutes & Centers</p>
-                    </div>
-                    <i class="fas fa-microscope text-info opacity-50 fs-4"></i>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.institutes.index') }}" class="nav-unit-link">
-                            <span class="small fw-bold">Institutes</span>
-                            <span class="badge rounded-pill bg-info px-3">{{ $summary['total_institutes'] }}</span>
-                        </a>
-                    </div>
+                
+                <div class="col-6 col-md-3">
+                    <div class="text-slate-400 text-uppercase mb-1" style="font-size:0.65rem; letter-spacing:0.12em; font-weight:700;">Total Assets</div>
+                    <div class="text-white fw-black" style="font-size:1.8rem; line-height:1;">{{ number_format($summary['total_global_assets']) }}</div>
+                    <div class="text-slate-400 mt-1" style="font-size:0.75rem;">Registry-Wide</div>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Main Breakdown Container --}}
-    <div class="bg-white rounded-4 shadow-sm border-0 overflow-hidden">
-        {{-- Header of the Breakdown Section --}}
-        <div class="p-4 border-bottom d-flex flex-column flex-lg-row align-items-start align-items-lg-center justify-content-between bg-white gap-3">
-            <div class="d-flex align-items-center">
-                <div class="bg-light rounded-3 p-2 me-3">
-                    <i class="fas fa-layer-group text-muted"></i>
+    {{-- Main Grid: Category Cards --}}
+    <div class="row g-4">
+        
+        {{-- ACADEMIC CARD --}}
+        <div class="col-12 col-lg-6">
+            <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden h-100">
+                <div class="p-4 bg-indigo-50 border-bottom border-indigo-100 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-indigo-600" 
+                             style="width:48px; height:48px; box-shadow:0 4px 14px rgba(79,70,229,0.3);">
+                            <i class="fas fa-graduation-cap text-white" style="font-size:1.2rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-black text-slate-900 mb-0" style="font-size:1.1rem;">Academic Branch</h5>
+                            <p class="text-slate-600 mb-0" style="font-size:0.8rem;">Faculties & Departments</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-indigo text-white fw-bold rounded-2" 
+                            style="font-size:0.75rem; padding:0.5rem 1rem;"
+                            data-bs-toggle="modal" data-bs-target="#addAcademicModal">
+                        <i class="fas fa-plus me-1"></i> Add
+                    </button>
                 </div>
-                <div>
-                    <h6 class="fw-bold text-dark mb-0 small text-uppercase responsive-table-title" style="letter-spacing: 0.05em;">Structure Breakdown</h6>
-                    <p class="text-muted mb-0 d-none d-lg-block" style="font-size: 0.75rem;">Comprehensive count of all college entities</p>
-                </div>
-            </div>
-            
-            <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border w-100 w-lg-auto justify-content-between">
-                <label class="form-check-label small fw-bold text-secondary me-3 mb-0 responsive-toggle-label" for="toggleInactive" style="cursor: pointer;">
-                    SHOW INACTIVE DATA
-                </label>
-                <div class="form-check form-switch mb-0 p-0">
-                    <input class="form-check-input custom-switch ms-0" type="checkbox" id="toggleInactive">
+
+                <div class="p-4">
+                    <div class="d-grid gap-3">
+                        {{-- Faculties --}}
+                        <a href="{{ route('admin.faculties.index') }}" 
+                           class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-slate-50 border border-slate-200 text-decoration-none"
+                           style="transition:all 0.2s;"
+                           onmouseenter="this.style.background='#eef2ff'; this.style.borderColor='#c7d2fe';"
+                           onmouseleave="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-university text-indigo-600" style="font-size:0.95rem;"></i>
+                                <span class="fw-bold text-slate-900" style="font-size:0.9rem;">Faculties</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill bg-indigo-100 text-indigo-700 fw-bold" style="padding:0.4rem 0.8rem;">
+                                    {{ $summary['total_faculties'] }}
+                                </span>
+                                <i class="fas fa-chevron-right text-slate-400" style="font-size:0.7rem;"></i>
+                            </div>
+                        </a>
+
+                        {{-- Departments --}}
+                        <a href="{{ route('admin.departments.index') }}" 
+                           class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-slate-50 border border-slate-200 text-decoration-none"
+                           style="transition:all 0.2s;"
+                           onmouseenter="this.style.background='#eef2ff'; this.style.borderColor='#c7d2fe';"
+                           onmouseleave="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-building text-indigo-600" style="font-size:0.95rem;"></i>
+                                <span class="fw-bold text-slate-900" style="font-size:0.9rem;">Departments</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill bg-indigo-100 text-indigo-700 fw-bold" style="padding:0.4rem 0.8rem;">
+                                    {{ $summary['total_departments'] }}
+                                </span>
+                                <i class="fas fa-chevron-right text-slate-400" style="font-size:0.7rem;"></i>
+                            </div>
+                        </a>
+                    </div>
+
+                    {{-- Footer Stats --}}
+                    <div class="row g-2 mt-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-indigo-50 border border-indigo-100">
+                                <div class="text-slate-600 fw-semibold mb-1" style="font-size:0.7rem;">Assets Assigned</div>
+                                <div class="fw-black text-indigo-700" style="font-size:1rem;">{{ number_format($summary['assets_in_faculties'] + $summary['assets_in_departments']) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-indigo-50 border border-indigo-100">
+                                <div class="text-slate-600 fw-semibold mb-1" style="font-size:0.7rem;">Status</div>
+                                <span class="badge bg-indigo-600 text-white fw-bold d-inline-block mt-1" style="font-size:0.7rem; padding:0.35rem 0.75rem;">
+                                    {{ $summary['inactive_faculties'] > 0 ? 'Mixed' : 'All Active' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- DESKTOP VIEW: Table structure from original code --}}
-        <div class="table-responsive d-none d-lg-block">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 py-3 text-uppercase text-muted fw-bold" style="font-size: 0.65rem; width: 35%;">Classification</th>
-                        <th class="py-3 text-uppercase text-muted fw-bold text-center" style="font-size: 0.65rem;">
-                            Count <span class="inactive-label text-danger ms-1" style="display:none;">(Inactive)</span>
-                        </th>
-                        <th class="py-3 text-uppercase text-muted fw-bold text-center" style="font-size: 0.65rem;">Assets Assigned</th>
-                        <th class="pe-4 py-3 text-uppercase text-muted fw-bold text-end" style="font-size: 0.65rem;">Status Flag</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{-- ACADEMIC --}}
-                    <tr><td colspan="4" class="ps-4 py-2 bg-light bg-opacity-50 text-primary fw-bold" style="font-size: 0.65rem;">ACADEMIC BRANCH</td></tr>
-                    <tr>
-                        <td class="ps-5"><span class="fw-bold text-dark small">Faculties</span></td>
-                        <td class="text-center">
-                            <span class="fw-bold">{{ $summary['total_faculties'] }}</span>
-                            <span class="inactive-count text-danger ms-2 small fw-bold" style="display:none;">+ {{ $summary['inactive_faculties'] }}</span>
-                        </td>
-                        <td class="text-center text-muted small fw-medium">{{ number_format($summary['assets_in_faculties']) }}</td>
-                        <td class="text-end pe-4">
-                            <span class="badge rounded-pill {{ $summary['inactive_faculties'] > 0 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' }} px-3 py-1">
-                                {{ $summary['inactive_faculties'] > 0 ? 'Mixed' : 'Active' }}
+        {{-- ADMINISTRATIVE CARD --}}
+        <div class="col-12 col-lg-6">
+            <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden h-100">
+                <div class="p-4 bg-emerald-50 border-bottom border-emerald-100 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-emerald-600" 
+                             style="width:48px; height:48px; box-shadow:0 4px 14px rgba(5,150,105,0.3);">
+                            <i class="fas fa-user-shield text-white" style="font-size:1.2rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-black text-slate-900 mb-0" style="font-size:1.1rem;">Administrative Branch</h5>
+                            <p class="text-slate-600 mb-0" style="font-size:0.8rem;">Offices & Units</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <div class="d-grid gap-3">
+                        {{-- Offices --}}
+                        <a href="{{ route('admin.offices.index') }}" 
+                           class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-slate-50 border border-slate-200 text-decoration-none"
+                           style="transition:all 0.2s;"
+                           onmouseenter="this.style.background='#f0fdf4'; this.style.borderColor='#bbf7d0';"
+                           onmouseleave="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-briefcase text-emerald-600" style="font-size:0.95rem;"></i>
+                                <span class="fw-bold text-slate-900" style="font-size:0.9rem;">Offices</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill bg-emerald-100 text-emerald-700 fw-bold" style="padding:0.4rem 0.8rem;">
+                                    {{ $summary['total_offices'] }}
+                                </span>
+                                <i class="fas fa-chevron-right text-slate-400" style="font-size:0.7rem;"></i>
+                            </div>
+                        </a>
+
+                        {{-- Units --}}
+                        <a href="{{ route('admin.units.index') }}" 
+                           class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-slate-50 border border-slate-200 text-decoration-none"
+                           style="transition:all 0.2s;"
+                           onmouseenter="this.style.background='#f0fdf4'; this.style.borderColor='#bbf7d0';"
+                           onmouseleave="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-layer-group text-emerald-600" style="font-size:0.95rem;"></i>
+                                <span class="fw-bold text-slate-900" style="font-size:0.9rem;">Units</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill bg-emerald-100 text-emerald-700 fw-bold" style="padding:0.4rem 0.8rem;">
+                                    {{ $summary['total_units'] }}
+                                </span>
+                                <i class="fas fa-chevron-right text-slate-400" style="font-size:0.7rem;"></i>
+                            </div>
+                        </a>
+                    </div>
+
+                    {{-- Footer Stats --}}
+                    <div class="row g-2 mt-3">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-emerald-50 border border-emerald-100">
+                                <div class="text-slate-600 fw-semibold mb-1" style="font-size:0.7rem;">Assets Assigned</div>
+                                <div class="fw-black text-emerald-700" style="font-size:1rem;">{{ number_format($summary['assets_in_offices'] + $summary['assets_in_units']) }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3 bg-emerald-50 border border-emerald-100">
+                                <div class="text-slate-600 fw-semibold mb-1" style="font-size:0.7rem;">Status</div>
+                                <span class="badge bg-emerald-600 text-white fw-bold d-inline-block mt-1" style="font-size:0.7rem; padding:0.35rem 0.75rem;">
+                                    {{ $summary['inactive_offices'] > 0 ? 'Mixed' : 'All Active' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- RESEARCH CARD --}}
+        <div class="col-12 col-lg-6">
+            <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 bg-cyan-50 border-bottom border-cyan-100 d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-cyan-600" 
+                             style="width:48px; height:48px; box-shadow:0 4px 14px rgba(8,145,178,0.3);">
+                            <i class="fas fa-microscope text-white" style="font-size:1.2rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-black text-slate-900 mb-0" style="font-size:1.1rem;">Research Branch</h5>
+                            <p class="text-slate-600 mb-0" style="font-size:0.8rem;">Institutes & Centers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <div class="d-grid gap-3">
+                        <a href="{{ route('admin.institutes.index') }}" 
+                           class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-slate-50 border border-slate-200 text-decoration-none"
+                           style="transition:all 0.2s;"
+                           onmouseenter="this.style.background='#ecfeff'; this.style.borderColor='#a5f3fc';"
+                           onmouseleave="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-flask text-cyan-600" style="font-size:0.95rem;"></i>
+                                <span class="fw-bold text-slate-900" style="font-size:0.9rem;">Institutes</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge rounded-pill bg-cyan-100 text-cyan-700 fw-bold" style="padding:0.4rem 0.8rem;">
+                                    {{ $summary['total_institutes'] }}
+                                </span>
+                                <i class="fas fa-chevron-right text-slate-400" style="font-size:0.7rem;"></i>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="row g-2 mt-3">
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-emerald-50 border border-emerald-100">
+                            <div class="text-slate-600 fw-semibold mb-1" style="font-size:0.7rem;">Assets Assigned</div>
+                            <div class="fw-black text-emerald-700" style="font-size:1rem;">{{ number_format($summary['assets_in_institutes']) }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded-3 bg-emerald-50 border border-emerald-100">
+                            <div class="text-slate-600 fw-semibold mb-1" style="font-size:0.7rem;">Status</div>
+                            <span class="badge bg-emerald-600 text-white fw-bold d-inline-block mt-1" style="font-size:0.7rem; padding:0.35rem 0.75rem;">
+                                {{ $summary['inactive_institutes'] > 0 ? 'Mixed' : 'All Active' }}
                             </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="ps-5">
-                            <i class="fas fa-level-up-alt fa-rotate-90 text-muted me-2 opacity-50"></i>
-                            <span class="fw-bold text-dark small">Departments</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="fw-bold">{{ $summary['total_departments'] }}</span>
-                            <span class="inactive-count text-danger ms-2 small fw-bold" style="display:none;">+ {{ $summary['inactive_departments'] }}</span>
-                        </td>
-                        <td class="text-center text-muted small fw-medium">{{ number_format($summary['assets_in_departments']) }}</td>
-                        <td class="text-end pe-4">Verfied</td>
-                    </tr>
-
-                    {{-- ADMINISTRATIVE --}}
-                    <tr><td colspan="4" class="ps-4 py-2 bg-light bg-opacity-50 text-success fw-bold" style="font-size: 0.65rem;">ADMINISTRATIVE BRANCH</td></tr>
-                    <tr>
-                        <td class="ps-5"><span class="fw-bold text-dark small">Offices</span></td>
-                        <td class="text-center">
-                            <span class="fw-bold">{{ $summary['total_offices'] }}</span>
-                            <span class="inactive-count text-danger ms-2 small fw-bold" style="display:none;">+ {{ $summary['inactive_offices'] }}</span>
-                        </td>
-                        <td class="text-center text-muted small fw-medium">--</td>
-                        <td class="text-end pe-4">Active</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        {{-- MOBILE VIEW: Card structure --}}
-        <div class="d-lg-none mobile-structure-cards">
-            {{-- Academic Section --}}
-            <div class="mobile-section-header">ACADEMIC BRANCH</div>
-            <div class="mobile-structure-card">
-                <div class="mobile-card-title"><span class="fw-bold">Faculties</span><span class="badge bg-primary rounded-pill">{{ $summary['total_faculties'] }}</span></div>
-                <div class="mobile-card-row"><span class="mobile-label">Assets:</span><span class="mobile-value">{{ number_format($summary['assets_in_faculties']) }}</span></div>
-                <div class="mobile-card-row">
-                    <span class="mobile-label">Status:</span>
-                    <span class="mobile-value {{ $summary['inactive_faculties'] > 0 ? 'text-warning' : 'text-success' }}">
-                        {{ $summary['inactive_faculties'] > 0 ? 'Mixed' : 'Active' }}
-                    </span>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="mobile-structure-card">
-                <div class="mobile-card-title"><span class="fw-bold">Departments</span><span class="badge bg-primary rounded-pill">{{ $summary['total_departments'] }}</span></div>
-                <div class="mobile-card-row"><span class="mobile-label">Assets:</span><span class="mobile-value">{{ number_format($summary['assets_in_departments']) }}</span></div>
-            </div>
+       {{-- INVENTORY CLASSIFICATION COMMAND CARD --}}
+        <div class="col-12 col-lg-6">
+            <div class="rounded-4 bg-white border border-slate-200 shadow-sm overflow-hidden h-100">
+                <div class="p-4 bg-amber-50 border-bottom border-amber-100">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-orange-500" style="width:48px; height:48px;">
+                            <i class="fas fa-tags text-white"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-black text-slate-900 mb-0 uppercase tracking-tight" style="font-size:1rem;">System Classification</h5>
+                            <p class="text-slate-500 mb-0 font-bold uppercase" style="font-size:0.65rem;">Registry Hierarchy Manager</p>
+                        </div>
+                    </div>
+                </div>
 
-            {{-- Administrative Section --}}
-            <div class="mobile-section-header">ADMINISTRATIVE BRANCH</div>
-            <div class="mobile-structure-card">
-                <div class="mobile-card-title"><span class="fw-bold">Offices</span><span class="badge bg-success rounded-pill">{{ $summary['total_offices'] }}</span></div>
-                <div class="mobile-card-row"><span class="mobile-label">Count:</span><span class="mobile-value">{{ $summary['total_offices'] }}</span></div>
+                <div class="p-4">
+                    <div class="d-grid gap-3">
+                        {{-- Category Row --}}
+                        <div class="p-3 rounded-3 bg-slate-50 border border-slate-200">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="w-10 h-10 rounded bg-amber-100 text-amber-600 d-flex align-items-center justify-content-center"><i class="fas fa-folder"></i></div>
+                                    <div>
+                                        <span class="fw-bold text-slate-700 uppercase block" style="font-size:0.8rem;">Major Categories</span>
+                                        <div class="d-flex gap-2">
+                                            <a href="javascript:void(0)" onclick="openCategoryModal()" class="text-orange-600 fw-bold text-decoration-none" style="font-size:0.65rem;">+ ADD NEW</a>
+                                            <span class="text-slate-300">|</span>
+                                            <a href="{{ route('admin.classification_categories.index') }}" class="text-slate-500 fw-bold text-decoration-none" style="font-size:0.65rem;">MANAGE ALL</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge rounded-pill bg-amber-100 text-amber-700 fw-black">{{ $summary['total_categories'] }}</span>
+                            </div>
+                        </div>
+
+                        {{-- Subcategory Row --}}
+                        <div class="p-3 rounded-3 bg-slate-50 border border-slate-200">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="w-10 h-10 rounded bg-blue-100 text-blue-600 d-flex align-items-center justify-content-center"><i class="fas fa-layer-group"></i></div>
+                                    <div>
+                                        <span class="fw-bold text-slate-700 uppercase block" style="font-size:0.8rem;">Sub-Classifications</span>
+                                        <div class="d-flex gap-2">
+                                            <a href="javascript:void(0)" onclick="openSubcategoryModal()" class="text-blue-600 fw-bold text-decoration-none" style="font-size:0.65rem;">+ ADD NEW</a>
+                                            <span class="text-slate-300">|</span>
+                                            <a href="{{ route('admin.classification_subcategories.index') }}" class="text-slate-500 fw-bold text-decoration-none" style="font-size:0.65rem;">MANAGE ALL</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge rounded-pill bg-blue-100 text-blue-700 fw-black">{{ $summary['total_subcategories'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+</div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@include('admin.Academic.partials.classifications_modals')
+<style>
+/* Input focus states */
+.form-control:focus, .form-select:focus {
+    background: #fff !important;
+    border-color: #0f172a !important;
+    box-shadow: 0 0 0 3px rgba(15,23,42,0.08) !important;
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+    transform: scale(0.95);
+    transition: transform 0.2s ease-out;
+}
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+</style>
+
 <script>
-    $(document).ready(function() {
-        $('#toggleInactive').on('change', function() {
-            if($(this).is(':checked')) {
-                $('.inactive-count, .inactive-label').show();
-            } else {
-                $('.inactive-count, .inactive-label').hide();
-            }
-        });
-    });
+    function openCategoryModal(id = null, name = '') {
+        const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+        document.getElementById('categoryModalTitle').innerText = id ? 'Edit Category' : 'New Category';
+        document.getElementById('categoryForm').action = id ? `/admin/classifications/categories/${id}` : "{{ route('admin.categories.store') }}";
+        document.getElementById('categoryMethod').value = id ? "PUT" : "POST";
+        document.getElementById('category_name_input').value = name;
+        modal.show();
+    }
+
+    function openSubcategoryModal(id = null, name = '', parentId = '') {
+        const modal = new bootstrap.Modal(document.getElementById('subcategoryModal'));
+        document.getElementById('subcategoryModalTitle').innerText = id ? 'Edit Sub-Classification' : 'New Sub-Classification';
+        document.getElementById('subcategoryForm').action = id ? `/admin/classifications/subcategories/${id}` : "{{ route('admin.subcategories.store') }}";
+        document.getElementById('subcategoryMethod').value = id ? "PUT" : "POST";
+        document.getElementById('subcategory_name_input').value = name;
+        document.getElementById('sub_parent_id').value = parentId;
+        modal.show();
+    }
+
+    function confirmDelete(id, name, type) {
+        if (confirm(`Are you sure you want to delete ${name}? This will check for linked medical assets first.`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/classifications/${type}/${id}`;
+            form.innerHTML = `@csrf @method('DELETE')`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
 </script>
+
 @endsection

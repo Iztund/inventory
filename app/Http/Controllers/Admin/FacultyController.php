@@ -28,7 +28,7 @@ class FacultyController extends Controller
             $query->where('is_active', $status);
         }
 
-        $faculties = $query->with('dean.profile') 
+        $faculties = $query->with(['dean','dean.profile']) 
                            ->withCount('departments')
                            ->orderBy('faculty_name', 'asc')
                            ->paginate(15)
@@ -44,8 +44,10 @@ class FacultyController extends Controller
     public function create(): View
     {
         $faculty = new Faculty();
-        $activeUsers = User::where('status', 'active')->get();
-        return view('admin.manage_faculties.faculty_create', compact('faculty', 'activeUsers'));
+        $activeFacultyUsers = User::where('status', 'active')
+            ->where('faculty_id', null)
+            ->get();
+        return view('admin.manage_faculties.faculty_create', compact('faculty', 'activeFacultyUsers'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -70,8 +72,9 @@ class FacultyController extends Controller
     public function edit($id): View
     {
         $faculty = Faculty::with('dean.profile')->findOrFail($id);
+        $department_count = $faculty->departments()->count();
         $activeUsers = User::where('status', 'active')->get();
-        return view('admin.manage_faculties.faculty_edit', compact('faculty', 'activeUsers'));
+        return view('admin.manage_faculties.faculty_edit', compact('faculty', 'department_count', 'activeUsers'));
     }
 
     public function update(Request $request, $faculty_id): RedirectResponse
@@ -116,19 +119,20 @@ class FacultyController extends Controller
         ->where('status', 'active')
         ->where(function ($query) use ($q) {
             $query->where('username', 'like', "%{$q}%")
-                ->orWhere('email', 'like', "%{$q}%") // Added email search for convenience
+                ->orWhere('email', 'like', "%{$q}%")
                 ->orWhereHas('profile', function ($subQuery) use ($q) {
-                    $subQuery->where('full_name', 'like', "%{$q}%");
+                    $subQuery->where('first_name', 'like', "%{$q}%")
+                            ->orWhere('last_name', 'like', "%{$q}%")
+                            ->orWhere('middle_name', 'like', "%{$q}%");
                 });
         })
         ->take(20)
         ->get();
 
-    // Select2 MUST have 'id' and 'text' keys
     $formattedUsers = $users->map(function($user) {
         return [
-            'id' => $user->user_id, // Ensure this matches your PK
-            'text' => ($user->profile->full_name ?? $user->username) . ' (' . $user->email . ')',
+            'id' => $user->user_id,
+            'text' => $user->full_name . ' (' . $user->email . ')',
         ];
     });
 

@@ -67,15 +67,57 @@ class User extends Authenticatable // Note: This table still uses Laravel's defa
         return $this->hasOne(UserProfile::class, 'user_id', 'user_id');
     }
     public function getFullNameAttribute()
-        {
-            if (!$this->profile) return $this->username; // Fallback
+{
+    // If there is no profile, fall back to username or "Unassigned"
+    if (!$this->relationLoaded('profile') || !$this->profile) {
+        return $this->username ?? 'Unknown User';
+    }
 
-            return trim("{$this->profile->first_name} {$this->profile->middle_name} {$this->profile->last_name}");
-        }
+    $name = implode(' ', array_filter([
+        $this->profile->first_name,
+        $this->profile->middle_name,
+        $this->profile->last_name
+    ]));
+
+    // If the profile exists but all name fields are empty
+    return !empty(trim($name)) ? $name : $this->username;
+}
     /**
      * Get the department the user belongs to.
      * Links to departments table via dept_id.
      */
+    // app/Models/User.php
+
+public function getAffiliationAttribute()
+{
+    // 1. Determine Primary (The Code/Heading)
+    $primary = $this->office->office_code 
+        ?? $this->institute->institute_code 
+        ?? $this->faculty->faculty_code 
+        ?? null;
+
+    // 2. Determine the Icon
+    $icon = 'fa-landmark'; // Default
+    if ($this->office) $icon = 'fa-building';
+    if ($this->institute) $icon = 'fa-microscope'; // Better icon for Research/Institute
+
+    // 3. Determine Sub-text (The "General" vs "Research Center" logic)
+    $sub = 'General';
+    if ($this->department) {
+        $sub = $this->department->dept_name;
+    } elseif ($this->unit) {
+        $sub = $this->unit->unit_name;
+    } elseif ($this->institute) {
+        // If it's an institute with no dept/unit, call it a Research Center
+        $sub = 'Research Center'; 
+    }
+
+    return (object) [
+        'primary' => $primary,
+        'icon'    => $icon,
+        'sub'     => $sub
+    ];
+}
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class, 'dept_id', 'dept_id');
