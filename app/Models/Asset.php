@@ -111,26 +111,68 @@ class Asset extends Model
 
 public function scopeApplyScopeForUser($query, $user)
 {
-    // Admin & Auditor: see all
     if (in_array((int)$user->role_id, [1, 3])) {
         return $query;
     }
 
-    // Staff: scoped by hierarchy priority
     return $query->where(function($q) use ($user) {
+        // 1. UNIT STAFF: See only their unit.
         if ($user->unit_id) {
             $q->where('current_unit_id', $user->unit_id);
-        } elseif ($user->department_id) {
-            $q->where('current_dept_id', $user->department_id);
-        } elseif ($user->institute_id) {
+        } 
+        
+        // 2. DEPT STAFF: See Dept assets, but EXCLUDE assets assigned to sub-units.
+        elseif ($user->department_id) {
+            $q->where('current_dept_id', $user->department_id)
+              ->whereNull('current_unit_id');
+        } 
+        
+        // 3. INSTITUTE STAFF: See only their institute.
+        elseif ($user->institute_id) {
             $q->where('current_institute_id', $user->institute_id);
-        } elseif ($user->office_id) {
-            $q->where('current_office_id', $user->office_id);
-        } elseif ($user->faculty_id) {
-            $q->where('current_faculty_id', $user->faculty_id);
-        } else {
-            $q->whereRaw('1 = 0'); // No assignment, no access
+        } 
+        
+        // 4. OFFICE STAFF: See Office assets, but EXCLUDE assets assigned to sub-units.
+        elseif ($user->office_id) {
+            $q->where('current_office_id', $user->office_id)
+              ->whereNull('current_unit_id');
+        } 
+        
+        // 5. FACULTY STAFF: See Faculty assets, but EXCLUDE assets assigned to sub-depts/units.
+        elseif ($user->faculty_id) {
+            $q->where('current_faculty_id', $user->faculty_id)
+              ->whereNull('current_dept_id')
+              ->whereNull('current_unit_id');
+        } 
+        
+        else {
+            $q->whereRaw('0 = 1'); 
         }
     });
+}
+
+// app/Models/Asset.php
+
+/**
+ * Accessor: Get Status based on the linked Submission.
+ * This uses your existing 'submissionItem' relationship.
+ */
+public function getComputedStatusAttribute()
+{
+    // Reach through: Asset -> SubmissionItem -> Submission
+    $submission = $this->submissionItem?->submission;
+
+    // 1. If no submission is linked yet, show the DB status
+    if (!$submission) {
+        return $this->status; 
+    }
+
+    // 2. If the submission is NOT approved, its status overrides the asset status
+    if ($submission->status !== 'approved') {
+        return $submission->status; // Returns 'pending' or 'rejected'
+    }
+
+    // 3. If approved, use the actual asset lifecycle (available, assigned, etc.)
+    return $this->status;
 }
 }

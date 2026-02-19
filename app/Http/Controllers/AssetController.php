@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Asset, Category, Subcategory, Faculty, Department, Office, Unit, Institute, Audit, Submission};
+use App\Models\{Asset, Category, Subcategory, Faculty, Department, Office, Unit, Institute, Audit, Submission, SubmissionItem};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB, Storage};
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -20,27 +20,33 @@ class AssetController extends Controller
 
     // --- 1. DEFINE COMMON FILTER LOGIC ---
     $applyFilters = function ($query) use ($request) {
+        $modelTable = $query->getModel()->getTable();
+
+        // A. Handle Text Search
         if ($request->filled('search')) {
             $search = trim($request->search);
-            // Detect which model/table we are currently filtering
-            $modelTable = $query->getModel()->getTable();
             $query->where(function ($q) use ($search, $modelTable) {
                 $q->where('item_name', 'like', "%{$search}%")
-                  ->orWhere('serial_number', 'like', "%{$search}%")
-                  ->orWhere('submission_id', 'like', "%{$search}%");
+                  ->orWhere('serial_number', 'like', "%{$search}%");
+                
                 if ($modelTable === 'assets') {
-                $q->orWhere('asset_tag', 'like', "%{$search}%");
-            }
+                    $q->orWhere('asset_tag', 'like', "%{$search}%");
+                }
             });
         }
 
-        if ($request->filled('faculty_id'))   $query->where('faculty_id', $request->faculty_id);
-        if ($request->filled('dept_id'))      $query->where('dept_id', $request->dept_id);
-        if ($request->filled('office_id'))    $query->where('office_id', $request->office_id);
-        if ($request->filled('unit_id'))      $query->where('unit_id', $request->unit_id);
-        if ($request->filled('institute_id')) $query->where('institute_id', $request->institute_id);
-        if ($request->filled('category_id'))  $query->where('category_id', $request->category_id);
-        if ($request->filled('subcategory_id')) $query->where('subcategory_id', $request->subcategory_id);
+        // B. Context-Aware Hierarchy Filters
+        // Detect if we are filtering Submissions/Items or Assets
+        $isSubContext = in_array($modelTable, ['submissions', 'submission_items']);
+        $this->applyHierarchyFilters($query, $request, $isSubContext);
+
+        // C. Handle Categories
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+        if ($request->filled('subcategory_id')) {
+            $query->where('subcategory_id', $request->subcategory_id);
+        }
         
         return $query;
     };
@@ -50,33 +56,36 @@ class AssetController extends Controller
         ((int)$user->role_id === 3) || 
         ((int)$user->role_id === 1 && request()->routeIs('admin.approved_items.index'))
     ) {
+        // Base Query
         $query = Submission::with(['items', 'submittedBy.profile', 'reviewedBy.profile'])
             ->whereIn('status', ['approved', 'rejected']);
 
+        // Filter the Submissions directly using the helper
+        $applyFilters($query);
+
+        // Specific ID Search for Submissions
         if ($request->filled('search') && is_numeric($request->search)) {
             $query->where('submission_id', $request->search);
         }
 
-        $query->whereHas('items', function ($iq) use ($applyFilters) {
-            $applyFilters($iq);
-        });
-
-        // --- START: GLOBAL STATS CALCULATION ---
-        // We clone the query so we don't mess up the pagination later
+        // --- GLOBAL STATS CALCULATION (Filtered) ---
         $statsQuery = clone $query;
-        $fullCollection = $statsQuery->get(); // Get all filtered records for math
 
-        $extraData['totalItemsCount'] = $fullCollection->sum(fn($s) => $s->items->count());
-        $extraData['totalValue'] = $fullCollection->sum(fn($s) => $s->items->sum(fn($i) => ($i->cost ?? 0) * ($i->quantity ?? 1)));
-        
-        // Breakdown counts across ALL pages
-        $extraData['countNew'] = $fullCollection->where('submission_type', 'new_purchase')->count();
-        $extraData['countTransfer'] = $fullCollection->where('submission_type', 'transfer')->count();
-        $extraData['countRepair'] = $fullCollection->where('submission_type', 'maintenance')->count();
-        $extraData['countDisposal'] = $fullCollection->where('submission_type', 'disposal')->count();
+        $extraData['totalItemsCount'] = SubmissionItem::whereIn('submission_id', $statsQuery->select('submission_id'))
+            ->sum('quantity');
 
-        $submissions = $query->latest('submission_id')->paginate(15)->withQueryString();
-        // --- END: GLOBAL STATS CALCULATION ---
+        $extraData['totalValue'] = SubmissionItem::whereIn('submission_id', $statsQuery->select('submission_id'))
+            ->selectRaw('SUM(cost * quantity) as total')
+            ->value('total') ?? 0;
+
+        $typeCounts = (clone $query)->selectRaw('submission_type, count(*) as count')
+            ->groupBy('submission_type')
+            ->pluck('count', 'submission_type');
+
+        $extraData['countNew']      = $typeCounts['new_purchase'] ?? 0;
+        $extraData['countTransfer'] = $typeCounts['transfer'] ?? 0;
+        $extraData['countRepair']   = $typeCounts['maintenance'] ?? 0;
+        $extraData['countDisposal'] = $typeCounts['disposal'] ?? 0;
 
         $submissions = $query->latest('submission_id')->paginate(15)->withQueryString();
 
@@ -86,32 +95,29 @@ class AssetController extends Controller
             default => abort(403),
         };
         
-        // Pass totalItems and totalValue to the view
-        return view($view, array_merge(
-            compact('submissions'), $extraData, $dropdownData));
-            }
+        return view($view, array_merge(compact('submissions'), $extraData, $dropdownData));
+    }
 
-            // --- 3. ADMIN & STAFF ROLES (Asset-Centric, for /assets routes) ---
-            $assetQuery = Asset::with([
-                'category', 'subcategory', 'faculty', 'department', 'office', 'unit', 'institute'
-            ]);
+    // --- 3. ADMIN & STAFF ROLES (Asset-Centric) ---
+    $assetQuery = Asset::with([
+        'category', 'subcategory', 'faculty', 'department', 'office', 'unit', 'institute'
+    ])->applyScopeForUser($user);
 
-            // --- 3. ADMIN & STAFF ROLES (Asset-Centric) ---
-            $assetQuery = Asset::with([
-                'category', 'subcategory', 'faculty', 'department', 'office', 'unit', 'institute'
-            ])->applyScopeForUser($user); // Updated: Chain directly to the query
+    $applyFilters($assetQuery);
 
-            $applyFilters($assetQuery);
+    $extraData['subcategorySummary'] = (clone $assetQuery)
+        ->join('subcategories', 'assets.subcategory_id', '=', 'subcategories.subcategory_id')
+        ->select('subcategories.subcategory_name as name', DB::raw('SUM(assets.quantity) as total_qty'))
+        ->groupBy('subcategories.subcategory_name')
+        ->reorder()
+        ->get();
 
-            $assets = $assetQuery->latest('updated_at')->paginate(20)->withQueryString();
+    $assets = $assetQuery->latest('assets.updated_at')->paginate(20)->withQueryString();
 
-            // Staff Extras
-            if ((int)$user->role_id === 2) {
-                $extraData['stats'] = $this->getAssetStats($user);
-                
-                // Updated: Call scope directly from the Model class
-                $extraData['totalItems'] = Asset::applyScopeForUser($user)->sum('quantity');
-            }
+    if ((int)$user->role_id === 2) {
+        $extraData['stats'] = $this->getAssetStats($user);
+        $extraData['totalItems'] = Asset::applyScopeForUser($user)->sum('quantity');
+    }
 
     $view = match ((int)$user->role_id) {
         1 => 'admin.manage_assets.assets',
@@ -210,7 +216,7 @@ class AssetController extends Controller
             'category_id'       => 'required|exists:categories,category_id',
             'subcategory_id'    => 'nullable|exists:subcategories,subcategory_id',
             'quantity'          => 'required|integer|min:1',
-            'unit_cost'         => 'required|numeric|min:0',
+            'cost'         => 'required|numeric|min:0',
             'purchase_date'     => 'nullable|date',
             'status'            => 'required|in:available,assigned,maintenance,retired',
             'current_faculty_id'   => 'nullable|exists:faculties,faculty_id',
@@ -265,7 +271,7 @@ class AssetController extends Controller
             'category_id'       => 'required|exists:categories,category_id',
             'subcategory_id'    => 'nullable|exists:subcategories,subcategory_id',
             'quantity'          => 'required|integer|min:1',
-            'unit_cost'         => 'required|numeric|min:0',
+            'cost'         => 'required|numeric|min:0',
             'purchase_date'     => 'nullable|date',
             'status'            => 'required|in:available,assigned,maintenance,retired',
             'current_faculty_id'   => 'nullable|exists:faculties,faculty_id',
@@ -390,14 +396,58 @@ class AssetController extends Controller
     // ============================================
 
 
-    private function applyHierarchyFilters($query, Request $request): void
-    {
-        if ($request->filled('faculty_id'))   $query->where('current_faculty_id', $request->faculty_id);
-        if ($request->filled('dept_id'))      $query->where('current_dept_id', $request->dept_id);
-        if ($request->filled('office_id'))    $query->where('current_office_id', $request->office_id);
-        if ($request->filled('unit_id'))      $query->where('current_unit_id', $request->unit_id);
-        if ($request->filled('institute_id')) $query->where('current_institute_id', $request->institute_id);
+    private function applyHierarchyFilters($query, Request $request, bool $isSubmission = false): void
+{
+    // Define the column prefix (Assets use 'current_', Submissions/Users usually don't)
+    $p = $isSubmission ? '' : 'current_';
+
+    // ACADEMIC BRANCH
+    if ($request->filled('faculty_id')) {
+        $this->applyHierarchyConstraint($query, $p . 'faculty_id', $request->faculty_id, $isSubmission);
+        
+        // Standalone Logic: If Faculty is selected but Dept is NOT, child (Dept) must be NULL
+        if (!$request->filled('dept_id')) {
+            $this->applyHierarchyConstraint($query, $p . 'dept_id', null, $isSubmission);
+        }
     }
+    if ($request->filled('dept_id')) {
+        $this->applyHierarchyConstraint($query, $p . 'dept_id', $request->dept_id, $isSubmission);
+    }
+
+    // ADMINISTRATIVE BRANCH
+    if ($request->filled('office_id')) {
+        $this->applyHierarchyConstraint($query, $p . 'office_id', $request->office_id, $isSubmission);
+        
+        // Standalone Logic: If Office is selected but Unit is NOT, child (Unit) must be NULL
+        if (!$request->filled('unit_id')) {
+            $this->applyHierarchyConstraint($query, $p . 'unit_id', null, $isSubmission);
+        }
+    }
+    if ($request->filled('unit_id')) {
+        $this->applyHierarchyConstraint($query, $p . 'unit_id', $request->unit_id, $isSubmission);
+    }
+
+    // INDEPENDENT
+    if ($request->filled('institute_id')) {
+        $this->applyHierarchyConstraint($query, $p . 'institute_id', $request->institute_id, $isSubmission);
+    }
+}
+
+/**
+ * Switcher to handle Direct Table vs. User Relationship
+ */
+private function applyHierarchyConstraint($query, $column, $value, $isSubmission)
+{
+    if ($isSubmission) {
+        // Look into the User who made the submission
+        $query->whereHas('submittedBy', function ($q) use ($column, $value) {
+            is_null($value) ? $q->whereNull($column) : $q->where($column, $value);
+        });
+    } else {
+        // Look directly at the Assets table columns
+        is_null($value) ? $query->whereNull($column) : $query->where($column, $value);
+    }
+}
 
     private function getOrganizationalDropdownData(): array
     {

@@ -3,203 +3,349 @@
 @section('title', 'My Inventory Submissions')
 
 @section('content')
-<style>
-    :root {
-        --med-navy: #0f172a; --med-blue: #3b82f6; --med-border: #e2e8f0;
-    }
-
-    /* Restoring your exact Alert Styling */
-    .alert-custom {
-        border-radius: 12px; border: none; font-size: 0.85rem; font-weight: 600;
-        display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .alert-success-custom { background: #ecfdf5; color: #065f46; border-left: 5px solid #10b981; }
-    .alert-error-custom { background: #fef2f2; color: #991b1b; border-left: 5px solid #ef4444; }
-
-    .submission-list-item { transition: all 0.2s ease; border-bottom: 1px solid var(--med-border); }
-    .submission-list-item:hover { background-color: #f8fafc; }
-
-    .action-container { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn-circle {
-        width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-        border-radius: 50%; border: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        text-decoration: none;
-    }
-    .btn-v { background: #eff6ff; color: #3b82f6; } .btn-v:hover { background: #3b82f6; color: #fff; transform: scale(1.1); }
-    .btn-e { background: #f1f5f9; color: #0f172a; } .btn-e:hover { background: #0f172a; color: #fff; transform: scale(1.1); }
-    .btn-d { background: #fef2f2; color: #ef4444; } .btn-d:hover { background: #ef4444; color: #fff; transform: scale(1.1); }
-
-    .status-pill { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 5px 12px; border-radius: 50px; border: 1px solid transparent; white-space: nowrap; }
-    .bg-pending { background: #fffbeb; color: #92400e; border-color: #fef3c7; }
-    .bg-approved { background: #ecfdf5; color: #065f46; border-color: #d1fae5; }
-    .bg-rejected { background: #fef2f2; color: #991b1b; border-color: #fee2e2; }
-    
-    .asset-tag-box { font-family: 'Monaco', 'Consolas', monospace; font-size: 0.75rem; background: #f8fafc; border: 1px solid #dee2e6; padding: 3px 10px; border-radius: 6px; color: #475569; font-weight: 700; }
-    .awaiting { border-style: dashed; color: #94a3b8; font-weight: 400; font-style: italic; }
-
-    .search-wrapper { background: #f1f5f9; border-radius: 50px; padding: 4px 20px; display: flex; align-items: center; border: 2px solid transparent; transition: 0.3s; flex: 1; }
-    .search-wrapper:focus-within { background: #fff; border-color: var(--med-blue); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05); }
-    .search-wrapper input { border: none; background: transparent; padding: 8px; width: 100%; outline: none; font-size: 0.9rem; }
-
-    /* Mobile Layout Fixes */
-    .mobile-submission-card { background: white; border: 1px solid var(--med-border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
-    .mobile-card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--med-border); }
-    .mobile-card-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; font-size: 0.875rem; }
-    .mobile-label { color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
-    .mobile-value { color: #1e293b; font-weight: 600; text-align: right; }
-    .mobile-actions { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--med-border); }
-
-    @media (max-width: 991px) {
-        .table-responsive { display: none; }
-        .mobile-view { display: block !important; }
-        .filter-buttons { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 5px; }
-    }
-</style>
-
-<div class="container-fluid px-3 px-lg-4 py-4">
-    {{-- SESSION MESSAGES --}}
-    @if(session('success'))
-        <div class="alert alert-custom alert-success-custom alert-dismissible fade show mb-4 shadow-sm" role="alert">
-            <i class="fas fa-check-circle me-3 fa-lg"></i>
-            <div>{{ session('success') }}</div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="min-h-screen bg-slate-50 py-8">
+    {{-- Standardized container to prevent edge-to-edge stretching --}}
+    {{-- SESSION FEEDBACK --}}
+    @if(session('success') || session('error'))
+        @php 
+            $isSuccess = session('success');
+            $theme = $isSuccess ? 'emerald' : 'red';
+            $icon = $isSuccess ? 'check-circle' : 'exclamation-triangle';
+        @endphp
+        <div id="session-alert" class="mb-6 flex items-center justify-between p-4 rounded-2xl bg-{{ $theme }}-50 border border-{{ $theme }}-100 shadow-sm transition-all duration-500">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-{{ $theme }}-600 flex items-center justify-center shrink-0">
+                    <i class="fas fa-{{ $icon }} text-white"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black text-{{ $theme }}-900 mb-0.5">{{ $isSuccess ? 'Success' : 'Alert' }}</h4>
+                    <p class="text-xs font-bold text-{{ $theme }}-700 opacity-90 mb-0 leading-tight">
+                        {{ session('success') ?? session('error') }}
+                    </p>
+                </div>
+            </div>
+            <button type="button" class="text-{{ $theme }}-400 hover:text-{{ $theme }}-600 transition-colors" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
     @endif
+    <div class="container mx-auto px-4 max-w-7xl">
+        
+        {{-- 1. HEADER & ACTION BAR --}}
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+            <div class="flex items-center gap-4">
+                {{-- BACK BUTTON --}}
+                <a href="{{ route('staff.dashboard') }}" 
+                   class="flex items-center justify-center w-11 h-11 rounded-xl border border-slate-200 bg-white text-slate-400 hover:text-emerald-600 hover:border-emerald-100 transition-all shrink-0 group shadow-sm">
+                    <i class="fas fa-chevron-left text-sm group-hover:-translate-x-0.5 transition-transform"></i>
+                </a>
 
-    {{-- Fixed Header: Log and Button aligned properly --}}
-    <div class="d-flex flex-row justify-content-between align-items-end mb-4">
-        <div>
-            <h6 class="text-primary fw-bold text-uppercase mb-1 small d-none d-md-block" style="letter-spacing: 1px;">College Inventory Log</h6>
-            <h2 class="fw-bold text-dark mb-0 h4">My Submissions</h2>
-        </div>
-        <a href="{{ route('staff.submissions.create') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm w-auto">
-            <i class="fas fa-plus-circle me-1"></i> <span class="d-none d-sm-inline">New Entry</span><span class="d-inline d-sm-none">New</span>
-        </a>
-    </div>
-
-    {{-- Search & Filter --}}
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-3">
-            <form action="{{ route('staff.submissions.index') }}" method="GET" class="d-flex flex-column gap-3">
-                <div class="d-flex flex-wrap gap-2 filter-buttons">
-                    <a href="{{ route('staff.submissions.index') }}" class="btn btn-sm rounded-pill px-3 {{ !request('status') ? 'btn-dark shadow' : 'btn-light border text-muted' }}">All</a>
-                    @foreach(['pending' => 'warning', 'approved' => 'success', 'rejected' => 'danger'] as $status => $color)
-                        <a href="{{ route('staff.submissions.index', ['status' => $status]) }}" 
-                           class="btn btn-sm rounded-pill px-3 {{ request('status') == $status ? "btn-$color fw-bold ".($color != 'warning' ? 'text-white' : '') : 'btn-light border text-muted' }}">
-                           {{ ucfirst($status) }}
-                        </a>
-                    @endforeach
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                        </span>
+                        <h6 class="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate">
+                            College of Medicine Inventory
+                        </h6>
+                    </div>
+                    <h1 class="text-xl md:text-3xl font-black text-slate-900 tracking-tight truncate">
+                        My Submissions
+                    </h1>
                 </div>
-                <div class="search-wrapper">
-                    <i class="fas fa-search text-muted me-2"></i>
-                    <input type="text" name="search" placeholder="Search Reference or Item..." value="{{ request('search') }}">
-                    <button type="submit" class="btn btn-sm btn-dark rounded-pill px-3 ms-2">Find</button>
-                </div>
-            </form>
+            </div>
+            
+            {{-- NEW ENTRY BUTTON (Auditor-Style CTA) --}}
+            <a href="{{ route('staff.submissions.create') }}" 
+               class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-200 transition-all transform hover:-translate-y-0.5 active:scale-95">
+                <i class="fas fa-plus-circle me-2"></i>
+                <span>New Entry</span>
+            </a>
         </div>
-    </div>
 
-    {{-- Desktop Table --}}
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden d-none d-lg-block">
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 py-3 text-uppercase small fw-bolder text-muted">Ref ID</th>
-                        <th class="py-3 text-uppercase small fw-bolder text-muted">Inventory Item</th>
-                        <th class="py-3 text-uppercase small fw-bolder text-muted">Asset Tag</th>
-                        <th class="py-3 text-uppercase small fw-bolder text-muted">Valuation</th>
-                        <th class="py-3 text-uppercase small fw-bolder text-muted text-center">Status</th>
-                        <th class="pe-4 py-3 text-uppercase small fw-bolder text-muted text-center">Operations</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($submissions as $sub)
+        {{-- 2. SEARCH & STATUS FILTERS (Auditor Style) --}}
+        <div class="mb-8">
+            <div class="bg-white rounded-[2rem] shadow-sm border-t-4 border-emerald-600 overflow-hidden">
+                <div class="p-6">
+                    <form action="{{ route('staff.submissions.index') }}" method="GET" class="flex flex-col gap-6">
+                        {{-- Search Bar --}}
+                        <div class="flex items-center bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+                            <span class="pl-4 pr-2 text-slate-400"><i class="fas fa-search"></i></span>
+                            <input type="text" name="search" 
+                                class="w-full border-0 bg-transparent py-3.5 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:ring-0" 
+                                placeholder="Search Reference or Item Name..." 
+                                value="{{ request('search') }}">
+                            @if(request('search'))
+                                <a href="{{ route('staff.submissions.index') }}" class="px-3 text-slate-300 hover:text-rose-500 transition-colors">
+                                    <i class="fas fa-times-circle text-lg"></i>
+                                </a>
+                            @endif
+                            <button type="submit" class="bg-slate-900 text-white px-8 py-3.5 font-black text-xs uppercase tracking-widest hover:bg-emerald-600 transition-colors">
+                                SEARCH
+                            </button>
+                        </div>
+
+                        {{-- Status Pill Filter --}}
+                        <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest me-2">Filter Status:</span>
+                            <a href="{{ route('staff.submissions.index') }}" 
+                               class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all {{ !request('status') ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200' }}">
+                                All
+                            </a>
+                            @foreach(['pending' => 'amber', 'approved' => 'emerald', 'rejected' => 'rose'] as $status => $color)
+                                <a href="{{ route('staff.submissions.index', ['status' => $status]) }}" 
+                                   class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all
+                                   {{ request('status') == $status 
+                                        ? "bg-$color-500 text-white shadow-md shadow-$color-100" 
+                                        : "bg-$color-50 text-$color-600 hover:bg-$color-100 border border-$color-100" }}">
+                                    {{ $status }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {{-- 3. DATA TABLE --}}
+        <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 text-white">
+                            <th class="ps-8 py-4 text-[10px] font-black uppercase tracking-widest">Ref Number</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Inventory Item</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-center">Asset Tag</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest">Valuation</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
+                            <th class="px-4 py-4 text-[10px] font-black uppercase tracking-widest text-center">Details</th>
+                            <th class="pe-8 py-4 text-[10px] font-black uppercase tracking-widest text-end">Manage</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($submissions as $sub)
+                            @php
+                                $firstItem = $sub->items->first();
+                                $count = $sub->items->count();
+                                $statusStyles = [
+                                    'pending' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                    'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                    'rejected' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                ];
+                            @endphp
+                            <tr class="hover:bg-emerald-50/30 transition-colors group">
+                                <td class="ps-8 py-5 align-middle whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="font-black text-emerald-600 text-xs italic leading-none">
+                                            #AUD-{{ str_pad($sub->submission_id, 5, '0', STR_PAD_LEFT) }}
+                                        </span>
+                                        <span class="text-[10px] font-bold text-slate-600 not-italic mt-1 uppercase tracking-tight">
+                                            {{ $sub->created_at->format('M d, Y') }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-5 align-middle">
+                                    <div class="text-[11px] font-black text-slate-800 uppercase leading-none">
+                                        {{ Str::limit($firstItem->item_name ?? 'N/A', 35) }}
+                                    </div>
+                                    @if($count > 1) 
+                                        <div class="inline-block mt-1 text-[9px] font-black px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded">
+                                            + {{ $count - 1 }} OTHER ITEMS
+                                        </div> 
+                                    @endif
+                                </td>
+                               <td class="px-4 py-5 align-middle text-center">
+                                    @php 
+                                        $firstItem = $sub->items->first();
+                                        $count = $sub->items->count();
+                                        $submissionType = $sub->submission_type;
+                                        $tag = $firstItem ? $firstItem->generated_tag : null;
+                                    @endphp
+
+                                    @if($firstItem)
+                                        <div class="relative inline-block">
+                                            
+                                            {{-- CASE 1: The Model explicitly returned the Pending string --}}
+                                            @if($tag === 'PENDING_ASSET_TAG')
+                                                <code class="px-2 py-1 rounded-2 bg-slate-100 text-slate-500 fw-bold border border-slate-300 border-dashed d-inline-block mb-1 shadow-sm" 
+                                                    style="font-size:0.65rem; letter-spacing: 0.05em;">
+                                                    <i class="fas fa-clock me-1 opacity-50"></i>
+                                                    PENDING_ASSET_TAG
+                                                </code>
+
+                                            {{-- CASE 2: The Model explicitly returned the Linked error --}}
+                                            @elseif($tag === 'ASSET_NOT_LINKED')
+                                                <code class="px-2 py-1 rounded-2 bg-amber-50 text-amber-700 fw-bold border border-amber-200 d-inline-block mb-1 shadow-sm" 
+                                                    style="font-size:0.65rem;">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    ASSET_TAG_MISSING
+                                                </code>
+
+                                            {{-- CASE 3: The Model returned a real generated Tag --}}
+                                            @else
+                                                <code class="px-2 py-1 rounded-2 {{ $submissionType === 'new_purchase' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200' }} fw-black border d-inline-block mb-1 shadow-sm" 
+                                                    style="font-size:0.7rem; border-width: 1px;">
+                                                    <i class="fas {{ $submissionType === 'new_purchase' ? 'fa-check-decagram' : 'fa-tools' }} me-1"></i>
+                                                    {{ $tag ?? 'UNKNOWN_TAG' }}
+                                                </code>
+                                            @endif
+
+                                            {{-- Batch Indicator --}}
+                                            @if($count > 1)
+                                                <span class="absolute -top-2 -right-3 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-slate-800 text-white text-[8px] font-bold rounded-full border-2 border-white shadow-sm z-10" 
+                                                    title="This submission contains {{ $count }} items">
+                                                    +{{ $count - 1 }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-slate-300 italic text-[10px] tracking-widest">NO_ITEMS_FOUND</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-5 align-middle text-xs font-black text-slate-900">
+                                    ₦{{ number_format($sub->total_value, 2) }}
+                                </td>
+                                
+                                <td class="px-4 py-5 align-middle text-center whitespace-nowrap">
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        {{-- Overall Submission Status Badge --}}
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border shadow-sm {{ $statusStyles[$sub->status] ?? 'bg-slate-50' }}">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-current me-1.5 {{ $sub->status === 'pending' ? 'animate-pulse' : '' }}"></span>
+                                            {{ $sub->status }}
+                                        </span>
+                                        @if($sub->items->count() > 0)
+                                            <div class="flex items-center gap-1">
+                                                @php
+                                                    $approvedCount = $sub->items->where('status', 'approved')->count();
+                                                    $rejectedCount = $sub->items->where('status', 'rejected')->count();
+                                                @endphp
+
+                                                @if($approvedCount > 0)
+                                                    <span class="flex items-center justify-center bg-emerald-100 text-emerald-700 text-[8px] font-black w-5 h-5 rounded-full border border-emerald-200" title="Approved Items">
+                                                        {{ $approvedCount }}
+                                                    </span>
+                                                @endif
+
+                                                @if($rejectedCount > 0)
+                                                    <span class="flex items-center justify-center bg-rose-100 text-rose-700 text-[8px] font-black w-5 h-5 rounded-full border border-rose-200" title="Rejected Items">
+                                                        {{ $rejectedCount }}
+                                                    </span>
+                                                @endif
+                                                
+                                                {{-- If it's a batch and some are still pending, show a small gray indicator --}}
+                                                @php $pendingItems = $sub->items->where('status', 'pending')->count(); @endphp
+                                                @if($pendingItems > 0 && $sub->status !== 'pending')
+                                                    <span class="text-[8px] font-bold text-slate-400 px-1 italic">
+                                                        +{{ $pendingItems }} pending
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td class="px-4 py-5 align-middle text-center">
+                                    <a href="{{ route('staff.submissions.show', $sub->submission_id) }}" 
+                                    class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-emerald-600 hover:text-white transition-all duration-200">
+                                        <i class="fas fa-file-alt me-2 text-[10px]"></i>
+                                        <span class="text-[10px] font-black uppercase tracking-wider">Details</span>
+                                    </a>
+                                </td>
+                                <td class="pe-8 py-5 align-middle text-right">
+                                    @if(in_array($sub->status, ['pending', 'rejected']))
+                                        <div class="flex justify-end gap-2">
+                                            <a href="{{ route('staff.submissions.edit', $sub->submission_id) }}" 
+                                            class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-[10px] font-bold hover:bg-slate-900 hover:text-white transition-all">
+                                                EDIT
+                                            </a>
+                                            <form action="{{ route('staff.submissions.destroy', $sub->submission_id) }}" method="POST" class="inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="px-3 py-1.5 rounded-lg border border-rose-100 bg-rose-50 text-rose-600 text-[10px] font-bold hover:bg-rose-600 hover:text-white transition-all">
+                                                    DELETE
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                            <i class="fas fa-lock text-[9px]"></i>
+                                            <span class="text-[9px] font-black uppercase tracking-widest">Read Only</span>
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="py-20 text-center font-black text-slate-300 uppercase text-xs">No inventory records found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- MOBILE VIEW --}}
+            <div class="md:hidden divide-y divide-slate-100">
+                @foreach($submissions as $sub)
                     @php
                         $firstItem = $sub->items->first();
-                        $count = $sub->items->count();
                         $totalVal = $sub->items->sum(fn($i) => $i->cost * $i->quantity);
                     @endphp
-                    <tr class="submission-list-item">
-                        <td class="ps-4">
-                            <span class="fw-bold text-dark">#AUD-{{ str_pad($sub->submission_id, 5, '0', STR_PAD_LEFT) }}</span>
-                            <div class="text-muted small">{{ $sub->created_at->format('M d, Y') }}</div>
-                        </td>
-                        <td>
-                            <div class="fw-bold text-dark small">{{ Str::limit($firstItem->item_name ?? 'N/A', 35) }}</div>
-                            @if($count > 1) <div class="text-primary fw-bold" style="font-size: 0.6rem;">+ {{ $count - 1 }} Other items</div> @endif
-                        </td>
-                        <td>
-                            @if($sub->status == 'approved' && $firstItem?->asset?->asset_tag)
-                                <span class="asset-tag-box">{{ $firstItem->asset->asset_tag }}</span>
-                            @else
-                                <span class="asset-tag-box awaiting">Awaiting Tag</span>
-                            @endif
-                        </td>
-                        <td><div class="fw-bold text-dark">₦{{ number_format($totalVal, 2) }}</div></td>
-                        <td class="text-center"><span class="status-pill bg-{{ $sub->status }}">{{ $sub->status }}</span></td>
-                        <td class="pe-4">
-                            <div class="action-container">
-                                <a href="{{ route('staff.submissions.show', $sub->submission_id) }}" class="btn-circle btn-v"><i class="fas fa-eye small"></i></a>
-                                @if(in_array($sub->status, ['pending', 'rejected']))
-                                    <a href="{{ route('staff.submissions.edit', $sub->submission_id) }}" class="btn-circle btn-e"><i class="fas fa-pencil-alt small"></i></a>
-                                    {{-- RESTORED DELETE BUTTON --}}
-                                    <form action="{{ route('staff.submissions.destroy', $sub->submission_id) }}" method="POST" onsubmit="return confirm('Confirm deletion of this record?');" style="display:inline;">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn-circle btn-d"><i class="fas fa-trash-alt small"></i></button>
-                                    </form>
-                                @endif
+                    <div class="p-5 relative">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="font-black text-emerald-600 text-sm italic">#AUD-{{ str_pad($sub->submission_id, 4, '0', STR_PAD_LEFT) }}</span>
+                                <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest">{{ $sub->created_at->format('d M, Y') }}</div>
                             </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="6" class="text-center py-5">No inventory records found.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black uppercase border {{ $statusStyles[$sub->status] ?? 'bg-slate-50' }}">
+                                {{ $sub->status }}
+                            </span>
+                        </div>
+                        
+                        <h3 class="text-xs font-black text-slate-800 uppercase mb-4 leading-tight">
+                            {{ Str::limit($firstItem->item_name ?? 'N/A', 40) }}
+                        </h3>
 
-    {{-- Mobile View --}}
-    <div class="mobile-view d-lg-none" style="display: none;">
-        @foreach($submissions as $sub)
-        @php
-            $firstItem = $sub->items->first();
-            $totalVal = $sub->items->sum(fn($i) => $i->cost * $i->quantity);
-        @endphp
-        <div class="mobile-submission-card shadow-sm">
-            <div class="mobile-card-header">
-                <div>
-                    <div class="fw-bold text-dark">#AUD-{{ str_pad($sub->submission_id, 5, '0', STR_PAD_LEFT) }}</div>
-                    <div class="text-muted small">{{ $sub->created_at->format('M d, Y') }}</div>
-                </div>
-                <span class="status-pill bg-{{ $sub->status }}">{{ $sub->status }}</span>
-            </div>
-            <div class="mobile-card-row">
-                <span class="mobile-label">Item</span>
-                <span class="mobile-value">{{ Str::limit($firstItem->item_name ?? 'N/A', 25) }}</span>
-            </div>
-            <div class="mobile-card-row">
-                <span class="mobile-label">Value</span>
-                <span class="mobile-value">₦{{ number_format($totalVal, 2) }}</span>
-            </div>
-            <div class="mobile-actions">
-                <a href="{{ route('staff.submissions.show', $sub->submission_id) }}" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">View</a>
-                @if(in_array($sub->status, ['pending', 'rejected']))
-                    <a href="{{ route('staff.submissions.edit', $sub->submission_id) }}" class="btn btn-sm btn-outline-dark rounded-pill flex-grow-1">Edit</a>
-                    {{-- MOBILE DELETE --}}
-                    <form action="{{ route('staff.submissions.destroy', $sub->submission_id) }}" method="POST" onsubmit="return confirm('Confirm deletion?');" class="d-inline">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"><i class="fas fa-trash-alt"></i></button>
-                    </form>
-                @endif
+                        <div class="flex items-center justify-between mb-5 px-3 py-2 bg-slate-50 rounded-xl">
+                            <span class="text-[10px] font-black text-slate-900">₦{{ number_format($totalVal, 2) }}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ $sub->items->count() }} items</span>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <a href="{{ route('staff.submissions.show', $sub->submission_id) }}" 
+                               class="flex-grow text-center bg-slate-900 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md">
+                                View Details
+                            </a>
+                            @if(in_array($sub->status, ['pending', 'rejected']))
+                                <a href="{{ route('staff.submissions.edit', $sub->submission_id) }}" class="px-4 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-600">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('staff.submissions.destroy', $sub->submission_id) }}" method="POST" onsubmit="return confirm('Confirm deletion?');" class="inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="px-4 h-full flex items-center justify-center bg-rose-50 text-rose-600 border border-rose-100 rounded-xl">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
-        @endforeach
-    </div>
 
-    <div class="mt-4">
-        {{ $submissions->appends(request()->query())->links() }}
+        {{-- PAGINATION --}}
+        <div class="mt-8">
+            {{ $submissions->links() }}
+        </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alert = document.getElementById('session-alert');
+        if (alert) {
+            // Wait 5 seconds, then fade and remove
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(() => alert.remove(), 100); // Wait for fade animation to finish
+            }, 1000);
+        }
+    });
+</script>
 @endsection

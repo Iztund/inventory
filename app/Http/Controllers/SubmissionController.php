@@ -43,7 +43,7 @@ class SubmissionController extends Controller
     }
 
     // Hierarchy filters on the submittedBy user
-    $this->applyHierarchyFilters($query, $request, 'submittedBy');
+    $this->applyHierarchyFilters($query, $request, true);
 
     // Category/Subcategory filters on items
     if ($request->filled('category_id')) {
@@ -74,15 +74,20 @@ class SubmissionController extends Controller
     // Organizational dropdowns for filters
     $dropdownData = $this->getOrganizationalDropdownData();
 
-    // Route name determines view:
-    // admin.submissions.pending -> admin.submissions.pending blade
-    // auditor.submissions.index -> auditor.submissions.index blade
-    $view = match(true) {
-        $user->role_id == 1 && request()->routeIs('admin.submissions.index') => 'admin.submissions.index',
-        $user->role_id == 1 => 'admin.submissions.index',
-        $user->role_id == 3 => 'auditor.submissions.index',
-        default => 'staff.submissions.index',
-    };
+    $sampleStatus = $submissions->first()?->status ?? $request->get('status', 'pending');
+
+// 2. Set the View based on that status
+$view = 'staff.submissions.my_submissions';
+
+if ($user->role_id == 1) {
+    $view = 'admin.submissions.index';
+} elseif ($user->role_id == 3) {
+    // If the submissions being sent to the view are 'approved', use the Registry blade
+    $view = ($sampleStatus === 'approved') 
+            ? 'auditor.approved_items.index' 
+            : 'auditor.submissions.index';
+}
+    
 
     return view($view, array_merge(compact('submissions'), $dropdownData));
 }
@@ -135,125 +140,142 @@ class SubmissionController extends Controller
     // CREATE - Staff Only
     // ============================================
     public function create()
-    {
-        $this->authorizeRole([2]);
-        $user = Auth::user();
+{
+    $this->authorizeRole([2]);
+    $user = Auth::user();
 
-        $myAssets = $this->getScopedAssetsForUser($user);
-        $categories = Category::whereIn('is_active', ['active', 1])->orderBy('category_name')->get();
-        $subcategoryMap = Subcategory::whereIn('is_active', ['active', 1])
-            ->get()
-            ->groupBy('category_id')
-            ->map(fn($items) => $items->values())
-            ->toArray();
+    // Use ONLY the scoped helper - no need for the manual $assets query
+    $myAssets = $this->getScopedAssetsForUser($user);
 
-        return view('staff.submissions.new_submission', compact('myAssets', 'categories', 'subcategoryMap'));
-    }
+    $categories = Category::whereIn('is_active', ['active', 1])
+        ->orderBy('category_name')
+        ->get();
+
+    $subcategoryMap = Subcategory::whereIn('is_active', ['active', 1])
+        ->get()
+        ->groupBy('category_id')
+        ->map(fn($items) => $items->values())
+        ->toArray();
+
+    // Pass 'myAssets' as 'assets' to the view so your existing @foreach works
+    return view('staff.submissions.new_submission', [
+        'assets' => $myAssets, 
+        'categories' => $categories, 
+        'subcategoryMap' => $subcategoryMap
+    ]);
+}
 
     // ============================================
     // STORE - Staff Only
     // ============================================
     public function store(Request $request)
-    {
-        $this->authorizeRole([2]);
-        $userId = Auth::id();
+{
+    $this->authorizeRole([2]);
+    $userId = Auth::id();
+    $user = Auth::user();
 
-        $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.submission_type' => 'required|string',
-            'items.*.category_id'     => 'required|exists:categories,category_id',
-            'items.*.subcategory_id'  => 'required|exists:subcategories,subcategory_id',
-            'items.*.item_name'       => 'required|string',
-            'items.*.quantity'        => 'required|integer|min:1',
-            'items.*.cost'            => 'nullable|numeric',
-            'items.*.funding_source_per_item' => 'nullable|string',
-            'items.*.documents'       => 'nullable|array',
-            'items.*.documents.*'     => 'file|mimes:pdf,jpg,jpeg,png|max:8048',
-            'funding_source'          => 'nullable|string',
-            'notes'                   => 'nullable|string',
-            'summary'                 => 'nullable|string',
-            'items.*.serial_number'   => 'nullable|string',
-            'items.*.condition'       => 'nullable|string',
-            'items.*.item_notes'      => 'nullable|string',
-            'items.*.asset_id'        => 'nullable|exists:assets,asset_id',
-        ]);
+    // 1. Validate
+    $request->validate([
+        'items' => 'required|array|min:1',
+        'items.*.submission_type' => 'required|string',
+        'items.*.category_id'     => 'required|exists:categories,category_id',
+        'items.*.subcategory_id'  => 'required|exists:subcategories,subcategory_id',
+        'items.*.item_name'       => 'required|string',
+        'items.*.quantity'        => 'required|integer|min:1',
+        'items.*.cost'            => 'nullable|numeric|min:0',
+        'items.*.documents'       => 'nullable|array',
+        'items.*.documents.*'     => 'file|mimes:pdf,jpg,jpeg,png|max:10240',
+    ]);
 
-        try {
-            return DB::transaction(function () use ($request, $userId) {
-                $user = Auth::user();
+    try {
+        DB::transaction(function () use ($request, $userId, $user) {
+            // Create the main submission record
+            $submission = Submission::create([
+                'submitted_by_user_id' => $userId,
+                'submission_type'      => $request->items[0]['submission_type'] ?? 'new_purchase',
+                'status'               => 'pending',
+                'notes'                => $request->notes,
+                'summary'              => $request->summary,
+                'submitted_at'         => now(),
+            ]);
 
-                $submission = Submission::create([
-                    'submitted_by_user_id' => $userId,
-                    'submission_type'      => $request->items[0]['submission_type'] ?? 'audit',
-                    'funding_source'       => $request->funding_source,
-                    'status'               => 'pending',
-                    'notes'                => $request->notes,
-                    'summary'              => $request->summary,
-                    'submitted_at'         => now(),
-                ]);
+            // Loop through items
+            foreach ($request->items as $index => $itemData) {
+                
+                // --- FILE UPLOAD LOGIC (FIXED) ---
+                // --- FILE UPLOAD LOGIC ---
+                $itemFileDetails = [];
 
-                foreach ($request->items as $index => $itemData) {
-                    $assetId = $itemData['asset_id'] ?? null;
-                    $itemFilePaths = [];
-
-                    if ($request->hasFile("items.$index.documents")) {
-                        foreach ($request->file("items.$index.documents") as $file) {
-                            $path = $file->store('audit_docs/' . $submission->submission_id, 'public');
-                            $itemFilePaths[] = $path;
-                        }
+                // Use dot notation to target the specific row's documents
+                if ($request->hasFile("items.$index.documents")) {
+                    $files = $request->file("items.$index.documents");
+                    
+                    foreach ($files as $file) {
+                        // Store the file and get the path
+                        $path = $file->store('audit_docs/' . $submission->submission_id, 'public');
+                        
+                        $itemFileDetails[] = [
+                            'original_name' => $file->getClientOriginalName(),
+                            'path'          => $path
+                        ];
                     }
+                }
+                // If $itemFileDetails is still empty here, the files aren't reaching the server at all.
 
-                    if ($itemData['submission_type'] === 'new_purchase') {
-                        $serial = $itemData['serial_number'] ?? 'TEMP-' . strtoupper(uniqid());
-                        $existingAsset = Asset::where('serial_number', $serial)
-                            ->where('status', '!=', 'rejected')
-                            ->first();
+                // --- ASSET CREATION ---
+                $assetId = $itemData['asset_id'] ?? null;
+                $asset = null;
 
-                        if ($existingAsset) {
-                            $assetId = $existingAsset->asset_id;
-                        } else {
-                            $asset = Asset::create([
-                                'serial_number'        => $serial,
-                                'item_name'            => $itemData['item_name'],
-                                'purchase_price'       => $itemData['cost'] ?? 0,
-                                'status'               => 'available',
-                                'category_id'          => $itemData['category_id'],
-                                'subcategory_id'       => $itemData['subcategory_id'],
-                                'quantity'             => $itemData['quantity'],
-                                'current_faculty_id'   => $user->faculty_id,
-                                'current_dept_id'      => $user->department_id,
-                                'current_office_id'    => $user->office_id,
-                                'current_unit_id'      => $user->unit_id,
-                                'current_institute_id' => $user->institute_id,
-                            ]);
-                            $assetId = $asset->asset_id;
-                        }
-                    }
+                if ($itemData['submission_type'] === 'new_purchase') {
+                    $serial = !empty($itemData['serial_number']) 
+                        ? $itemData['serial_number'] 
+                        : 'TEMP-' . strtoupper(uniqid()) . '-' . $index;
 
-                    $submission->items()->create([
-                        'asset_id'                => $assetId,
-                        'category_id'             => $itemData['category_id'],
-                        'subcategory_id'          => $itemData['subcategory_id'],
-                        'condition'               => $itemData['condition'] ?? null,
-                        'item_notes'              => $itemData['item_notes'] ?? null,
-                        'item_name'               => $itemData['item_name'],
-                        'cost'                    => $itemData['cost'] ?? 0,
-                        'serial_number'           => $itemData['serial_number'] ?? null,
-                        'quantity'                => $itemData['quantity'],
-                        'funding_source_per_item' => $itemData['funding_source_per_item'] ?? $request->funding_source,
-                        'document_path'           => json_encode($itemFilePaths),
+                    $asset = Asset::create([
+                        'serial_number'        => $serial,
+                        'item_name'            => $itemData['item_name'],
+                        'purchase_price'       => $itemData['cost'] ?? 0,
+                        'status'               => 'available',
+                        'category_id'          => $itemData['category_id'],
+                        'subcategory_id'       => $itemData['subcategory_id'],
+                        'quantity'             => $itemData['quantity'],
+                        'current_faculty_id'   => $user->faculty_id,
+                        'current_dept_id'      => $user->department_id,
+                        'current_office_id'    => $user->office_id,
+                        'current_unit_id'      => $user->unit_id,
+                        'current_institute_id' => $user->institute_id,
                     ]);
+                    $assetId = $asset->asset_id;
                 }
 
-                return redirect()->route('staff.submissions.index')
-                    ->with('success', 'Inventory submission created successfully.');
-            });
-        } catch (\Exception $e) {
-            Log::error("Store failed: " . $e->getMessage());
-            return back()->withInput()->with('error', 'Database Error: ' . $e->getMessage());
-        }
-    }
+                // --- CREATE SUBMISSION ITEM ---
+                $submissionItem = $submission->items()->create([
+                    'asset_id'       => $assetId,
+                    'category_id'    => $itemData['category_id'],
+                    'subcategory_id' => $itemData['subcategory_id'],
+                    'condition'      => $itemData['condition'] ?? null,
+                    'item_notes'     => $itemData['item_notes'] ?? null,
+                    'item_name'      => $itemData['item_name'],
+                    'cost'           => $itemData['cost'] ?? 0,
+                    'serial_number'  => $itemData['serial_number'] ?? null,
+                    'quantity'       => $itemData['quantity'],
+                    'document_path'  => $itemFileDetails,
+                ]);
 
+                if ($asset) {
+                    $asset->update(['submission_item_id' => $submissionItem->submission_item_id]);
+                }
+            }
+        });
+
+        return redirect()->route('staff.submissions.index')
+            ->with('success', 'Inventory submission created successfully.');
+
+    } catch (\Exception $e) {
+        Log::error("Store failed: " . $e->getMessage());
+        return back()->withInput()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
     // ============================================
     // EDIT - Staff Only (Own Pending Submissions)
     // ============================================
@@ -282,97 +304,180 @@ class SubmissionController extends Controller
 
     // ============================================
     // UPDATE - Staff Only
-    // ============================================
-    public function update(Request $request, $submission_id)
-    {
-        $this->authorizeRole([2]);
-        $user = Auth::user();
 
-        $submission = Submission::where('submission_id', $submission_id)
-            ->where('submitted_by_user_id', $user->user_id)
-            ->where('status', 'pending')
-            ->firstOrFail();
+public function update(Request $request, $submission_id)
+{
+    $this->authorizeRole([2]);
+    $user = Auth::user();
 
-        $request->validate([
-            'funding_source' => 'nullable|string|max:255',
-            'notes'          => 'nullable|string',
-            'summary'        => 'nullable|string',
-            'items'          => 'required|array|min:1',
-            'items.*.item_name' => 'required|string',
-            'items.*.new_evidence.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:8048',
-        ]);
+    $submission = Submission::where('submission_id', $submission_id)
+        ->where('submitted_by_user_id', $user->user_id)
+        ->where('status', 'pending')
+        ->firstOrFail();
 
-        try {
-            return DB::transaction(function () use ($request, $submission) {
-                $updatedItemIds = [];
+    $request->validate([
+        'notes'                  => 'nullable|string',
+        'summary'                => 'nullable|string',
+        'items'                  => 'required|array|min:1',
+        'items.*.item_name'      => 'required|string',
+        'items.*.new_evidence.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+    ]);
 
-                foreach ($request->items as $index => $itemData) {
-                    $item = isset($itemData['submission_item_id'])
-                        ? SubmissionItem::find($itemData['submission_item_id'])
-                        : null;
+    try {
+        return DB::transaction(function () use ($request, $submission) {
+            // Track which items were updated (to delete removed ones later)
+            $processedItemIds = [];
 
-                    $filesToKeep = $itemData['existing_files'] ?? [];
-                    $newFiles = [];
-
-                    if ($request->hasFile("items.$index.new_evidence")) {
-                        foreach ($request->file("items.$index.new_evidence") as $file) {
-                            $path = $file->store('audit_docs/' . $submission->submission_id, 'public');
-                            $newFiles[] = $path;
-                        }
-                    }
-
-                    $finalFiles = array_merge($filesToKeep, $newFiles);
-
-                    if ($item) {
-                        $oldFiles = is_string($item->document_path) ? json_decode($item->document_path, true) : ($item->document_path ?? []);
-                        $deletedFiles = array_diff($oldFiles, $filesToKeep);
-                        foreach ($deletedFiles as $fileToDelete) {
-                            if ($fileToDelete) Storage::disk('public')->delete($fileToDelete);
-                        }
-                    }
-
-                    $newItem = $submission->items()->updateOrCreate(
-                        ['submission_item_id' => $itemData['submission_item_id'] ?? null],
-                        [
-                            'submission_type'         => $itemData['submission_type'] ?? 'new_purchase',
-                            'category_id'             => $itemData['category_id'],
-                            'subcategory_id'          => $itemData['subcategory_id'],
-                            'item_name'               => $itemData['item_name'],
-                            'quantity'                => $itemData['quantity'],
-                            'cost'                    => $itemData['cost'] ?? 0,
-                            'serial_number'           => $itemData['serial_number'] ?? null,
-                            'funding_source_per_item' => $itemData['funding_source_per_item'] ?? null,
-                            'item_notes'              => $itemData['item_notes'] ?? null,
-                            'document_path'           => $finalFiles,
-                        ]
-                    );
-
-                    $updatedItemIds[] = $newItem->submission_item_id;
+            foreach ($request->items as $index => $itemData) {
+                
+                // ============================================
+                // DETERMINE IF UPDATE OR CREATE
+                // ============================================
+                
+                $submissionItemId = $itemData['submission_item_id'] ?? null;
+                
+                // If has submission_item_id, it's an EXISTING item (UPDATE)
+                // If no submission_item_id, it's a NEW item (CREATE)
+                
+                if ($submissionItemId) {
+                    // UPDATE existing item
+                    $item = SubmissionItem::where('submission_item_id', $submissionItemId)
+                        ->where('submission_id', $submission->submission_id)
+                        ->firstOrFail();
+                } else {
+                    // CREATE new item
+                    $item = new SubmissionItem();
+                    $item->submission_id = $submission->submission_id;
                 }
 
-                $itemsToDelete = $submission->items()->whereNotIn('submission_item_id', $updatedItemIds)->get();
-                foreach ($itemsToDelete as $oldItem) {
-                    $paths = is_string($oldItem->document_path) ? json_decode($oldItem->document_path, true) : ($oldItem->document_path ?? []);
-                    foreach ($paths as $p) {
-                        Storage::disk('public')->delete($p);
+                // ============================================
+                // HANDLE FILES
+                // ============================================
+                
+                // Start with existing files that user wants to keep
+                $filesToKeep = [];
+                if (isset($itemData['existing_files']) && is_array($itemData['existing_files'])) {
+                    foreach ($itemData['existing_files'] as $existingPath) {
+                        // Handle both string paths and array objects
+                        if (is_string($existingPath)) {
+                            $filesToKeep[] = ['path' => $existingPath];
+                        } elseif (is_array($existingPath) && isset($existingPath['path'])) {
+                            $filesToKeep[] = $existingPath;
+                        }
                     }
-                    $oldItem->delete();
                 }
 
-                $submission->update([
-                    'funding_source' => $request->funding_source,
-                    'notes'          => $request->notes,
-                    'summary'        => $request->summary,
+                // Add newly uploaded files
+                $newFiles = [];
+                if ($request->hasFile('items')) {
+                    $allItems = $request->file('items');
+                    
+                    if (isset($allItems[$index]['new_evidence'])) {
+                        $files = $allItems[$index]['new_evidence'];
+                        
+                        foreach ($files as $file) {
+                            $path = $file->store('audit_docs/' . date('Y') . '/' . $submission->submission_id, 'public');
+                            $newFiles[] = [
+                                'original_name' => $file->getClientOriginalName(),
+                                'path'          => $path,
+                                'size'          => $file->getSize(),
+                                'uploaded_at'   => now()->toDateTimeString(),
+                            ];
+                        }
+                    }
+                }
+
+                // Merge files
+                $finalFiles = array_merge($filesToKeep, $newFiles);
+
+                // Delete removed files from storage
+                if ($item->exists) {
+                    $oldFiles = (array) ($item->document_path ?? []);
+                    $finalPaths = array_column($finalFiles, 'path');
+                    
+                    foreach ($oldFiles as $oldFile) {
+                        $oldPath = is_array($oldFile) ? ($oldFile['path'] ?? null) : $oldFile;
+                        
+                        if ($oldPath && !in_array($oldPath, $finalPaths)) {
+                            Storage::disk('public')->delete($oldPath);
+                            Log::info("Deleted removed file: $oldPath");
+                        }
+                    }
+                }
+
+                // ============================================
+                // SAVE ITEM
+                // ============================================
+                
+                $item->fill([
+                    'category_id'    => $itemData['category_id'],
+                    'subcategory_id' => $itemData['subcategory_id'],
+                    'item_name'      => $itemData['item_name'],
+                    'quantity'       => $itemData['quantity'],
+                    'cost'           => $itemData['cost'] ?? 0,
+                    'serial_number'  => $itemData['serial_number'] ?? null,
+                    'item_notes'     => $itemData['item_notes'] ?? null,
+                    'document_path'  => $finalFiles,
                 ]);
+                
+                $item->save();
+                
+                $processedItemIds[] = $item->submission_item_id;
+                
+                Log::info("Processed item", [
+                    'submission_id' => $submission->submission_id,
+                    'item_id' => $item->submission_item_id,
+                    'action' => $submissionItemId ? 'updated' : 'created',
+                ]);
+            }
 
-                return redirect()->route('staff.submissions.index')
-                    ->with('success', 'Submission #' . $submission->submission_id . ' updated successfully.');
-            });
-        } catch (\Exception $e) {
-            Log::error("Update failed for ID " . $submission->submission_id . ": " . $e->getMessage());
-            return back()->withInput()->with('error', 'Update failed: ' . $e->getMessage());
-        }
+            // ============================================
+            // DELETE REMOVED ITEMS
+            // ============================================
+            
+            $removedItems = $submission->items()
+                ->whereNotIn('submission_item_id', $processedItemIds)
+                ->get();
+            
+            foreach ($removedItems as $removedItem) {
+                // Delete associated files
+                if ($removedItem->document_path) {
+                    foreach ((array) $removedItem->document_path as $file) {
+                        $path = is_array($file) ? ($file['path'] ?? null) : $file;
+                        if ($path) {
+                            Storage::disk('public')->delete($path);
+                        }
+                    }
+                }
+                
+                $removedItem->delete();
+                Log::info("Deleted removed item: " . $removedItem->submission_item_id);
+            }
+
+            // ============================================
+            // UPDATE SUBMISSION META
+            // ============================================
+            
+            $submission->update([
+                'notes'   => $request->notes,
+                'summary' => $request->summary,
+            ]);
+
+            return redirect()->route('staff.submissions.index', $submission->submission_id)
+                ->with('success', 'Submission updated successfully.');
+        });
+        
+    } catch (\Exception $e) {
+        Log::error("Update failed for submission $submission_id", [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        
+        return back()
+            ->withInput()
+            ->with('error', 'Update failed: ' . $e->getMessage());
     }
+}
 
     // ============================================
     // DESTROY - Staff Only
@@ -408,29 +513,24 @@ class SubmissionController extends Controller
     }
 
     private function getScopedAssetsForUser($user)
-    {
-        $query = Asset::query()
-            ->where('status', '!=', 'retired')
-            ->where(function($q) use ($user) {
-                if ($user->institute_id) {
-                    $q->where('current_institute_id', $user->institute_id);
-                } elseif ($user->unit_id) {
-                    $q->where('current_unit_id', $user->unit_id);
-                } elseif ($user->office_id) {
-                    $q->where('current_office_id', $user->office_id);
-                } elseif ($user->department_id) {
-                    $q->where('current_dept_id', $user->department_id);
-                } elseif ($user->faculty_id) {
-                    $q->where('current_faculty_id', $user->faculty_id);
-                } else {
-                    $q->whereRaw('1 = 0');
-                }
-            })
-            ->orderBy('item_name')
-            ->get();
-
-        return $query;
+{
+    // If the user has none of these assigned, don't even hit the DB
+    if (!$user->faculty_id && !$user->department_id && !$user->office_id && !$user->unit_id && !$user->institute_id) {
+        return collect(); 
     }
+
+    return Asset::query()
+        ->where('status', '!=', 'retired')
+        ->where(function($q) use ($user) {
+            if ($user->institute_id)   return $q->where('current_institute_id', $user->institute_id);
+            if ($user->unit_id)        return $q->where('current_unit_id', $user->unit_id);
+            if ($user->office_id)      return $q->where('current_office_id', $user->office_id);
+            if ($user->department_id)  return $q->where('current_dept_id', $user->department_id);
+            if ($user->faculty_id)     return $q->where('current_faculty_id', $user->faculty_id);
+        })
+        ->orderBy('item_name')
+        ->get();
+}
 
     private function getOrganizationalDropdownData(): array
     {
@@ -445,16 +545,51 @@ class SubmissionController extends Controller
         ];
     }
 
-    private function applyHierarchyFilters($query, Request $request, string $relation = null): void
-    {
-        $prefix = $relation ? "$relation." : '';
+    private function applyHierarchyFilters($query, Request $request, bool $isSubmission = false): void
+{
+    // Define the branch pairings for standalone/exclusive logic
+    $hierarchy = [
+        'faculty_id' => 'dept_id',
+        'office_id'  => 'unit_id',
+    ];
+    $standalone = ['dept_id', 'unit_id', 'institute_id'];
 
-        if ($request->filled('faculty_id')) $query->where("{$prefix}faculty_id", $request->faculty_id);
-        if ($request->filled('dept_id'))     $query->where("{$prefix}dept_id", $request->dept_id);
-        if ($request->filled('office_id'))   $query->where("{$prefix}office_id", $request->office_id);
-        if ($request->filled('unit_id'))     $query->where("{$prefix}unit_id", $request->unit_id);
-        if ($request->filled('institute_id')) $query->where("{$prefix}institute_id", $request->institute_id);
+    // 1. Determine the prefix for direct table filtering
+    // Assets use 'current_', Submissions (if filtered directly) usually don't.
+    $modelTable = $query->getModel()->getTable();
+    $p = ($modelTable === 'assets') ? 'current_' : '';
+
+    if ($isSubmission) {
+        // --- SUBMISSION LOGIC (Filter via User Profile) ---
+        foreach (array_merge(array_keys($hierarchy), $standalone) as $field) {
+            if ($request->filled($field)) {
+                $query->whereHas('submittedBy', function ($q) use ($field, $request, $hierarchy) {
+                    $q->where($field, $request->get($field));
+
+                    // Exclusive Logic: If parent is picked but child isn't, child must be NULL
+                    if (isset($hierarchy[$field]) && !$request->filled($hierarchy[$field])) {
+                        $q->whereNull($hierarchy[$field]);
+                    }
+                });
+            }
+        }
+    } else {
+        // --- ASSET/DIRECT LOGIC (Filter table columns directly) ---
+        foreach ($hierarchy as $parent => $child) {
+            if ($request->filled($parent)) {
+                $query->where($p . $parent, $request->get($parent));
+                if (!$request->filled($child)) {
+                    $query->whereNull($p . $child);
+                }
+            }
+        }
+        foreach ($standalone as $field) {
+            if ($request->filled($field)) {
+                $query->where($p . $field, $request->get($field));
+            }
+        }
     }
+}
 
     private function enrichItems($submission)
     {

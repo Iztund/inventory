@@ -87,7 +87,7 @@ class AuthController extends Controller
                 ]);
 
                 // Explicitly find the user by ID to ensure it's a Model instance
-                $user = \App\Models\User::find(Auth::id());
+                $user = User::find(Auth::id());
 
                 if (!$user) {
                     return redirect()->route('login')->with('error', 'User not found.');
@@ -99,7 +99,7 @@ class AuthController extends Controller
                 
                 $user->save(); 
 
-                return redirect()->route('dashboard')->with('success', 'Password updated successfully. Welcome!');
+                return redirect()->route('login')->with('success', 'Password updated successfully. Welcome!');
             }
 
     public function logout(Request $request)

@@ -347,61 +347,102 @@ class AuditorController extends Controller
     }
 
     private function processAudit($submission, $data)
-    {
-        return DB::transaction(function () use ($submission, $data) {
-            $approvedCount = 0;
-            $rejectedCount = 0;
+{
+    // 1. Run the database logic
+    DB::transaction(function () use ($submission, $data, &$approvedCount, &$rejectedCount) {
+        $approvedCount = 0;
+        $rejectedCount = 0;
 
-            foreach ($data['items'] as $itemId => $itemData) {
-                $item = $submission->items->where('submission_item_id', $itemId)->first();
-                if (!$item) continue;
+        foreach ($data['items'] as $itemId => $itemData) {
+            $item = $submission->items->where('submission_item_id', $itemId)->first();
+            if (!$item) continue;
 
-                $itemDecision = $itemData['status'] === 'pending' 
-                    ? $data['overall_decision'] 
-                    : $itemData['status'];
+            $itemDecision = $itemData['status'] === 'pending' 
+                ? $data['overall_decision'] 
+                : $itemData['status'];
 
-                $specificRemark = $itemData['remarks'] 
-                    ?? $data['comments'] 
-                    ?? ($itemDecision === 'approved' ? 'Verified.' : 'Rejected by auditor.');
+            $specificRemark = $itemData['remarks'] 
+                ?? $data['comments'] 
+                ?? ($itemDecision === 'approved' ? 'Verified.' : 'Rejected by auditor.');
 
-                Audit::create([
-                    'submission_id'      => $submission->submission_id,
-                    'submission_item_id' => $item->submission_item_id,
-                    'auditor_id'         => Auth::id(),
-                    'decision'           => $itemDecision,
-                    'comments'           => $specificRemark,
-                    'audited_at'         => now(),
-                ]);
-
-                $item->update([
-                    'status'  => $itemDecision,
-                    'remarks' => $specificRemark,
-                ]);
-
-                $this->processAsset($item, $submission->submittedBy, $itemDecision);
-                
-                $itemDecision === 'approved' ? $approvedCount++ : $rejectedCount++;
-            }
-
-            $submission->update([
-                'status'              => $data['overall_decision'],
-                'reviewed_by_user_id' => Auth::id(),
-                'reviewed_at'         => now(),
-                'audited_at'          => now(),
-                'summary'             => "Audit completed: $approvedCount approved, $rejectedCount rejected. " . ($data['comments'] ?? ''),
+            Audit::create([
+                'submission_id'      => $submission->submission_id,
+                'submission_item_id' => $item->submission_item_id,
+                'auditor_id'         => Auth::id(),
+                'decision'           => $itemDecision,
+                'comments'           => $specificRemark,
+                'audited_at'         => now(),
             ]);
 
-            return redirect()->route('auditor.submissions.index')
-                ->with('success', "Audit complete for #{$submission->submission_id}. Approved: $approvedCount, Rejected: $rejectedCount.");
-        });
+            $item->update([
+                'status'  => $itemDecision,
+                'remarks' => $specificRemark,
+            ]);
+
+            $this->processAsset($item, $submission->submittedBy, $itemDecision);
+            
+            $itemDecision === 'approved' ? $approvedCount++ : $rejectedCount++;
+        }
+
+        $submission->update([
+            'status'              => $data['overall_decision'],
+            'reviewed_by_user_id' => Auth::id(),
+            'reviewed_at'         => now(),
+            'audited_at'          => now(),
+            'summary'             => "Audit completed: $approvedCount approved, $rejectedCount rejected. " . ($data['comments'] ?? ''),
+        ]);
+    });
+
+    // 2. NOW perform the redirect outside the transaction block
+    // We add the 'status' parameter to the URL so the view switcher knows to show the Registry
+
+    $targetStatus = ($data['overall_decision'] === 'approved') ? 'approved' : 'pending';
+    $location = ($targetStatus === 'approved') ? 'Verified Registry' : 'Pending Worklist';
+    $resultMessage = $approvedCount > 0 
+    ? "Successfully verified $approvedCount medical assets." 
+    : "Audit completed.";
+
+if ($rejectedCount > 0) {
+    $resultMessage .= " $rejectedCount items were marked for correction.";
+}
+return redirect()->route('auditor.submissions.index', ['status' => $targetStatus])
+    ->with('success', "{$resultMessage} You are now viewing the {$location}.");
     }
 
     private function processAsset($item, $staff, $status): void
-    {
-        $asset = Asset::find($item->asset_id);
-        if (!$asset) return;
+{
+    if ($status !== 'approved') return;
 
-        $updateData = [
+    // 1. Handle NEW PURCHASES
+    if ($item->submission->submission_type === 'new_purchase' && !$item->asset_id) {
+        
+        // We temporarily update status so the accessor knows it's okay to generate
+        $item->status = 'approved'; 
+
+        $asset = Asset::create([
+            'item_name'            => $item->item_name,
+            'category_id'          => $item->category_id,
+            'subcategory_id'       => $item->subcategory_id,
+            'funding_source'       => $item->funding_source_per_item ?? $item->submission->funding_source,
+            'status'               => 'available',
+            'asset_tag'            => $item->generated_tag, // USES YOUR ACCESSOR HERE
+            'current_faculty_id'   => $staff->faculty_id,
+            'current_dept_id'      => $staff->department_id,
+            'current_office_id'    => $staff->office_id,
+            'current_unit_id'      => $staff->unit_id,
+            'current_institute_id' => $staff->institute_id,
+            'last_audited_at'      => now(),
+        ]);
+        
+        // Link back to the item
+        $item->update(['asset_id' => $asset->asset_id]);
+        return; 
+    }
+
+    // 2. Handle EXISTING ASSETS
+    $asset = Asset::find($item->asset_id);
+    if ($asset) {
+        $asset->update([
             'status'               => 'available',
             'last_audited_at'      => now(),
             'current_faculty_id'   => $staff->faculty_id,
@@ -409,50 +450,9 @@ class AuditorController extends Controller
             'current_office_id'    => $staff->office_id,
             'current_unit_id'      => $staff->unit_id,
             'current_institute_id' => $staff->institute_id,
-        ];
-
-        if ($status === 'approved' && empty($asset->asset_tag)) {
-            $updateData['asset_tag'] = $this->generateHierarchicalTag($this->buildAssetPrefix($staff));
-        }
-
-        $asset->update($updateData);
+        ]);
     }
-
-    private function buildAssetPrefix($staff): string
-    {
-        $prefixParts = [];
-
-        if ($staff->unit_id) {
-            $prefixParts[] = $staff->unit->office->office_code ?? 'OFF';
-            $prefixParts[] = $staff->unit->unit_code;
-        } elseif ($staff->department_id) {
-            $prefixParts[] = $staff->department->faculty->faculty_code ?? 'FAC';
-            $prefixParts[] = $staff->department->dept_code;
-        } elseif ($staff->institute_id) {
-            $prefixParts[] = 'INST';
-            $prefixParts[] = $staff->institute->institute_code;
-        }
-
-        return implode('/', array_filter($prefixParts)) ?: 'COM';
-    }
-
-    private function generateHierarchicalTag($prefix): string
-    {
-        $prefix = !empty($prefix) ? $prefix : 'COM';
-
-        if (self::$lastGeneratedNumber === null) {
-            $lastAsset = Asset::where('asset_tag', 'like', $prefix . '/%')
-                ->orderByRaw('CAST(SUBSTRING_INDEX(asset_tag, "/", -1) AS UNSIGNED) DESC')
-                ->first();
-
-            self::$lastGeneratedNumber = $lastAsset 
-                ? (int)explode('/', $lastAsset->asset_tag)[count(explode('/', $lastAsset->asset_tag)) - 1]
-                : 0;
-        }
-
-        self::$lastGeneratedNumber++;
-        return $prefix . '/' . str_pad(self::$lastGeneratedNumber, 9, '0', STR_PAD_LEFT);
-    }
+}
 
     private function getItemCounts($submission): array
     {

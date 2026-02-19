@@ -226,9 +226,9 @@
                     @forelse($submissions as $submission)
                         @php
                             $type_style = [
-                                'new_purchase' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'label' => 'New Entry'],
+                                'new_purchase' => ['bg' => 'bg-emerald-50', 'text' => 'text-emerald-700', 'label' => 'New Purchase'],
                                 'transfer'     => ['bg' => 'bg-blue-50',    'text' => 'text-blue-700',    'label' => 'Transfer'],
-                                'maintenance'  => ['bg' => 'bg-amber-50',   'text' => 'text-amber-700',   'label' => 'Repair'],
+                                'maintenance'  => ['bg' => 'bg-amber-50',   'text' => 'text-amber-700',   'label' => 'Maintenance'],
                                 'disposal'     => ['bg' => 'bg-rose-50',    'text' => 'text-rose-700',    'label' => 'Disposal'],
                             ][$submission->submission_type ?? ''] ?? ['bg' => 'bg-slate-50', 'text' => 'text-slate-700', 'label' => 'General'];
 
@@ -242,31 +242,63 @@
                                     <span class="text-sm font-black text-slate-800 uppercase tracking-tight">
                                         {{ $itemNames ?: 'No Items' }}
                                     </span>
-                                    <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                                    <span class="text-[10px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">
                                         Batch #{{ str_pad($submission->submission_id, 5, '0', STR_PAD_LEFT) }} • {{ $submission->items->count() }} Item(s)
                                     </span>
                                 </div>
                             </td>
                             {{-- Serial Numbers --}}
-                            <td class="px-4 py-5 align-middle">
-                                <code class="text-[11px] font-black bg-slate-100 px-2 py-1 rounded text-slate-600">
-                                    {{ $serialNumbers ?: 'NO-SERIAL' }}
-                                </code>
+                            <td class="px-3 py-3 align-middle border-b border-slate-100">
+                                @php
+                                    // Ensure we are working with a collection or array
+                                    $serials = collect($submission->items->pluck('serial_number')->filter());
+                                    $firstSerial = $serials->first();
+                                    $extraCount = $serials->count() - 1;
+                                @endphp
+
+                                <div class="flex items-center gap-2">
+                                    <code class="text-[11px] font-black bg-slate-100 px-2 py-1 rounded text-slate-600 whitespace-nowrap border border-slate-200">
+                                        {{ $firstSerial ?: 'NO-SERIAL' }}
+                                    </code>
+
+                                    @if($extraCount > 0)
+                                        <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full border border-amber-200 cursor-help" 
+                                            title="Total items in this batch: {{ $serials->count() }}">
+                                            +{{ $extraCount }}
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             {{-- Submitted By --}}
-                            <td class="px-4 py-5 align-middle">
-                                <div class="flex flex-col">
-                                    <span class="text-[11px] font-black text-slate-800 uppercase">
-                                        {{ $submission->submittedBy->profile->full_name ?? $submission->submittedBy->username ?? 'Unknown' }}
-                                    </span>
-                                    <span class="text-[9px] text-slate-400 font-bold italic uppercase">
-                                        {{ $submission->submittedBy->department->dept_name ?? $submission->submittedBy->faculty->faculty_name ?? 'Registry' }}
-                                    </span>
+                            <td class="px-3 py-3 align-middle border-b border-slate-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="hidden lg:flex w-8 h-8 rounded bg-slate-100 items-center justify-center text-slate-500">
+                                        <i class="fas {{ $submission->submittedBy->affiliation->icon }} text-xs"></i>
+                                    </div>
+
+                                    <div class="flex flex-col leading-tight">
+                                        <span class="text-[11px] font-black text-slate-800 uppercase">
+                                            {{ $submission->submittedBy->full_name ?? $submission->submittedBy->username ?? 'Unknown' }}
+                                        </span>
+                                        
+                                        <div class="flex items-center gap-1 mt-0.5">
+                                            <span class="text-[10px] text-slate-500 font-bold italic uppercase tracking-tighter truncate max-w-[180px]" 
+                                                title="{{ $submission->submittedBy->affiliation->primary }}">
+                                                {{ $submission->submittedBy->affiliation->primary }}
+                                            </span>
+                                        </div>
+
+                                        @if($submission->submittedBy->affiliation->secondary)
+                                            <span class="text-[8px] text-slate-600 uppercase font-medium leading-none mt-0.5">
+                                                {{ $submission->submittedBy->affiliation->secondary }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                             {{-- Classification --}}
                             <td class="px-4 py-5 align-middle">
-                                <span class="inline-flex items-center {{ $type_style['bg'] }} {{ $type_style['text'] }} px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wide">
+                                <span class="inline-flex items-center whitespace-nowrap shrink-0 {{ $type_style['bg'] }} {{ $type_style['text'] }} px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wide">
                                     {{ $type_style['label'] }}
                                 </span>
                             </td>

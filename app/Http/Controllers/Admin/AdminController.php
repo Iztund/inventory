@@ -63,7 +63,8 @@ class AdminController extends Controller
         $activeFacultyIds = Faculty::where('is_active', 'active')->pluck('faculty_id');
         $allActiveDepts   = Department::where('is_active', 'active')->get();
         $dropdownData = [
-        'categories' => Category::orderBy('category_name', 'asc')->get()
+        'categories' => Category::orderBy('category_name', 'asc')->get(),
+        'subcategories' => Subcategory::orderBy('subcategory_name', 'asc')->get()
         ];
         $summary = [
             'total_faculties'      => $activeFacultyIds->count(),
@@ -104,46 +105,82 @@ class AdminController extends Controller
     $startDate  = $request->input('start_date', now()->subMonth()->startOfDay());
     $endDate    = $request->input('end_date', now()->endOfDay());
 
-    // 1. Base Query
+    // 1. Base Query (Filtered by Date & Global Standing)
     $assetQuery = Asset::query();
-    
-    // Mapping for the filter
-    $columnMap = [
-        'faculty'    => 'current_faculty_id',
-        'department' => 'current_dept_id',
-        'office'     => 'current_office_id',
-        'unit'       => 'current_unit_id',
-        'institute'  => 'current_institute_id',
-    ];
 
-    if ($entityType && array_key_exists($entityType, $columnMap)) {
-        $assetQuery->whereNotNull($columnMap[$entityType]);
+    // --- APPLY EXCLUSIVE FILTERING FOR SUMMARY METRICS ---
+    // This ensures the "Total Assets" and "Total Value" cards update correctly
+    if ($entityType) {
+        switch ($entityType) {
+            case 'faculty':
+                $assetQuery->whereNotNull('current_faculty_id')->whereNull('current_dept_id');
+                break;
+            case 'department':
+                $assetQuery->whereNotNull('current_dept_id');
+                break;
+            case 'office':
+                $assetQuery->whereNotNull('current_office_id')->whereNull('current_unit_id');
+                break;
+            case 'unit':
+                $assetQuery->whereNotNull('current_unit_id');
+                break;
+            case 'institute':
+                $assetQuery->whereNotNull('current_institute_id');
+                break;
+        }
+    }
+    
+    
+   // 2. Summary Metrics (Filtered)
+    $submissionQuery = Submission::whereBetween('submitted_at', [$startDate, $endDate]);
+
+    if ($entityType) {
+        // Filter submissions based on the profile of the user who submitted it
+        $submissionQuery->whereHas('submittedBy', function($q) use ($entityType) {
+            switch ($entityType) {
+                case 'faculty':
+                    // Submissions by users in a Faculty but not in a Dept
+                    $q->whereNotNull('faculty_id')->whereNull('dept_id');
+                    break;
+                case 'department':
+                    $q->whereNotNull('dept_id');
+                    break;
+                case 'office':
+                    // Submissions by users in an Office but not in a Unit
+                    $q->whereNotNull('office_id')->whereNull('unit_id');
+                    break;
+                case 'unit':
+                    $q->whereNotNull('unit_id');
+                    break;
+                case 'institute':
+                    $q->whereNotNull('institute_id');
+                    break;
+            }
+        });
     }
 
-    // 2. Summary Metrics (Filtered)
     $summary = [
         'total_assets' => (clone $assetQuery)->count(),
         'total_value'  => (clone $assetQuery)->sum(DB::raw('quantity * purchase_price')),
-        'submissions_period' => Submission::whereBetween('submitted_at', [$startDate, $endDate])->count(),
+        'submissions_period' => $submissionQuery->count(),
     ];
 
-    // 3. Dynamic Entity Loop - FIXED NAMING CONVENTION
+    // 3. Dynamic Entity Loop (For the Bar Chart)
     $queryData = collect();
     $typesToFetch = $entityType ? [$entityType] : ['faculty', 'department', 'office', 'unit', 'institute'];
 
     foreach ($typesToFetch as $type) {
         $table = Str::plural($type);
-        
-        // Handle your shorthand naming (dept vs department)
         $prefix = ($type === 'department') ? 'dept' : $type;
-        
         $pk = $prefix . '_id';
         $nameAttr = $prefix . '_name';
         $foreignKey = 'current_' . $prefix . '_id';
 
-        // Check if table exists to prevent crash
         if (Schema::hasTable($table)) {
             $data = Asset::join($table, "assets.{$foreignKey}", '=', "{$table}.{$pk}")
+                // Apply the branch exclusion logic
+                ->when($type === 'faculty', fn($q) => $q->whereNull('assets.current_dept_id'))
+                ->when($type === 'office', fn($q) => $q->whereNull('assets.current_unit_id'))
                 ->select("{$table}.{$nameAttr} as label", DB::raw('SUM(assets.quantity * assets.purchase_price) as total'))
                 ->groupBy("{$table}.{$nameAttr}")
                 ->get();
@@ -154,7 +191,7 @@ class AdminController extends Controller
 
     $allEntities = $queryData->sortByDesc('total')->take(10);
 
-    // 4. Chart Data
+    // 4. Chart Data (Logic is now consistent with steps above)
     $chartData = [
         'enrollment_labels' => $allEntities->pluck('label')->toArray(),
         'enrollment_data'   => $allEntities->pluck('total')->map(fn($v) => round($v / 1000000, 2))->toArray(),
@@ -167,7 +204,8 @@ class AdminController extends Controller
         ]
     ];
 
-    $topAssets = (clone $assetQuery)->with(['category'])
+    // Top 10 High-Value Assets for the Table
+    $topAssets = (clone $assetQuery)->with(['category', 'subcategory', 'department', 'unit', 'office', 'faculty', 'institute'])
         ->select('*', DB::raw('quantity * purchase_price as total_value'))
         ->orderBy('total_value', 'desc')
         ->take(10)

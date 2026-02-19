@@ -13,7 +13,9 @@
         
         <div class="row align-items-center relative z-10">
             <div class="col-lg-8">
-                <h6 class="text-emerald-400 font-black uppercase tracking-[0.2em] text-xs mb-3">System Administration</h6>
+                <h6 class="text-amber-500 font-black uppercase tracking-[0.2em] text-[10px] mb-3">
+                    System Administration
+                </h6>
                 <h1 class="text-3xl md:text-4xl font-black text-white mb-2">
                     Welcome back, {{ Auth::user()->profile->first_name ?? Auth::user()->username }}
                 </h1>
@@ -24,7 +26,7 @@
             </div>
             <div class="col-lg-4 text-lg-end d-none d-lg-block">
                 <div class="inline-block bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl min-w-[200px]">
-                    <div class="text-[12px] text-emerald-400 font-black uppercase tracking-widest mb-1">
+                    <div class="text-[12px] text-amber-500 font-black uppercase tracking-widest mb-1">
                         Pending Review
                     </div>
                     <div class="text-3xl font-black text-white mb-0">
@@ -53,13 +55,13 @@
         <div class="col-6 col-lg-4">
             <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1">
                 <div class="flex justify-between items-start mb-3">
-                    <span class="text-[11px] font-black text-slate-800 uppercase tracking-wider">{{ $label }}</span>
+                    <span class="text-[11px] font-black text-slate-600 uppercase tracking-wider">{{ $label }}</span>
                     <div class="w-8 h-8 rounded-lg {{ $bgColor }} flex items-center justify-center">
                         <i class="fas {{ $icon }} {{ $textColor }} text-xs"></i>
                     </div>
                 </div>
                 <div class="text-2xl font-black text-slate-900 mb-1">{{ number_format($val) }}</div>
-                <div class="text-[9px] font-bold text-slate-600 uppercase">{{ $subtitle }}</div>
+                <div class="text-[9px] font-bold text-slate-500 uppercase">{{ $subtitle }}</div>
             </div>
         </div>
         @endforeach
@@ -128,7 +130,7 @@
         <div class="col">
             <div class="bg-white border border-slate-200 rounded-xl p-4 text-center transition-all hover:border-slate-400 hover:-translate-y-1 shadow-sm">
                 <div class="text-2xl font-black {{ $text }} mb-1">{{ $count }}</div>
-                <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">{{ $label }}</div>
+                <div class="text-[9px] font-black text-slate-500 uppercase tracking-wider">{{ $label }}</div>
             </div>
         </div>
         @endforeach
@@ -215,15 +217,45 @@
                                 <td>
                                     @php
                                         $statusConfig = [
-                                            'pending' => ['bg-amber-100/50', 'text-amber-700', 'border-amber-200'],
-                                            'approved' => ['bg-emerald-100/50', 'text-emerald-700', 'border-emerald-200'],
-                                            'rejected' => ['bg-rose-100/50', 'text-rose-700', 'border-rose-200'],
+                                            'pending'  => ['bg-amber-100/50', 'text-amber-700', 'border-amber-200', 'icon' => 'fa-clock'],
+                                            'approved' => ['bg-emerald-100/50', 'text-emerald-700', 'border-emerald-200', 'icon' => 'fa-check-circle'],
+                                            'rejected' => ['bg-rose-100/50', 'text-rose-700', 'border-rose-200', 'icon' => 'fa-times-circle'],
                                         ];
                                         $classes = $statusConfig[$r->status] ?? $statusConfig['pending'];
+                                        
+                                        // Calculate counts from the items relationship
+                                        $totalItems = $r->items->count();
+                                        $approvedCount = $r->items->where('status', 'approved')->count();
+                                        $rejectedCount = $r->items->where('status', 'rejected')->count();
                                     @endphp
-                                    <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border {{ implode(' ', $classes) }}">
-                                        {{ $r->status }}
-                                    </span>
+
+                                    <div class="flex flex-col gap-2">
+                                        {{-- Main Status Badge --}}
+                                        <div>
+                                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border {{ $classes[0] }} {{ $classes[1] }} {{ $classes[2] }}">
+                                                <i class="fas {{ $classes['icon'] }} me-1"></i> {{ $r->status }}
+                                            </span>
+                                        </div>
+
+                                        {{-- Item Stats Breakdown --}}
+                                        <div class="flex items-center gap-2">
+                                            @if($approvedCount > 0)
+                                                <span class="text-[10px] font-black text-emerald-600" title="Approved Items">
+                                                    <i class="fas fa-check"></i> {{ $approvedCount }}
+                                                </span>
+                                            @endif
+
+                                            @if($rejectedCount > 0)
+                                                <span class="text-[10px] font-black text-rose-600" title="Rejected Items">
+                                                    <i class="fas fa-times"></i> {{ $rejectedCount }}
+                                                </span>
+                                            @endif
+
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                / {{ $totalItems }} Total
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <td>

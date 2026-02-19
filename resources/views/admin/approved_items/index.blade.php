@@ -27,19 +27,22 @@
         </div>
 
         {{-- SUMMARY BADGE --}}
-        @php
-            $totalItems = $submissions->sum(fn($s) => $s->items->count());
-        @endphp
-        <div class="bg-white border-2 border-emerald-100 rounded-2xl p-2 shadow-md flex items-center self-start lg:self-center shrink-0">
-            <div class="relative flex items-center justify-center p-2">
-                <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white relative z-10 shadow-lg">
-                    <span class="text-sm font-black">{{ $submissions->total() }}</span>
+        <div class="bg-white border border-emerald-200 rounded-lg p-1.5 shadow-sm flex items-center self-start lg:self-center shrink-0">
+            <div class="relative flex items-center justify-center p-1.5">
+                <div class="w-9 h-9 bg-emerald-600 rounded-lg flex flex-col items-center justify-center text-white relative z-10 shadow-md">
+                    <span class="text-[12px] font-black leading-none">{{ $submissions->total() }}</span>
+                    <span class="text-[7px] uppercase font-bold tracking-tighter mt-0.5">Batches</span>
                 </div>
             </div>
-            <div class="ml-3 pr-4">
-                <div class="text-[9px] font-black text-slate-600 uppercase tracking-widest">{{ $totalItems }} Item(s) Across Batches</div>
-                <div class="text-xs font-black text-emerald-600 uppercase">
-                    {{ $submissions->total() }} Verified Batch(es)
+            
+            <div class="ml-2 pr-3">
+                <div class="text-[10px] font-black text-slate-700 uppercase tracking-tight leading-none">
+                    {{ number_format($totalItemsCount ?? 0) }} Total Item(s)
+                </div>
+                
+                <div class="text-[9px] font-bold text-emerald-600 uppercase tracking-wider mt-1 flex items-center gap-1">
+                    <div class="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
+                    Verified Registry
                 </div>
             </div>
         </div>
@@ -190,41 +193,38 @@
         </div>
     </div>
     {{-- 3. COMBINED REGISTRY STATS --}}
-<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-    @php
-        $statsCards = [
-            // Registry Totals (Accurate across all pages)
-            ['label' => 'Verified Assets', 'value' => number_format($totalItemsCount), 'icon' => 'fa-check-double', 'bg' => '#f0f9ff', 'fg' => '#0369a1'],
-            ['label' => 'Total Valuation', 'value' => '₦' . number_format($totalValue, 0), 'icon' => 'fa-landmark', 'bg' => '#f5f3ff', 'fg' => '#6d28d9'],
-            
-            // Acquisition Types (Accurate across all pages)
-            ['label' => 'New Acquisitions', 'value' => $countNew, 'icon' => 'fa-plus-circle', 'bg' => '#ecfdf5', 'fg' => '#059669'],
-            ['label' => 'Internal Transfers', 'value' => $countTransfer, 'icon' => 'fa-route', 'bg' => '#eff6ff', 'fg' => '#2563eb'],
-            
-            // Maintenance & Disposal (Accurate across all pages)
-            ['label' => 'Repair Logs', 'value' => $countRepair, 'icon' => 'fa-tools', 'bg' => '#fffbeb', 'fg' => '#d97706'],
-            ['label' => 'Disposed Items', 'value' => $countDisposal, 'icon' => 'fa-trash-alt', 'bg' => '#fff1f2', 'fg' => '#e11d48'],
-        ];
-    @endphp
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6 gap-3 mb-8">
+        @php
+            $statsCards = [
+                ['label' => 'Verified Assets', 'value' => number_format($totalItemsCount), 'icon' => 'fa-check-double', 'bg' => 'bg-sky-50', 'fg' => 'text-sky-800'],
+                ['label' => 'Total Valuation', 'value' => '₦' . number_format($totalValue, 0), 'icon' => 'fa-landmark', 'bg' => 'bg-purple-50', 'fg' => 'text-purple-700'],
+                ['label' => 'New Purchases', 'value' => $countNew, 'icon' => 'fa-plus-circle', 'bg' => 'bg-emerald-50', 'fg' => 'text-emerald-700'],
+                ['label' => 'Internal Transfers', 'value' => $countTransfer, 'icon' => 'fa-route', 'bg' => 'bg-blue-50', 'fg' => 'text-blue-700'],
+                ['label' => 'Maintenance', 'value' => $countRepair, 'icon' => 'fa-tools', 'bg' => 'bg-amber-50', 'fg' => 'text-amber-700'],
+                ['label' => 'Disposed Items', 'value' => $countDisposal, 'icon' => 'fa-trash-alt', 'bg' => 'bg-rose-50', 'fg' => 'text-rose-700'],
+            ];
+        @endphp
 
-    @foreach($statsCards as $card)
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 transition-transform hover:scale-[1.02]">
-            {{-- Icon Container --}}
-            <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-sm shadow-inner" 
-                style="background-color: {{ $card['bg'] }}; color: {{ $card['fg'] }};">
-                <i class="fas {{ $card['icon'] }}"></i>
-            </div>
-            
-            {{-- Label & Value --}}
-            <div class="min-w-0">
-                <div class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">{{ $card['label'] }}</div>
-                <div class="text-base font-black text-slate-900 leading-none truncate">
-                    {{ $card['value'] }}
+        @foreach($statsCards as $card)
+            <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4 transition-all hover:shadow-md">
+                
+                {{-- Icon Container: Scaled for mobile vs desktop --}}
+                <div class="shrink-0 w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center text-xs md:text-lg {{ $card['bg'] }} {{ $card['fg'] }} shadow-inner">
+                    <i class="fas {{ $card['icon'] }}"></i>
+                </div>
+                
+                {{-- Label & Value: Center-aligned on mobile, Left-aligned on Desktop --}}
+                <div class="min-w-0 flex-1 text-center md:text-left w-full">
+                    <div class="text-[8px] md:text-[10px] font-black text-slate-600 uppercase tracking-tighter md:tracking-widest leading-tight mb-0.5 md:mb-1 truncate">
+                        {{ $card['label'] }}
+                    </div>
+                    <div class="text-xs md:text-lg font-black text-slate-900 leading-none truncate" title="{{ $card['value'] }}">
+                        {{ $card['value'] }}
+                    </div>
                 </div>
             </div>
-        </div>
-    @endforeach
-</div>
+        @endforeach
+    </div>
 
     {{-- 4. MAIN TABLE --}}
     <div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">

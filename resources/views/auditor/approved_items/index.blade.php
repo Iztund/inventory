@@ -5,7 +5,42 @@
 @section('content')
 <div class="min-h-screen bg-slate-50 py-8">
     <div class="container mx-auto px-4 max-w-7xl">
-        
+       {{-- SYSTEM NOTIFICATION --}}
+        @if(session('success') || session('error'))
+            @php
+                $isSuccess = session()->has('success');
+                $theme = $isSuccess ? 'emerald' : 'rose';
+                $icon = $isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                $message = $isSuccess ? session('success') : session('error');
+            @endphp
+
+            <div id="system-alert" class="mt-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div class="flex items-center p-4 mb-6 text-{{ $theme }}-800 border-l-4 border-{{ $theme }}-500 bg-{{ $theme }}-50 rounded-r-xl shadow-sm border-y border-r border-{{ $theme }}-100" role="alert">
+                    {{-- Status Icon --}}
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-{{ $theme }}-100 mr-4 shrink-0 shadow-sm">
+                        <i class="fas {{ $icon }} text-{{ $theme }}-600 text-lg"></i>
+                    </div>
+
+                    {{-- Message Content --}}
+                    <div class="flex-grow">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-{{ $theme }}-600 mb-0.5">
+                            System Notification
+                        </p>
+                        <div class="text-xs font-bold text-{{ $theme }}-900">
+                            {{ $message }}
+                        </div>
+                    </div>
+
+                    {{-- Close Button --}}
+                    <button type="button" 
+                            class="ms-auto bg-{{ $theme }}-50 text-{{ $theme }}-500 rounded-lg p-1.5 hover:bg-{{ $theme }}-100 transition-colors" 
+                            onclick="this.parentElement.parentElement.remove()" 
+                            aria-label="Close">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        @endif 
         {{-- 1. HEADER & ACTION BAR --}}
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
             <div class="flex items-center gap-4">
@@ -346,5 +381,20 @@ document.addEventListener('DOMContentLoaded', function () {
     initFilter('officeSelect', 'unitWrapper', 'unitSelect'); // Fixed Unit logic
     initFilter('categorySelect', 'subcategoryWrapper', 'subcategorySelect');
 });
+    document.addEventListener('DOMContentLoaded', function() {
+        const alert = document.getElementById('system-alert');
+        if (alert) {
+            // Wait 1 second (1000ms) then start the fade out
+            setTimeout(() => {
+                alert.style.transition = "opacity 0.5s ease";
+                alert.style.opacity = "0";
+                
+                // Physically remove it from the DOM after the 0.5s fade finishes
+                setTimeout(() => {
+                    alert.remove();
+                }, 500);
+            }, 1000); 
+        }
+    });
 </script>
 @endsection

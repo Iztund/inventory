@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 /*
  * DashboardController
  *
@@ -43,4 +44,5 @@ class DashboardController extends Controller
                 return redirect()->route('staff.dashboard');
         }
     }
+    // Add to your dashboar
 }

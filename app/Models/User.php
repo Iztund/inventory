@@ -88,34 +88,61 @@ class User extends Authenticatable // Note: This table still uses Laravel's defa
      */
     // app/Models/User.php
 
+// app/Models/User.php
+
 public function getAffiliationAttribute()
 {
-    // 1. Determine Primary (The Code/Heading)
-    $primary = $this->office->office_code 
-        ?? $this->institute->institute_code 
-        ?? $this->faculty->faculty_code 
-        ?? null;
+    // 1. Initialize Defaults
+    $primaryName = 'General Staff';
+    $code = 'COM';
+    $icon = 'fa-user-tag';
+    $secondaryName = null;
 
-    // 2. Determine the Icon
-    $icon = 'fa-landmark'; // Default
-    if ($this->office) $icon = 'fa-building';
-    if ($this->institute) $icon = 'fa-microscope'; // Better icon for Research/Institute
+    // 2. The Logic: Identify the most specific assignment first (Bottom-Up)
+    
+    // CASE: Unit Level (Most Specific)
+    if ($this->unit_id) {
+        $primaryName = $this->unit->unit_name;
+        $code = $this->unit->unit_code ?? 'UNIT';
+        $icon = 'fa-microscope';
+        // Unit can belong to an Office or a Department
+        $secondaryName = $this->office->office_name ?? ($this->department->dept_name ?? 'Specialized Unit');
 
-    // 3. Determine Sub-text (The "General" vs "Research Center" logic)
-    $sub = 'General';
-    if ($this->department) {
-        $sub = $this->department->dept_name;
-    } elseif ($this->unit) {
-        $sub = $this->unit->unit_name;
-    } elseif ($this->institute) {
-        // If it's an institute with no dept/unit, call it a Research Center
-        $sub = 'Research Center'; 
+    // CASE: Department Level
+    } elseif ($this->department_id) {
+        $primaryName = $this->department->dept_name;
+        $code = $this->department->dept_code ?? 'DEPT';
+        $icon = 'fa-building-user';
+        // Department usually belongs to a Faculty
+        $secondaryName = $this->faculty->faculty_name ?? 'Academic Department';
+
+    // CASE: Institute Level (Usually Standalone/Research focused)
+    } elseif ($this->institute_id) {
+        $primaryName = $this->institute->institute_name;
+        $code = $this->institute->institute_code ?? 'INST';
+        $icon = 'fa-university';
+        $secondaryName = 'Research Institute';
+
+    // CASE: Office Level (Standalone Entity, e.g., Provost's Office)
+    } elseif ($this->office_id) {
+        $primaryName = $this->office->office_name;
+        $code = $this->office->office_code ?? 'OFFICE';
+        $icon = 'fa-briefcase';
+        $secondaryName = 'Administration';
+
+    // CASE: Faculty Level (Standalone Entity, e.g., Dean's Office)
+    } elseif ($this->faculty_id) {
+        $primaryName = $this->faculty->faculty_name;
+        $code = $this->faculty->faculty_code ?? 'FAC';
+        $icon = 'fa-graduation-cap';
+        $secondaryName = 'College Faculty';
     }
 
     return (object) [
-        'primary' => $primary,
-        'icon'    => $icon,
-        'sub'     => $sub
+        'primary'   => $primaryName,   // The actual entity owning the asset
+        'code'      => $code,          // Short code
+        'icon'      => $icon,          // Best matching icon
+        'secondary' => $secondaryName  // The parent context
     ];
 }
     public function department(): BelongsTo
@@ -182,5 +209,21 @@ public function getAffiliationAttribute()
     {
         return $this->hasMany(Submission::class, 'reviewed_by_user_id');
     }
+
+    // app/Models/User.php
+
+/**
+ * Get the name of the primary organizational unit the user belongs to.
+ */
+public function getOrganizationNameAttribute()
+{
+    if ($this->unit_id)       return $this->unit->unit_name;
+    if ($this->department_id) return $this->department->dept_name;
+    if ($this->institute_id)  return $this->institute->institute_name;
+    if ($this->office_id)      return $this->office->office_name;
+    if ($this->faculty_id)     return $this->faculty->faculty_name;
+
+    return 'College of Medicine';
+}
     
 }

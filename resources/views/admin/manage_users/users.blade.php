@@ -212,11 +212,11 @@
                         {{-- Affiliation --}}
                         <td class="py-4">
                             @if($userItem->affiliation->primary)
-                            <div class="fw-bold text-slate-800" style="font-size:0.84rem;">
+                            <div class="fw-bold text-slate-800" style="font-size:0.84rem; white-space: nowrap;">
                                 <i class="fas {{ $userItem->affiliation->icon }} me-1 text-slate-500" style="font-size:0.78rem;"></i>{{ $userItem->affiliation->primary }}
                             </div>
                             @endif
-                            <div class="text-slate-700" style="font-size:0.75rem;">{{ $userItem->affiliation->sub }}</div>
+                            <div class="text-slate-700" style="font-size:0.75rem;">{{ $userItem->affiliation->secondary }}</div>
                         </td>
 
                         {{-- Status --}}

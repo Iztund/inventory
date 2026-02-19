@@ -15,6 +15,7 @@ class Subcategory extends Model
     
     protected $fillable = [
         'category_id',
+        'subcategory_code',
         'subcategory_name',
         'description',
         'is_active'
@@ -30,6 +31,17 @@ class Subcategory extends Model
     /**
  * Scope to only include active subcategories
  */
+public function getSubcategoryCodeAttribute($value)
+{
+    // 1. Return database value if it exists
+    if (!empty($value)) {
+        return strtoupper($value);
+    }
+
+    // 2. Fallback: Take the first 3 letters of the subcategory name
+    // e.g., 'Microscopes' -> 'MIC'
+    return strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->subcategory_name), 0, 3));
+}
     public function scopeActive($query)
         {
             return $query->where('is_active', 'active');

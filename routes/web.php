@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AuthController, DashboardController, AssetController, SubmissionController};
-use App\Http\Controllers\Admin\{AdminController, UserController,ClassificationController, FacultyController, DepartmentController, OfficeController, UnitController, InstituteController};
+use App\Http\Controllers\Admin\{AdminController, BulkAssetController, UserController, ClassificationController, FacultyController, DepartmentController, OfficeController, UnitController, InstituteController};
 use App\Http\Controllers\Staff\{StaffController, GuidelineController};
 use App\Http\Controllers\Auditor\AuditorController;
 
@@ -15,130 +15,138 @@ Route::middleware('guest')->group(function () {
 
 // 2. Authenticated Routes (Shared across roles)
 Route::middleware(['auth', 'session.timeout'])->group(function () {
+    
+    // Session Management
+    Route::get('/session-heartbeat', function () {
+        session(['last_activity_time' => time(), 'heartbeat_tick' => time()]);
+        session()->save(); 
+        return response()->json([
+            'status' => 'session refreshed',
+            'expiry' => time() + (config('session.lifetime') * 60)
+        ]);
+    })->name('session.heartbeat');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::prefix('profile')->group(function () {
-        Route::get('/password', [AuthController::class, 'showChangePassword'])->name('password.change');
-        Route::post('/password', [AuthController::class, 'updatePassword'])->name('password.update');
+    Route::prefix('profile')->as('password.')->group(function () {
+        Route::get('/password', [AuthController::class, 'showChangePassword'])->name('change');
+        Route::post('/password', [AuthController::class, 'updatePassword'])->name('update');
     });
 
     // ────────────────────────────────────────────────
     // ADMIN ROUTES (role_id = 1)
     // ────────────────────────────────────────────────
-    Route::get('/session-heartbeat', function () {
-    return response()->json(['status' => 'session refreshed']);
-        })->name('session.heartbeat');
-
     Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => 'role:1'], function () {
 
         Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
         
-
-        // Submissions – full access
+        // Submissions
         Route::get('/submissions/pending', [SubmissionController::class, 'index'])->name('submissions.pending');
-        Route::get('/submissions/{id}', [SubmissionController::class, 'show'])->name('submissions.show');
-        Route::resource('submissions', SubmissionController::class)->parameters([
-            'submissions' => 'submission_id'
-        ])->only(['index', 'show', 'create', 'store', 'edit', 'update']);
+        Route::resource('submissions', SubmissionController::class)->parameters(['submissions' => 'submission_id']);
 
-        // Assets – full CRUD
-        Route::resource('assets', AssetController::class)->parameters(['assets' => 'asset_id']);
+        // Assets (Inventory)
         Route::get('/approved-items', [AssetController::class, 'index'])->name('approved_items.index');
+        Route::resource('assets', AssetController::class)->parameters(['assets' => 'asset_id']);
 
-        // Reports & Structure Management
+        // Bulk Asset Management
+        Route::controller(BulkAssetController::class)->prefix('bulk-assets')->as('bulk-assets.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/manual/create', 'createManual')->name('manual.create');
+            Route::post('/manual/store', 'storeManual')->name('manual.store');
+            Route::get('/csv/create', 'createCsv')->name('csv.create');
+            Route::post('/csv/process', 'processCsv')->name('csv.process');
+            Route::get('/csv/template', 'downloadTemplate')->name('csv.template');
+            Route::get('/{import_id}', 'show')->name('show');
+            Route::delete('/{import_id}', 'destroy')->name('destroy');
+            Route::post('/{import_id}/generate-tags', 'generateTags')->name('generate-tags');
+        });
+
+        // Reports & Management
         Route::controller(AdminController::class)->group(function () {
-            Route::get('College/Management', 'unitsManagementIndex')->name('units-management.index');
+            Route::get('college/management', 'unitsManagementIndex')->name('units-management.index');
             Route::get('reports', 'reportsIndex')->name('reports.index');
             Route::get('reports/export', 'exportReport')->name('reports.export');
             Route::get('structure/export', 'export')->name('structure.export');
-            Route::get('/categories', 'unitsManagementIndex')->name('categories.index');
-            Route::get('/subcategories','unitsManagementIndex')->name('subcategories.index');
+            Route::get('/search/staff-leadership', 'searchStaff')->name('search.staff');
         });
 
-        // Classification Management
+        // Classification (Categories/Subcategories)
         Route::controller(ClassificationController::class)->group(function () {
             Route::get('/registry-management', 'index')->name('classification_categories.index');
-            Route::get('/registry-management/sub', 'index')->name('classification_subcategories.index');
-
+            Route::get('/registry-management/subcategories', 'index')->name('classification_subcategories.index');
             Route::post('/categories', 'storeCategory')->name('categories.store');
             Route::put('/categories/{id}', 'updateCategory')->name('categories.update');
             Route::delete('/categories/{id}', 'destroyCategory')->name('categories.delete');
-            
             Route::post('/subcategories', 'storeSubcategory')->name('subcategories.store');
             Route::put('/subcategories/{id}', 'updateSubcategory')->name('subcategories.update');
             Route::delete('/subcategories/{id}', 'destroySubcategory')->name('subcategories.delete');
         });
 
-        // Organizational Resources (CRUD)
-        Route::resource('users',      UserController::class)     ->parameters(['users'      => 'user_id']);
-        Route::resource('faculties',  FacultyController::class)  ->parameters(['faculties'  => 'faculty_id']);
-        Route::resource('depts',      DepartmentController::class)->names('departments')->parameters(['depts' => 'dept_id']);
-        Route::resource('offices',    OfficeController::class)   ->parameters(['offices'    => 'office_id']);
-        Route::resource('units',      UnitController::class)     ->parameters(['units'      => 'unit_id']);
-        Route::resource('institutes', InstituteController::class)->parameters(['institutes' => 'institute_id']);
-
-        // Search Helpers
-        // Place this in your admin routes group
-        Route::get('/search/staff-leadership', [AdminController::class, 'searchStaff'])
-             ->name('search.staff');
+        // Organizational Hierarchy Resources
+        Route::resources([
+            'users'      => UserController::class,
+            'faculties'  => FacultyController::class,
+            'departments'      => DepartmentController::class,
+            'offices'    => OfficeController::class,
+            'units'      => UnitController::class,
+            'institutes' => InstituteController::class,
+        ], ['parameters' => [
+            'users'      => 'user_id',
+            'faculties'  => 'faculty_id',
+            'departments'=> 'dept_id',
+            'offices'    => 'office_id',
+            'units'      => 'unit_id',
+            'institutes' => 'institute_id'
+        ]]);
     });
 
     // ────────────────────────────────────────────────
     // STAFF ROUTES (role_id = 2)
     // ────────────────────────────────────────────────
     Route::group(['prefix' => 'staff', 'as' => 'staff.', 'middleware' => 'role:2'], function () {
-
         Route::get('/dashboard', [StaffController::class, 'index'])->name('dashboard');
 
-        // Submissions – full CRUD for own records
-        Route::resource('submissions', SubmissionController::class)->parameters([
-            'submissions' => 'submission_id'
-        ])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
+        Route::resource('submissions', SubmissionController::class)->parameters(['submissions' => 'submission_id']);
 
-        // Assets – read-only + exports
-        Route::get('assets',          [AssetController::class, 'index'])->name('assets.index');
-        Route::get('assets/{asset_id}', [AssetController::class, 'show'])->name('assets.show');
+        Route::controller(AssetController::class)->prefix('assets')->as('assets.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/export-pdf', 'exportPdf')->name('export-pdf');
+            Route::get('/export-csv', 'exportCsv')->name('export-csv');
+            Route::get('/{asset_id}', 'show')->name('show');
+        });
 
-        Route::get('assets/export-pdf', [AssetController::class, 'exportPdf'])->name('assets.export-pdf');
-        Route::get('assets/export-csv', [AssetController::class, 'exportCsv'])->name('assets.export-csv');
-
-        // Guidelines
-        Route::get('/guidelines',          [GuidelineController::class, 'index'])->name('guidelines.index');
-        Route::get('/guidelines/download', [GuidelineController::class, 'downloadManual'])->name('guidelines.download');
+        Route::controller(GuidelineController::class)->prefix('guidelines')->as('guidelines.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/download', 'downloadManual')->name('download');
+        });
     });
 
     // ────────────────────────────────────────────────
     // AUDITOR ROUTES (role_id = 3)
     // ────────────────────────────────────────────────
-  Route::group(['prefix' => 'auditor', 'as' => 'auditor.', 'middleware' => 'role:3'], function () {
+    Route::group(['prefix' => 'auditor', 'as' => 'auditor.', 'middleware' => 'role:3'], function () {
+        Route::get('/dashboard', [AuditorController::class, 'dashboard'])->name('dashboard');
 
-    Route::get('/dashboard', [AuditorController::class, 'dashboard'])->name('dashboard');
+        // Submissions & Item Processing
+        Route::controller(SubmissionController::class)->group(function () {
+            Route::get('/submissions', 'index')->name('submissions.index');
+            Route::get('/submissions/{id}', 'show')->name('submissions.show');
+            Route::get('/items/{item_id}', 'showItem')->name('items.show');
+        });
 
-    // --- SUBMISSIONS (Batches) ---
-    Route::get('/submissions', [SubmissionController::class, 'index'])->name('submissions.index');
-    Route::get('/submissions/{id}', [SubmissionController::class, 'show'])->name('submissions.show');
+        Route::controller(AuditorController::class)->group(function () {
+            Route::post('/submissions/{submission_id}/store', 'store')->name('submissions.store');
+            Route::post('/items/{item_id}/process', 'processItem')->name('items.process');
+            Route::post('/submissions/{submission_id}/re-evaluate', 'reEvaluate')->name('submissions.re-evaluate');
+            Route::get('/central-registry', 'registryIndex')->name('registry.index');
+            Route::get('/registry/export', 'export')->name('registry.export');
+        });
 
-    // --- INDIVIDUAL ITEMS (The "Process" functionality from Registry) ---
-    Route::get('/items/{item_id}', [SubmissionController::class, 'showItem'])->name('items.show');
-
-    // --- AUDITOR-SPECIFIC ACTIONS ---
-    // Batch actions
-    Route::post('/submissions/{submission_id}/store', [AuditorController::class, 'store'])->name('submissions.store');
-    
-    // Item-specific actions (Approval/Rejection per item)
-    Route::post('/items/{item_id}/process', [AuditorController::class, 'processItem'])->name('items.process');
-    Route::post('/submissions/{submission_id}/re-evaluate', [AuditorController::class, 'reEvaluate'])->name('submissions.re-evaluate');
-
-    // --- APPROVED / VERIFIED ASSETS ---
-    Route::get('/approved-items', [AssetController::class, 'index'])->name('approved_items.index');
-    // This route now uses SubmissionController to show the full submission details
-    Route::get('/approved-items/{submission_id}', [AssetController::class, 'show'])->name('approved_items.show');
-    Route::get('/reports/export', [AssetController::class, 'exportcsv'])->name('reports.export');
-    
-    // --- CENTRAL REGISTRY ---
-    Route::get('/central-registry', [AuditorController::class, 'registryIndex'])->name('registry.index');
-    Route::get('/registry/export', [AuditorController::class, 'export'])->name('registry.export');
-    
+        Route::controller(AssetController::class)->prefix('approved-items')->as('approved_items.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{submission_id}', 'show')->name('show');
+            Route::get('/export', 'exportcsv')->name('export');
+        });
     });
 });

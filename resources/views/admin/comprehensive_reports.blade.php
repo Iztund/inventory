@@ -171,7 +171,24 @@
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="ps-4 py-3">
                                 <div class="fw-bold text-slate-900">{{ $asset->item_name }}</div>
-                                <small class="text-slate-400">ID: #{{ $asset->asset_id }}</small>
+                                <td class="px-4 py-3 align-middle">
+                                    <div class="flex flex-col">
+                                        @if($asset->asset_tag)
+                                            <div class="flex items-center gap-1.5">
+                                                {{-- Use the Asset Tag directly from the asset model --}}
+                                                <span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded tracking-tighter shadow-sm">
+                                                    {{ $asset->asset_tag }}
+                                                </span>
+                                            </div>
+                                            
+                                            <span class="text-[8px] text-slate-600 font-bold uppercase tracking-widest mt-1">
+                                                <i class="fas fa-barcode mr-1 text-[7px]"></i> Registry Tag
+                                            </span>
+                                        @else
+                                            <span class="text-[9px] text-slate-600 italic font-bold">LEGACY / NO TAG</span>
+                                        @endif
+                                    </div>
+                                </td>
                             </td>
                             <td class="py-3">
                                 <span class="badge border border-slate-200 text-slate-600 bg-white fw-bold">{{ $asset->category->category_name ?? 'N/A' }}</span>

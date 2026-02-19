@@ -149,27 +149,26 @@
                                     <div class="mb-4">
                                         <label class="text-muted fw-bold text-uppercase x-small d-block mb-3 italic border-bottom pb-1">Attached Evidence & Documents</label>
                                         <div class="row g-2">
-                                            @forelse($docs as $doc)
-                                                @php 
-                                                    $cleanPath = str_replace('public/', '', $doc); 
-                                                    $isPdf = Str::endsWith(strtolower($doc), '.pdf');
-                                                @endphp
-                                                <div class="col-sm-6">
-                                                    <a href="{{ asset('storage/' . $cleanPath) }}" target="_blank" class="d-flex align-items-center p-2 bg-light border rounded-3 text-decoration-none transition hover-bg-white group">
-                                                        <div class="bg-white rounded border d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                                                            <i class="fas {{ $isPdf ? 'fa-file-pdf text-danger' : 'fa-file-image text-primary' }}"></i>
-                                                        </div>
-                                                        <div class="ms-3 overflow-hidden">
-                                                            <p class="mb-0 x-small fw-bold text-dark text-truncate">VIEW_DOC_{{ $loop->iteration }}</p>
-                                                            <span class="x-small text-muted text-uppercase" style="font-size: 0.55rem;">Click to Open</span>
-                                                        </div>
-                                                    </a>
-                                                </div>
-                                            @empty
-                                                <div class="col-12 text-center py-3 border-2 border-dashed rounded-4 bg-light">
-                                                    <span class="x-small fw-bold text-muted text-uppercase">No Documents Attached</span>
-                                                </div>
-                                            @endforelse
+                                            @forelse($item->documents as $doc)
+                                            <div class="col-sm-6">
+                                                {{-- Use the 'url' and 'path' properties from our Model object --}}
+                                                <a href="{{ $doc->url }}" target="_blank" class="d-flex align-items-center p-2 bg-light border rounded-3 text-decoration-none transition hover-bg-white group">
+                                                    <div class="bg-white rounded border d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                                        {{-- Use 'is_image' property from the Model --}}
+                                                        <i class="fas {{ $doc->is_image ? 'fa-file-image text-primary' : 'fa-file-pdf text-danger' }}"></i>
+                                                    </div>
+                                                    <div class="ms-3 overflow-hidden">
+                                                        {{-- Use the 'name' property from the Model --}}
+                                                        <p class="mb-0 x-small fw-bold text-dark text-truncate">{{ $doc->name }}</p>
+                                                        <span class="x-small text-muted text-uppercase" style="font-size: 0.55rem;">Click to Open</span>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        @empty
+                                            <div class="col-12">
+                                                <p class="text-muted small italic">No evidence uploaded for this item.</p>
+                                            </div>
+                                        @endforelse
                                         </div>
                                     </div>
 

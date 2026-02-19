@@ -11,7 +11,7 @@
 
         <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
-                <h6 class="text-amber-400 font-black uppercase tracking-widest text-xs lg:text-sm mb-2">
+                <h6 class="text-indigo-400 font-black uppercase tracking-widest text-xs lg:text-sm mb-2">
                     Internal Audit Terminal
                 </h6>
                 <h1 class="text-2xl lg:text-4xl font-black text-white mb-2">
@@ -19,7 +19,7 @@
                 </h1>
                 <p class="text-slate-300 text-sm lg:text-base flex items-center">
                     <i class="fas fa-shield-check text-emerald-400 me-2"></i>
-                    COMIS • Real-time Compliance Monitoring
+                    CoMUI • Real-time Compliance Monitoring
                 </p>
             </div>
 

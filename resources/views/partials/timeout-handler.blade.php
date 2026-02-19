@@ -119,114 +119,108 @@
 </div>
 
 <script>
-    /**
-     * CONFIGURATION
-     * Lifetime from .env (20 mins)
-     */
     const LIFETIME_MINS = {{ config('session.lifetime', 20) }}; 
-    const BUFFER_SECONDS = 120; // 2 minute countdown
+    const BUFFER_SECONDS = 120; 
     
-    let warningTimer, logoutTimer, countdownInterval;
+    let countdownInterval;
 
     function initSecurityTimers() {
         stopAllLogic();
         
+        // 1. Get or Set the ABSOLUTE expiry time in localStorage
+        // This persists across refreshes and tabs!
+        let expiryTime = localStorage.getItem('session_expiry_time');
+        
+        if (!expiryTime) {
+            resetExpiryInStorage();
+            expiryTime = localStorage.getItem('session_expiry_time');
+        }
+
         const toast = document.getElementById('timeout-warning');
-        const bar = document.getElementById('timeout-bar');
         const display = document.getElementById('timer-display');
         const btn = document.getElementById('restore-session-btn');
 
         // Reset UI
         toast.classList.add('d-none');
         toast.classList.remove('show-toast', 'minimized');
-        bar.style.width = '100%';
-        bar.style.transition = 'none'; // Prevent animation on reset
-        display.innerText = BUFFER_SECONDS;
         btn.innerText = "KEEP WORKING";
         btn.disabled = false;
 
-        // Calculate timing
-        const msUntilWarning = (LIFETIME_MINS * 60 * 1000) - (BUFFER_SECONDS * 1000);
-        
-        // 1. Set Warning trigger
-        warningTimer = setTimeout(triggerWarningUI, msUntilWarning);
-
-        // 2. Set Absolute Logout
-        logoutTimer = setTimeout(forceLogout, LIFETIME_MINS * 60 * 1000);
-    }
-
-    function stopAllLogic() {
-        clearTimeout(warningTimer);
-        clearTimeout(logoutTimer);
-        clearInterval(countdownInterval);
-    }
-
-    function triggerWarningUI() {
-        const toast = document.getElementById('timeout-warning');
-        const bar = document.getElementById('timeout-bar');
-        
-        toast.classList.remove('d-none');
-        // Small delay to trigger CSS transform animation
-        setTimeout(() => toast.classList.add('show-toast'), 50);
-
-        let secondsLeft = BUFFER_SECONDS;
-        const display = document.getElementById('timer-display');
-        
-        bar.style.transition = 'width 1s linear';
-
+        // 2. Start a persistent watcher
         countdownInterval = setInterval(() => {
-            secondsLeft--;
-            if (display) display.innerText = secondsLeft;
-            if (bar) bar.style.width = (secondsLeft / BUFFER_SECONDS) * 100 + '%';
+            const now = Date.now();
+            const timeLeftMs = expiryTime - now;
+            const secondsLeft = Math.floor(timeLeftMs / 1000);
 
+            // Trigger Warning UI when we hit the buffer (e.g., 2 mins left)
+            if (secondsLeft <= BUFFER_SECONDS && secondsLeft > 0) {
+                if (toast.classList.contains('d-none')) {
+                    triggerWarningUI();
+                }
+                if (display) display.innerText = secondsLeft;
+                
+                const bar = document.getElementById('timeout-bar');
+                if (bar) bar.style.width = (secondsLeft / BUFFER_SECONDS) * 100 + '%';
+            }
+
+            // Force Logout if time is up
             if (secondsLeft <= 0) {
                 forceLogout();
             }
         }, 1000);
     }
 
-    function executeRestore(e) {
-        if(e) e.stopPropagation();
-        const btn = document.getElementById('restore-session-btn');
-        btn.disabled = true;
-        btn.innerText = "REFRESHING...";
-
-        // Ping the heartbeat route
-        fetch("{{ route('session.heartbeat') }}")
-            .then(res => {
-                if(res.ok) {
-                    initSecurityTimers(); // Reset 20-minute cycle
-                } else {
-                    forceLogout();
-                }
-            })
-            .catch(() => forceLogout());
+    function resetExpiryInStorage() {
+        const absoluteExpiry = Date.now() + (LIFETIME_MINS * 60 * 1000);
+        localStorage.setItem('session_expiry_time', absoluteExpiry);
     }
+
+    function stopAllLogic() {
+        clearInterval(countdownInterval);
+    }
+
+    function triggerWarningUI() {
+        const toast = document.getElementById('timeout-warning');
+        toast.classList.remove('d-none');
+        setTimeout(() => toast.classList.add('show-toast'), 50);
+    }
+
+    function executeRestore(e) {
+    if(e) e.stopPropagation();
+    const btn = document.getElementById('restore-session-btn');
+    btn.disabled = true;
+    btn.innerText = "REFRESHING...";
+
+    fetch("{{ route('session.heartbeat') }}", {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest', // Crucial for session identification
+            'Cache-Control': 'no-cache'
+        }
+    })
+    .then(res => {
+        if(res.ok) {
+            // Forcefully reset the local clock truth
+            const newExpiry = Date.now() + (LIFETIME_MINS * 60 * 1000);
+            localStorage.setItem('session_expiry_time', newExpiry);
+            
+            // Restart the logic with the new time
+            initSecurityTimers(); 
+            console.log("Session verified and extended in Database");
+        } else {
+            forceLogout();
+        }
+    })
+    .catch(() => forceLogout());
+}
 
     function forceLogout() {
         stopAllLogic();
+        localStorage.removeItem('session_expiry_time');
         window.location.href = "{{ route('login') }}?reason=timeout";
     }
 
-    function minimizeToast(e) {
-        e.stopPropagation();
-        document.getElementById('timeout-warning').classList.add('minimized');
-    }
-
-    function expandToast() {
-        const toast = document.getElementById('timeout-warning');
-        if (toast.classList.contains('minimized')) {
-            toast.classList.remove('minimized');
-        }
-    }
-
-    // Initialize logic
-    window.onload = initSecurityTimers;
-
-    /**
-     * MULTI-DEVICE ACTIVITY TRACKING
-     * Resets the 20-minute timer if the user is active.
-     */
+    // Capture activity to reset the timer
     const activityEvents = ['mousedown', 'touchstart', 'scroll', 'keypress'];
     let debounceTimer;
 
@@ -235,20 +229,21 @@
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 const toast = document.getElementById('timeout-warning');
-                // Only reset the background timer if the user isn't currently 
-                // looking at the "Warning" popup.
+                // Only extend session if warning isn't already showing
                 if (toast && toast.classList.contains('d-none')) {
-                    initSecurityTimers();
+                    resetExpiryInStorage();
                 }
-            }, 5000); // Check activity every 5 seconds
+            }, 5000); 
         }, { passive: true });
     });
 
-    // Detect when browser comes back from "Sleep" or "Background" (Mobile Fix)
+    // Detect when browser tab becomes active again
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            // Ping server to see if we're still logged in
-            fetch("{{ route('session.heartbeat') }}").catch(() => forceLogout());
+            // Immediately re-sync the timer with the stored timestamp
+            initSecurityTimers();
         }
     });
+
+    window.onload = initSecurityTimers;
 </script>

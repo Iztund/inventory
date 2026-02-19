@@ -19,21 +19,10 @@
                 <p class="text-slate-400 font-medium mb-0 flex items-center">
                     <i class="fas fa-map-marker-alt text-emerald-500 me-2"></i>
                     Current Assignment: 
-                    <span class="text-white fw-bold ms-1">
-                        @if(Auth::user()->unit_id) 
-                            {{ Auth::user()->unit->unit_name }}
-                        @elseif(Auth::user()->department_id) 
-                            {{ Auth::user()->department->dept_name }}
-                        @elseif(Auth::user()->institute_id) 
-                            {{ Auth::user()->institute->institute_name }}
-                        @elseif(Auth::user()->office_id) 
-                            {{ Auth::user()->office->office_name }}
-                        @elseif(Auth::user()->faculty_id) 
-                            {{ Auth::user()->faculty->faculty_name }}
-                        @else 
-                            College of Medicine
-                        @endif
-                    </span>
+                    <div class="user-meta">
+                        <span class="d-block fw-bold text-slate-100">{{ Auth::user()->full_name }}</span>
+                        <small class="text-emerald-400">{{ Auth::user()->organization_name }}</small>
+                    </div>
                 </p>
             </div>
             <div class="col-lg-4 text-lg-end d-none d-lg-block">
@@ -54,19 +43,22 @@
     <div class="row g-4 mb-8">
         @php
             $coreMetrics = [
-                ['My Submissions', $stats['total'] ?? 0, 'fa-clipboard-list', 'text-emerald-600', 'bg-emerald-50', 'Total Submitted'],
-                ['Pending Audit', $stats['pending'] ?? 0, 'fa-clock', 'text-amber-500', 'bg-amber-50', 'Under Review'],
-                ['Verified Assets', $stats['approved'] ?? 0, 'fa-check-circle', 'text-emerald-500', 'bg-emerald-50', 'Approved'],
-                ['Unit Assets', $totalUnitAssets ?? 0, 'fa-boxes-stacked', 'text-teal-600', 'bg-teal-50', 'Registry Total'],
+                ['My Submissions', $stats['total'] ?? 0, 'fa-clipboard-list', 'text-emerald-600', 'bg-emerald-50', 'Total Submitted Items'],
+                ['Pending Audit', $stats['pending'] ?? 0, 'fa-clock', 'text-amber-500', 'bg-amber-50', 'Under Review Items'],
+                ['Verified Assets', $stats['approved'] ?? 0, 'fa-check-circle', 'text-emerald-500', 'bg-emerald-50', 'Approved Items'],
+                // New Rejected Metric Added Below
+                ['Rejected', $stats['rejected'] ?? 0, 'fa-circle-exclamation', 'text-rose-600', 'bg-rose-50', 'Action Required'],
+                ['Total Available Assets', $totalUnitAssets ?? 0, 'fa-boxes-stacked', 'text-teal-600', 'bg-teal-50', 'Registry Total Items'],
             ];
         @endphp
         
         @foreach($coreMetrics as [$label, $val, $icon, $textColor, $bgColor, $subtitle])
-        <div class="col-6 col-lg-3">
-            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1">
+        {{-- Changed col-lg-3 to col-xl for better 5-column fit, or keep col-lg-3 for wrapping --}}
+        <div class="col-6 col-lg-4 col-xl"> 
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-transform hover:-translate-y-1 h-100">
                 <div class="flex justify-between items-start mb-3">
                     <span class="text-[11px] font-black text-slate-800 uppercase tracking-wider">{{ $label }}</span>
-                    <div class="w-8 h-8 rounded-lg {{ $bgColor }} flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-lg {{ $bgColor }} flex items-center justify-center shrink-0">
                         <i class="fas {{ $icon }} {{ $textColor }} text-xs"></i>
                     </div>
                 </div>
@@ -83,14 +75,14 @@
         <h6 class="font-black text-slate-900 uppercase tracking-widest text-[11px] mb-0">Submission Status Overview</h6>
     </div>
 
-    <div class="row g-4 mb-8">
+    <div class="row g-3 mb-6">
         <div class="col-md-4">
             <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 shadow-lg">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="text-[10px] text-emerald-100 font-black uppercase tracking-widest mb-2">Approved Items</div>
                         <div class="text-4xl font-black text-white">{{ $stats['approved'] ?? 0 }}</div>
-                        <div class="text-emerald-200 text-xs font-bold mt-2">
+                        <div class="text-emerald-100 text-xs font-bold mt-2">
                             <i class="fas fa-check-double me-1"></i> Successfully Verified
                         </div>
                     </div>
@@ -123,15 +115,10 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <div class="text-[10px] text-slate-300 font-black uppercase tracking-widest mb-2">Total Value</div>
-                        <div class="text-4xl font-black text-white">
-                            @php
-                                $totalValue = $recentSubmissions->sum(function($sub) {
-                                    return $sub->items->sum(fn($i) => ($i->cost ?? 0) * ($i->quantity ?? 0));
-                                });
-                            @endphp
+                        <div class="text-4l font-black text-white">
                             ₦{{ number_format($totalValue, 0) }}
                         </div>
-                        <div class="text-slate-400 text-xs font-bold mt-2">
+                        <div class="text-slate-200 text-xs font-bold mt-2">
                             <i class="fas fa-sack-dollar me-1"></i> Asset Valuation
                         </div>
                     </div>
@@ -171,16 +158,7 @@
                 <tbody class="border-top-0">
                     @forelse($recentSubmissions as $index => $sub)
                     @php
-                        $u = Auth::user();
                         $firstItem = $sub->items->first();
-                        
-                        $prefix = 'COM';
-                        if($u->unit_id) $prefix = $u->unit->unit_code ?? 'UNIT';
-                        elseif($u->department_id) $prefix = $u->department->dept_code ?? 'DEPT';
-                        elseif($u->institute_id) $prefix = $u->institute->institute_code ?? 'INST';
-                        elseif($u->office_id) $prefix = $u->office->office_code ?? 'OFF';
-                        elseif($u->faculty_id) $prefix = $u->faculty->faculty_code ?? 'FAC';
-                        
                         $statusConfig = [
                             'pending' => ['bg' => 'bg-amber-100/50', 'text' => 'text-amber-700', 'border' => 'border-amber-200', 'icon' => 'fa-clock'],
                             'approved' => ['bg' => 'bg-emerald-100/50', 'text' => 'text-emerald-700', 'border' => 'border-emerald-200', 'icon' => 'fa-check-circle'],
@@ -201,30 +179,80 @@
                                 {{ $firstItem->item_name ?? 'Batch Submission' }}
                             </div>
                             <div class="text-[10px] text-slate-600 font-semibold">
-                                Value: ₦{{ number_format($sub->items->sum(fn($i) => ($i->cost ?? 0) * ($i->quantity ?? 0)), 2) }}
+                                Value: ₦{{ number_format($sub->total_value, 2) }}
                                 @if($sub->items->count() > 1)
                                     <span class="text-slate-400 italic"> • {{ $sub->items->count() }} items</span>
                                 @endif
                             </div>
                         </td>
 
-                        <td class="py-4">
-                            @if($sub->status == 'approved' && $firstItem)
-                                <code class="px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    {{ $prefix }}/{{ date('y') }}/{{ str_pad($firstItem->id, 4, '0', STR_PAD_LEFT) }}
-                                </code>
-                            @else
-                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200 italic">
-                                    <i class="fas fa-hourglass-start me-1"></i> Pending Tag
-                                </span>
+                        <td class="py-4 align-middle text-center">
+                            @php 
+                                $firstItem = $sub->items->first();
+                                $tag = $firstItem ? $firstItem->generated_tag : 'NO_ITEM';
+                                $isNewPurchase = ($sub->submission_type === 'new_purchase');
+                            @endphp
+
+                            @if($firstItem)
+                                <div class="relative inline-block">
+                                    
+                                    {{-- This condition will now work because the Model is forced to return this string --}}
+                                    @if($tag === 'PENDING_ASSET_TAG')
+                                        <span class="px-2 py-1 rounded-md text-[9px] font-bold bg-slate-50 text-slate-400 border border-slate-200 border-dashed italic inline-flex items-center">
+                                            <i class="fas fa-hourglass-start mr-1 opacity-50"></i>
+                                            PENDING_TAG
+                                        </span>
+
+                                    @elseif($tag === 'ASSET_NOT_LINKED')
+                                        <span class="px-2 py-1 rounded-md text-[9px] font-bold bg-amber-50 text-amber-600 border border-amber-200 inline-flex items-center">
+                                            <i class="fas fa-exclamation-circle mr-1"></i>
+                                            ASSET_TAG_MISSING
+                                        </span>
+
+                                    @else
+                                        <code class="px-2 py-1 rounded-md text-[10px] font-black {{ $isNewPurchase ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200' }} border shadow-sm leading-none inline-flex items-center">
+                                            <i class="fas {{ $isNewPurchase ? 'fa-check-decagram' : 'fa-tools' }} mr-1 opacity-70"></i>
+                                            {{ $tag ?? 'UNKNOWN_TAG' }}
+                                        </code>
+                                    @endif
+
+                                    @if($sub->items->count() > 1)
+                                        <span class="absolute -top-2 -right-3 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-slate-800 text-white text-[8px] font-bold rounded-full border-2 border-white shadow-sm">
+                                            +{{ $sub->items->count() - 1 }}
+                                        </span>
+                                    @endif
+                                </div>
                             @endif
                         </td>
 
                         <td class="py-4">
-                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border {{ $status['bg'] }} {{ $status['text'] }} {{ $status['border'] }}">
-                                <i class="fas {{ $status['icon'] }} me-1"></i>
-                                {{ $sub->status }}
-                            </span>
+                            <div class="flex flex-col gap-1.5">
+                                <div>
+                                    <span class="px-2 py-0.5 rounded-md text-[9px] font-black uppercase border {{ $status['bg'] }} {{ $status['text'] }} {{ $status['border'] }}">
+                                        <i class="fas {{ $status['icon'] }} me-1"></i>
+                                        {{ $sub->status }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-1">
+                                    @php
+                                        $approvedCount = $sub->items->where('status', 'approved')->count();
+                                        $rejectedCount = $sub->items->where('status', 'rejected')->count();
+                                    @endphp
+
+                                    @if($approvedCount > 0)
+                                        <span class="inline-flex items-center justify-center bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[8px] font-bold border border-emerald-200">
+                                            <i class="fas fa-check me-0.5"></i> {{ $approvedCount }}
+                                        </span>
+                                    @endif
+
+                                    @if($rejectedCount > 0)
+                                        <span class="inline-flex items-center justify-center bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded text-[8px] font-bold border border-rose-200">
+                                            <i class="fas fa-times me-0.5"></i> {{ $rejectedCount }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
                         </td>
 
                         <td class="py-4">

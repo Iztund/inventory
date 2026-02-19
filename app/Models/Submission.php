@@ -22,7 +22,6 @@ class Submission extends Model
         'submitted_by_user_id',
         'reviewed_by_user_id',
         'submission_type', 
-        'funding_source',
         'notes',
         'summary',
         'status',
@@ -45,7 +44,12 @@ class Submission extends Model
     {
         return $this->belongsTo(User::class, 'submitted_by_user_id');
     }
-   
+   public function getTotalValueAttribute()
+{
+    return $this->items->sum(function($item) {
+        return ($item->cost ?? 0) * ($item->quantity ?? 0);
+    });
+}
 
     /**
      * The Admin who approved/rejected the audit.

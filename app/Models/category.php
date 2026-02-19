@@ -16,6 +16,7 @@ class Category extends Model
 
     protected $fillable = [
         'category_name',
+        'category_code',
         'description',
         'is_consumable',
         'is_active',
@@ -33,7 +34,17 @@ class Category extends Model
         {
             return $query->where('is_active', 'active');
         }
+    public function getCategoryCodeAttribute($value)
+    {
+        // 1. If the database has a specific code (e.g., 'LAB'), use it.
+        if (!empty($value)) {
+            return strtoupper($value);
+        }
 
+        // 2. Fallback: Generate a code from the category name
+        // e.g., 'Laboratory' becomes 'LAB', 'Office Supplies' becomes 'OFF'
+        return strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $this->category_name), 0, 3));
+    }
     /**
      * Scope to get only Main Categories (where parent_id is null)
      */

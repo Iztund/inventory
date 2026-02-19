@@ -11,22 +11,22 @@ use App\Models\Asset;
 class ClassificationController extends Controller
 {
     public function index()
-        {
-            // Fetch all categories and subcategories with their parent relationships
-            $categories = Category::withCount('subcategories')
-                                    ->orderBy('category_name')
-                                    ->take(10)
-                                    ->get();
-            $subcategories = Subcategory::with('category')
-                                        ->orderBy('category_name')
-                                        ->take(10)
-                                        ->get();
-            $dropdownData = [
+{
+    $categories = Category::withCount('subcategories')
+                    ->orderBy('category_name')
+                    ->paginate(15); // Changed from take(10)
+
+    $subcategories = Subcategory::with('category')
+                        ->join('categories', 'subcategories.category_id', '=', 'categories.category_id')
+                        ->orderBy('categories.category_name')
+                        ->paginate(15); // Changed from take(10)
+
+    $dropdownData = [
         'categories' => Category::orderBy('category_name')->get(),
-        
-         ];
-            return view('admin.Academic.classifications_index', compact('categories', 'subcategories', 'dropdownData'));
-        }
+    ];
+
+    return view('admin.Academic.classifications_index', compact('categories', 'subcategories', 'dropdownData'));
+}
     // --- CATEGORIES ---
     public function storeCategory(Request $request) {
         $request->validate(['category_name' => 'required|unique:categories,category_name']);

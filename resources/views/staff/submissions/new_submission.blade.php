@@ -1,310 +1,489 @@
 @extends('layouts.staff')
 
-@section('title', 'Inventory Audit Submission')
+@section('title', 'New Inventory Submission')
 
 @section('content')
-<style>
-    :root {
-        --med-navy: #0f172a; --med-blue: #3b82f6; --med-crimson: #ef4444;
-        --med-slate: #f8fafc; --med-border: #e2e8f0; --med-accent: #7dd3fc;
-    }
-    body { background-color: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.82rem; }
-    
-    .audit-card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 1.5rem; background: #fff; }
-    .item-row { background: #fff; border: 1.5px solid var(--med-border) !important; border-radius: 12px; position: relative; margin-bottom: 2rem; overflow: hidden; }
-    .item-header { background: #f8fafc; border-bottom: 1px solid var(--med-border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .admin-box { background: #f0f7ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-    
-    .form-control, .form-select { font-size: 0.85rem; border-radius: 8px; border: 1.2px solid var(--med-border); }
-    .form-label { font-size: 0.72rem; font-weight: 700; color: #475569; }
 
-    .file-preview-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
-    .preview-item { position: relative; border: 1px solid var(--med-border); border-radius: 8px; padding: 5px; background: #fff; text-align: center; font-size: 10px; min-height: 85px; }
-    .preview-item img { width: 100%; height: 60px; object-fit: cover; border-radius: 5px; }
-    .remove-file { position: absolute; top: -5px; right: -5px; background: var(--med-crimson); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; font-weight: bold; }
+<div class="container-fluid py-6 px-4 max-w-[1600px] mx-auto">
     
-    .sidebar-meta { background: var(--med-navy); color: white; border-radius: 20px; padding: 25px; }
-    .side-label { font-size: 0.62rem; font-weight: 800; color: var(--med-accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-    .entity-tag { background: rgba(255,255,255,0.05); border-left: 3px solid var(--med-accent); padding: 8px 12px; margin-bottom: 8px; border-radius: 0 6px 6px 0; font-size: 0.75rem; color: #fff; }
-
-    /* RESPONSIVE OVERRIDES */
-    @media (max-width: 991.98px) {
-        .sticky-top { position: static !important; }
-        .sidebar-meta { margin-top: 1rem; margin-bottom: 3rem; }
-    }
-    @media (max-width: 575.98px) {
-        .item-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-        .admin-box { padding: 12px; }
-        .p-4 { padding: 1.5rem !important; }
-    }
-</style>
-
-<div class="container-fluid px-2 px-lg-4">
-    {{-- Header Section: Stacks on mobile, row on desktop --}}
-    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between mb-4 mt-4 gap-3">
+    {{-- Header --}}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-            <h1 class="h5 fw-bold text-navy mb-0" style="color: var(--med-navy);">Inventory Audit Submission</h1>
-            <p class="text-muted mb-0" style="font-size: 0.7rem;">College of Medicine Inventory System</p>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{{ route('staff.submissions.index') }}" 
+                   class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm text-slate-400 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-200 no-underline">
+                    <i class="fas fa-arrow-left text-xs"></i>
+                </a>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-0">New Inventory Submission</h1>
+            </div>
+            <p class="text-sm text-slate-500 ml-12">Submit assets for audit and verification</p>
         </div>
-        <a href="{{ route('staff.submissions.index') }}" class="btn btn-sm btn-white border rounded-pill px-4 shadow-sm fw-bold">
-            <i class="fas fa-arrow-left me-1"></i> Back
-        </a>
     </div>
 
     <form action="{{ route('staff.submissions.store') }}" method="POST" enctype="multipart/form-data" id="audit-form">
         @csrf
-        <div class="row">
-            {{-- LEFT SIDE: ITEMS (Full width on mobile/tablet, 8/12 on desktop) --}}
-            <div class="col-lg-8 order-2 order-lg-1">
+        <div class="row g-4">
+            
+            {{-- Left Column: Asset Items --}}
+            <div class="col-lg-8">
                 <div id="items-container">
-                    <div class="item-row shadow-sm" data-row-index="0">
-                        <div class="item-header">
-                            <span class="fw-bold text-primary item-number-label small text-uppercase"><i class="fas fa-box me-2"></i>Asset Entry #1</span>
-                        </div>
+                    {{-- The First Row (Template for cloning) --}}
+                    <div class="item-row bg-white rounded-2xl border border-slate-200 shadow-sm mb-6 overflow-hidden transition-all duration-300 relative" data-row-index="0">
                         
-                        <div class="p-4">
-                            <div class="admin-box">
+                        {{-- Item Header --}}
+                        <div class="flex justify-between items-center px-6 py-4 bg-slate-50 border-b border-slate-100">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
+                                    <i class="fas fa-box text-white text-xs"></i>
+                                </div>
+                                <span class="item-number-label font-black text-slate-900 text-sm">Asset Entry #1</span>
+                            </div>
+                            {{-- Placeholder for JS to inject delete button on cloned rows --}}
+                            <div class="delete-btn-placeholder"></div>
+                        </div>
+
+                        <div class="p-6">
+                            {{-- Entry Type & Selection Section --}}
+                            <div class="bg-emerald-50/50 rounded-xl p-4 border border-emerald-100 mb-6">
                                 <div class="row g-3">
-                                    <div class="col-sm-6">
-                                        <label class="form-label">Entry Type</label>
-                                        <select name="items[0][submission_type]" class="form-select" onchange="toggleRowFields(this)">
+                                    <div class="col-md-5">
+                                        <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider">Entry Type</label>
+                                        <select name="items[0][submission_type]" class="form-select submission-type-select rounded-lg border-slate-200 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500" onchange="toggleRowFields(this)">
                                             <option value="new_purchase">New Purchase</option>
+                                            <option value="maintenance">Maintenance</option>
                                             <option value="transfer">Internal Transfer</option>
                                             <option value="disposal">Disposal</option>
-                                            <option value="audit">Existing Audit/Update</option>
                                         </select>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <label class="form-label">Item Funding Source</label>
-                                        <input type="text" name="items[0][funding_source_per_item]" class="form-control" placeholder="Specific source (e.g. TETFUND)">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label text-primary">Item Specific Notes</label>
-                                        <textarea name="items[0][item_notes]" rows="2" class="form-control" placeholder="Technical details or specific item condition..."></textarea>
+
+                                    {{-- Existing Asset Selection --}}
+                                    {{-- Existing Asset Selection (Shown for Maintenance, Transfer, Disposal) --}}
+                                    <div class="col-md-7 asset-selection-area" style="display: none;">
+                                        <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider">Search Asset (Name or Tag)</label>
+                                        {{-- Added 'asset-search-select' class --}}
+                                        <select name="items[0][asset_id]" 
+                                            class="form-select asset-search-select rounded-lg" 
+                                            onchange="autoFillAssetDetails(this)">
+                                        <option value="">-- Choose Asset --</option>
+                                        @foreach($assets as $asset)
+                                            <option value="{{ $asset->asset_id }}" 
+                                                    data-name="{{ $asset->item_name }}"
+                                                    data-cat="{{ $asset->category_id }}"
+                                                    data-subcat="{{ $asset->subcategory_id }}">
+                                                {{ $asset->asset_tag }} - {{ $asset->item_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <label class="form-label">Category</label>
-                                    <select name="items[0][category_id]" class="form-select category-select" onchange="updateSubcats(this)" required>
+                            {{-- Main Asset Details --}}
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider"><i class="fas fa-tags text-slate-400 mr-1"></i> Category</label>
+                                    <select name="items[0][category_id]" class="form-select category-select rounded-lg border-slate-200 text-sm shadow-sm" onchange="updateSubcats(this)" required>
                                         <option value="">-- Select Category --</option>
                                         @foreach($categories as $cat)
                                             <option value="{{ $cat->category_id }}">{{ $cat->category_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">Sub-Category</label>
-                                    <select name="items[0][subcategory_id]" class="form-select subcategory-select" required>
+
+                                <div class="col-md-6">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider"><i class="fas fa-layer-group text-slate-400 mr-1"></i> Sub-Category</label>
+                                    <select name="items[0][subcategory_id]" class="form-select subcategory-select rounded-lg border-slate-200 text-sm shadow-sm" required>
                                         <option value="">-- Select Category First --</option>
                                     </select>
                                 </div>
+
                                 <div class="col-12">
-                                    <label class="form-label">Item Name / Model Description</label>
-                                    <input type="text" name="items[0][item_name]" class="form-control" required>
-                                </div>
-                                <div class="col-6 col-md-3">
-                                    <label class="form-label">Quantity</label>
-                                    <input type="number" name="items[0][quantity]" value="1" min="1" class="form-control qty-input" oninput="runGrandTotal()">
-                                </div>
-                                <div class="col-6 col-md-4 cost-area">
-                                    <label class="form-label">Unit Cost (₦)</label>
-                                    <input type="number" step="0.01" name="items[0][cost]" class="form-control cost-input" oninput="runGrandTotal()">
-                                </div>
-                                <div class="col-12 col-md-5 serial-area">
-                                    <label class="form-label">Serial Number</label>
-                                    <input type="text" name="items[0][serial_number]" class="form-control">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider"><i class="fas fa-box text-slate-400 mr-1"></i> Item Name / Model Description</label>
+                                    <input type="text" name="items[0][item_name]" class="form-control rounded-lg border-slate-200 text-sm shadow-sm" placeholder="e.g., Dell Latitude 5420 Laptop" required>
                                 </div>
 
-                                <div class="col-12 mt-3">
-                                    <label class="form-label text-primary">Supporting Evidence (Photos/PDFs)</label>
-                                    <div class="p-3 border rounded-3 bg-light">
-                                        <input type="file" class="form-control form-control-sm" multiple onchange="handleFileSelect(this)">
-                                        <div class="hidden-inputs-container" style="display: none;"></div>
-                                        <div class="file-preview-container"></div>
+                                <div class="col-md-4">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider"><i class="fas fa-hashtag text-slate-400 mr-1"></i> Quantity</label>
+                                    <input type="number" name="items[0][quantity]" value="1" min="1" class="form-control qty-input rounded-lg border-slate-200 text-sm shadow-sm" oninput="runGrandTotal()">
+                                </div>
+
+                                <div class="col-md-4 cost-area">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider"><i class="fas fa-naira-sign text-slate-400 mr-1"></i> Unit Cost (₦)</label>
+                                    <input type="number" step="0.01" name="items[0][cost]" class="form-control cost-input rounded-lg border-slate-200 text-sm shadow-sm" placeholder="0.00" oninput="runGrandTotal()">
+                                </div>
+
+                                <div class="col-md-4 serial-area">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider"><i class="fas fa-barcode text-slate-400 mr-1"></i> Serial Number</label>
+                                    <input type="text" name="items[0][serial_number]" class="form-control rounded-lg border-slate-200 text-sm shadow-sm" placeholder="Optional">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label font-bold text-emerald-700 text-[11px] uppercase tracking-wider">Item Notes</label>
+                                    <textarea name="items[0][item_notes]" rows="2" class="form-control rounded-lg border-slate-200 text-sm shadow-sm" placeholder="Technical details or condition..."></textarea>
+                                </div>
+
+                                {{-- File Upload --}}
+                                <div class="col-12 mt-4">
+                                    <label class="form-label font-bold text-slate-700 text-[11px] uppercase tracking-wider block mb-3">
+                                        <i class="fas fa-camera text-slate-400 mr-1"></i> Supporting Evidence
+                                    </label>
+                                    
+                                    <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 bg-slate-50/50 text-center hover:bg-emerald-50 hover:border-emerald-200 transition-all cursor-pointer relative" 
+                                        onclick="this.querySelector('.trigger-input').click()">
+                                        
+                                        <input type="file" class="hidden trigger-input" multiple accept="image/*,.pdf" onchange="handleFileSelect(this)">
+                                        <i class="fas fa-cloud-upload-alt text-slate-300 text-3xl mb-2"></i>
+                                        <p class="text-sm font-bold text-slate-600 mb-1">Click to upload or drag files here</p>
+                                        <p class="text-xs text-slate-400">JPG, PNG, PDF • Max 10MB per file</p>
+                                        
+                                        {{-- Hidden storage for JS --}}
+                                        <div class="hidden-inputs-container hidden"></div>
                                     </div>
+
+                                    <div class="file-preview-container flex flex-wrap gap-3 mt-4 justify-start"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button type="button" id="add-row" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm mb-5 w-100 w-sm-auto">
-                    <i class="fas fa-plus-circle me-2 text-primary"></i> Add Another Asset
+                <button type="button" id="add-row" class="w-100 py-4 border-2 border-dashed border-slate-200 rounded-2xl bg-white text-slate-500 font-bold text-sm hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-200 transition-all mb-8">
+                    <i class="fas fa-plus-circle mr-2"></i> Add Another Submission Entry
                 </button>
             </div>
 
-            {{-- RIGHT SIDE: SUMMARY (Appears first on mobile for quick visibility of Total) --}}
-            <div class="col-lg-4 order-1 order-lg-2">
-                <div class="sticky-top" style="top: 85px; z-index: 10;">
-                    <div class="sidebar-meta shadow-sm">
-                        <div class="text-center mb-4">
-                            <h6 class="side-label opacity-75">Total Submission Value</h6>
-                            <h3 class="fw-bold mb-0">₦ <span id="grand-total-val">0.00</span></h3>
-                        </div>
+            {{-- Right Column: Summary --}}
+            <div class="col-lg-4">
+                <div class="sticky top-24">
+                    <div class="rounded-2xl shadow-xl mb-6 bg-gradient-to-br from-emerald-600 to-emerald-800 p-8 text-center text-white">
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-100 mb-2">Total Submission Value</p>
+                        <h2 class="text-4sm font-black tracking-tight mb-2">₦<span id="grand-total-val">0.00</span></h2>
+                        <p class="text-[10px] text-emerald-200/80 italic"><i class="fas fa-info-circle mr-1"></i> Includes New Purchases & Repairs</p>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="side-label">Global Funding Source</label>
-                            <input type="text" name="funding_source" class="form-control form-control-sm bg-transparent text-white border-secondary" placeholder="e.g. College Budget 2026">
+                    {{-- Submission Meta --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 font-black text-slate-900 text-[11px] uppercase tracking-widest">Submission Details</div>
+                        <div class="p-6">
+                            <div class="mb-4">
+                                <label class="form-label font-bold text-slate-700 text-[11px] uppercase">Overall Notes</label>
+                                <textarea name="notes" rows="3" class="form-control rounded-lg border-slate-200 text-sm shadow-sm" placeholder="General context..."></textarea>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label font-bold text-slate-700 text-[11px] uppercase">Executive Summary</label>
+                                <textarea name="summary" rows="3" class="form-control rounded-lg border-slate-200 text-sm shadow-sm" placeholder="Brief summary for committee..."></textarea>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="side-label">Overall Notes</label>
-                            <textarea name="notes" class="form-control form-control-sm bg-transparent text-white border-secondary" rows="2" placeholder="General context..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="side-label">Executive Summary</label>
-                            <textarea name="summary" class="form-control form-control-sm bg-transparent text-white border-secondary" rows="2" placeholder="Brief summary for approval..."></textarea>
-                        </div>
-
-                        <div class="mb-4 d-none d-md-block">
-                            <h6 class="side-label">Originating Entity</h6>
+                    {{-- Entity Display Card --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100 font-black text-slate-900 text-[11px] uppercase tracking-widest">Submitting Entity</div>
+                        <div class="p-6">
                             @php $u = auth()->user(); @endphp
                             @foreach(['faculty', 'institute', 'department', 'office', 'unit'] as $entity)
                                 @if($u && $u->$entity)
-                                    <div class="entity-tag">
-                                        <span class="opacity-75" style="font-size: 0.6rem;">{{ strtoupper($entity) }}</span><br>
-                                        <b>{{ $u->$entity->{$entity.'_name'} }}</b>
+                                    <div class="flex items-center gap-4 mb-4 last:mb-0 pb-4 last:pb-0 border-b last:border-0 border-slate-100">
+                                        <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                                            <i class="fas fa-{{ $entity == 'faculty' ? 'graduation-cap' : ($entity == 'institute' ? 'university' : ($entity == 'department' ? 'building-columns' : ($entity == 'office' ? 'briefcase' : 'microscope'))) }}"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-tighter mb-0">{{ $entity }}</p>
+                                            <p class="text-sm font-bold text-slate-900 leading-tight">{{ $u->$entity->{$entity.'_name'} }}</p>
+                                        </div>
                                     </div>
                                 @endif
                             @endforeach
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow">
-                            <i class="fas fa-check-circle me-2"></i> Finalize Submission
-                        </button>
                     </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-primary bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                        <span id="btnText">Submit Item(s)</span>
+                        <span id="btnSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    </button>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
-<script>
-    /* Logic preserved exactly as original */
-    const subMap = {!! json_encode($subcategoryMap) !!};
-    let itemIndex = 1; 
-    let rowFilesTracker = { 0: [] }; 
-
-    function handleFileSelect(input) {
-        const row = input.closest('.item-row');
-        const idx = row.getAttribute('data-row-index');
-        if (!rowFilesTracker[idx]) rowFilesTracker[idx] = [];
-        rowFilesTracker[idx] = [...rowFilesTracker[idx], ...Array.from(input.files)];
-        syncRowFiles(idx);
-        input.value = ''; 
+<style>
+    .preview-item {
+        position: relative;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 0.25rem;
+        width: 5rem;
+        height: 5rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+</style>
 
-    function syncRowFiles(idx) {
-        const row = document.querySelector(`.item-row[data-row-index="${idx}"]`);
-        const previewZone = row.querySelector('.file-preview-container');
-        const hiddenZone = row.querySelector('.hidden-inputs-container');
-        const itemName = row.querySelector('input[name*="[item_name]"]').value || "Asset";
-        
-        previewZone.innerHTML = ''; hiddenZone.innerHTML = '';
-        const dt = new DataTransfer();
-        
+<script>
+const subMap = {!! json_encode($subcategoryMap) !!};
+let itemIndex = 1; 
+let rowFilesTracker = { 0: [] }; 
+
+/**
+ * Handle File Selection & Previews
+ */
+function handleFileSelect(input) {
+    const row = input.closest('.item-row');
+    const idx = row.getAttribute('data-row-index');
+    
+    if (!rowFilesTracker[idx]) rowFilesTracker[idx] = [];
+    rowFilesTracker[idx] = [...rowFilesTracker[idx], ...Array.from(input.files)];
+    
+    syncRowFiles(idx);
+    input.value = ''; 
+}
+
+function syncRowFiles(idx) {
+    const row = document.querySelector(`.item-row[data-row-index="${idx}"]`);
+    if (!row) return;
+
+    const previewZone = row.querySelector('.file-preview-container');
+    const hiddenZone = row.querySelector('.hidden-inputs-container');
+    previewZone.innerHTML = ''; 
+    hiddenZone.innerHTML = '';
+    
+    const dt = new DataTransfer();
+    
+    if (rowFilesTracker[idx] && rowFilesTracker[idx].length > 0) {
         rowFilesTracker[idx].forEach((file, fileIdx) => {
             dt.items.add(file);
+            
+            const isImage = file.type.startsWith('image/');
             const div = document.createElement('div');
-            div.className = 'preview-item';
-            let icon = file.type.startsWith('image/') 
-                ? `<img src="${URL.createObjectURL(file)}" alt="Preview">` 
-                : `<div class="py-2"><i class="fas fa-file-pdf fa-2x text-danger"></i></div>`;
+            
+            // "Pill" Style: Better for long filenames
+            div.className = 'flex items-center bg-white border border-slate-200 rounded-lg p-2 pr-10 relative shadow-sm max-w-[200px] overflow-hidden';
+            
+            div.innerHTML = `
+                <div class="w-8 h-8 flex-shrink-0 mr-3 overflow-hidden rounded bg-slate-100 flex items-center justify-center">
+                    ${isImage 
+                        ? `<img src="${URL.createObjectURL(file)}" class="w-full h-full object-cover">` 
+                        : `<i class="fas fa-file-pdf text-red-500 text-sm"></i>`}
+                </div>
 
-            div.innerHTML = `${icon}<div class="small text-truncate p-1">${itemName}_${fileIdx+1}</div>
-                             <span class="remove-file" onclick="removeRowFile(${idx}, ${fileIdx})">×</span>`;
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-medium text-slate-700 truncate" title="${file.name}">
+                        ${file.name}
+                    </p>
+                    <p class="text-[8px] text-slate-400 uppercase">${(file.size / 1024).toFixed(1)} KB</p>
+                </div>
+
+                <button type="button" 
+                    onclick="event.stopPropagation(); removeRowFile(${idx}, ${fileIdx})" 
+                    class="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
             previewZone.appendChild(div);
         });
-        
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'file'; 
-        hiddenInput.name = `items[${idx}][documents][]`;
-        hiddenInput.multiple = true; 
-        hiddenInput.files = dt.files;
-        hiddenZone.appendChild(hiddenInput);
     }
-
-    window.removeRowFile = (rowIdx, fileIdx) => {
-        rowFilesTracker[rowIdx].splice(fileIdx, 1);
-        syncRowFiles(rowIdx);
-    };
-
-    function updateSubcats(sel) {
-        const row = sel.closest('.item-row');
-        const subSel = row.querySelector('.subcategory-select');
-        subSel.innerHTML = '<option value="">-- Select --</option>';
-        if (sel.value && subMap[sel.value]) {
-            Object.values(subMap[sel.value]).forEach(s => {
-                subSel.add(new Option(s.subcategory_name, s.subcategory_id));
-            });
-        }
+    
+    // Create the hidden input for form submission
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'file'; 
+    hiddenInput.name = `items[${idx}][documents][]`; 
+    hiddenInput.multiple = true; 
+    hiddenInput.files = dt.files;
+    hiddenInput.classList.add('hidden');
+    hiddenZone.appendChild(hiddenInput);
+}
+/**
+ * Category & Asset Auto-Fill Logic
+ */
+function updateSubcats(sel) {
+    const row = sel.closest('.item-row');
+    const subSel = row.querySelector('.subcategory-select');
+    const catId = sel.value;
+    
+    subSel.innerHTML = '<option value="">-- Select Sub-Category --</option>';
+    
+    if (catId && subMap[catId]) {
+        const options = Object.values(subMap[catId]);
+        options.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.subcategory_id;
+            opt.textContent = s.subcategory_name;
+            subSel.appendChild(opt);
+        });
     }
+}
 
-    function toggleRowFields(sel) {
-        const row = sel.closest('.item-row');
-        const isNew = sel.value === 'new_purchase';
-        row.querySelector('.cost-area').style.visibility = isNew ? 'visible' : 'hidden';
-        row.querySelector('.serial-area').style.visibility = isNew ? 'visible' : 'hidden';
-        runGrandTotal();
+function autoFillAssetDetails(selectEl) {
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    if (!selectedOption || !selectedOption.value) return;
+
+    const row = selectEl.closest('.item-row');
+    const nameInput = row.querySelector('input[name*="[item_name]"]');
+    if (nameInput) nameInput.value = selectedOption.getAttribute('data-name');
+
+    const catSelect = row.querySelector('.category-select');
+    if (catSelect) {
+        catSelect.value = selectedOption.getAttribute('data-cat');
+        updateSubcats(catSelect);
+        setTimeout(() => {
+            const subcatSelect = row.querySelector('.subcategory-select');
+            if (subcatSelect) subcatSelect.value = selectedOption.getAttribute('data-subcat');
+        }, 100);
     }
+}
 
-    function runGrandTotal() {
-        let grand = 0;
-        document.querySelectorAll('.item-row').forEach(row => {
+/**
+ * UI Toggle & Totals
+ */
+function toggleRowFields(sel) {
+    const row = sel.closest('.item-row');
+    const type = sel.value;
+    
+    row.querySelector('.cost-area').style.display = (type === 'new_purchase' || type === 'maintenance') ? 'block' : 'none';
+    row.querySelector('.serial-area').style.display = (type === 'new_purchase') ? 'block' : 'none';
+    
+    const assetSelect = row.querySelector('.asset-selection-area');
+    if(assetSelect) {
+        assetSelect.style.display = (type !== 'new_purchase') ? 'block' : 'none';
+        const selectEl = assetSelect.querySelector('select');
+        type !== 'new_purchase' ? selectEl.setAttribute('required', 'required') : selectEl.removeAttribute('required');
+    }
+    runGrandTotal();
+}
+
+function runGrandTotal() {
+    let grand = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+        const type = row.querySelector('.submission-type-select').value;
+        if (type === 'new_purchase' || type === 'maintenance') {
             const q = parseFloat(row.querySelector('.qty-input').value) || 0;
             const c = parseFloat(row.querySelector('.cost-input').value) || 0;
             grand += (q * c);
-        });
-        document.getElementById('grand-total-val').textContent = grand.toLocaleString('en-US', {minimumFractionDigits: 2});
-    }
+        }
+    });
+    const display = document.getElementById('grand-total-val');
+    if (display) display.textContent = grand.toLocaleString('en-US', {minimumFractionDigits: 2});
+}
 
-    document.getElementById('add-row').addEventListener('click', () => {
-        const container = document.getElementById('items-container');
-        const firstRow = document.querySelector('.item-row');
-        const newRow = firstRow.cloneNode(true);
-        const idx = itemIndex++;
-
-        newRow.setAttribute('data-row-index', idx);
-        rowFilesTracker[idx] = []; 
-        
-        newRow.querySelectorAll('input, select, textarea').forEach(input => {
-            if (input.name) {
-                input.name = input.name.replace(/items\[\d+\]/, `items[${idx}]`);
-            }
-            if(input.type !== 'file' && input.type !== 'hidden') {
-                input.value = input.classList.contains('qty-input') ? 1 : '';
-            }
-        });
-
-        newRow.querySelector('.subcategory-select').innerHTML = '<option value="">-- Select Category First --</option>';
-        newRow.querySelector('.file-preview-container').innerHTML = '';
-        newRow.querySelector('.hidden-inputs-container').innerHTML = '';
-
-        const delBtn = document.createElement('button');
-        delBtn.type = 'button';
-        delBtn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle';
-        delBtn.innerHTML = '<i class="fas fa-times"></i>';
-        delBtn.onclick = function() {
-            newRow.remove();
-            delete rowFilesTracker[idx];
-            renumberAll();
-            runGrandTotal();
-        };
-        newRow.appendChild(delBtn);
-
-        container.appendChild(newRow);
-        renumberAll();
-        runGrandTotal();
+/**
+ * Row Management (Add/Remove)
+ */
+document.getElementById('add-row').addEventListener('click', () => {
+    const container = document.getElementById('items-container');
+    const allRows = document.querySelectorAll('.item-row');
+    const firstRow = allRows[0];
+    const newRow = firstRow.cloneNode(true);
+    
+    // 1. Calculate the new index based on current length
+    const newIdx = allRows.length;
+    
+    // 2. IMPORTANT: Initialize a completely empty array for the new index
+    rowFilesTracker[newIdx] = []; 
+    
+    // 3. Scrub the cloned row of any Row 0 data
+    newRow.setAttribute('data-row-index', newIdx);
+    newRow.querySelector('.file-preview-container').innerHTML = '';
+    newRow.querySelector('.hidden-inputs-container').innerHTML = '';
+    
+    // 4. Reset standard inputs
+    newRow.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type !== 'file') {
+            input.value = input.classList.contains('qty-input') ? 1 : '';
+        } else {
+            // Physically clear the visible file input as well
+            input.value = ''; 
+        }
     });
 
-    function renumberAll() {
-        document.querySelectorAll('.item-row').forEach((row, i) => {
-            row.querySelector('.item-number-label').innerHTML = `<i class="fas fa-box me-2"></i>Asset Entry #${i + 1}`;
+    container.appendChild(newRow);
+
+    // 5. Re-run renumbering to fix names/IDs
+    renumberAll();
+});
+
+function removeRow(idx, btn) {
+    btn.closest('.item-row').remove();
+    runGrandTotal();
+    renumberAll();
+}
+
+function renumberAll() {
+    const rows = document.querySelectorAll('.item-row');
+    const newTracker = {}; 
+
+    rows.forEach((row, i) => {
+        const oldIdx = row.getAttribute('data-row-index');
+        row.setAttribute('data-row-index', i);
+
+        // Move the file array to the new index
+        newTracker[i] = rowFilesTracker[oldIdx] || [];
+
+        // Fix names
+        row.querySelectorAll('[name]').forEach(el => {
+            el.name = el.name.replace(/items\[\d+\]/, `items[${i}]`);
         });
+
+        // RE-SYNC: This is what fixes the visual and data ghosting
+        syncRowFiles(i); 
+    });
+
+    rowFilesTracker = newTracker;
+}
+document.querySelector('form').addEventListener('submit', function(e) {
+    let isValid = true;
+    let errorMessage = "";
+
+    document.querySelectorAll('.item-row').forEach((row, i) => {
+        // Ensure the hidden inputs are perfectly synced with the JS tracker before sending
+        if (typeof syncRowFiles === "function") {
+            syncRowFiles(i);
+        }
+
+        const type = row.querySelector('.submission-type-select').value;
+        const itemNameInput = row.querySelector('input[name*="[item_name]"]');
+        const itemName = itemNameInput ? itemNameInput.value : `Item #${i+1}`;
+        
+        // Medical Validation: Must have documentation for audit purposes
+        if ((type === 'new_purchase' || type === 'maintenance')) {
+            if (!rowFilesTracker[i] || rowFilesTracker[i].length === 0) {
+                isValid = false;
+                errorMessage += `• Row #${i+1} (${itemName}) requires a Receipt or Invoice.\n`;
+                row.classList.add('border-red-500', 'bg-red-50'); 
+            } else {
+                row.classList.remove('border-red-500', 'bg-red-50');
+            }
+        }
+    });
+
+    if (!isValid) {
+        e.preventDefault();
+        // Professional Alert
+        alert("Action Required: Missing Evidence\n\n" + errorMessage);
+    } else {
+        // --- SPINNER LOGIC ---
+        const btn = document.querySelector('button[type="submit"]');
+        
+        // Prevent double-clicking (very important when uploading heavy medical manuals/PDFs)
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        
+        // Using Tailwind for the spinner to maintain your styling
+        btn.innerHTML = `
+            <svg class="animate-spin h-5 w-5 mr-3 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing Upload...
+        `;
     }
+});
 </script>
+
 @endsection

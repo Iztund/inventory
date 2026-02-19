@@ -12,6 +12,9 @@
             </a>
             <div class="ms-4">
                 <h3 class="font-black text-slate-800 m-0 text-2xl uppercase tracking-tighter italic">Verification Details</h3>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-black text-[10px] uppercase tracking-widest border border-blue-200 shadow-sm">
+                    Submission Type: {{ str_replace('_', ' ', $submission?->submission_type ?? 'Standard') }}
+                </span>
                 <div class="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-1">
                     Ref ID: #{{ str_pad($submission?->submission_id ?? 'N/A', 7, '0', STR_PAD_LEFT) }} 
                     &bullet; {{ $submission?->items?->count() ?? 1 }} Item(s)
@@ -86,7 +89,12 @@
                             {{ $item->item_name ?? 'Unnamed Item' }}
                         </h4>
                         <p class="text-slate-200 font-mono text-[11px] font-black mt-2 uppercase mb-0">
-                            Asset Tag: {{ $asset?->asset_tag ?? 'NEW_ENTRY' }}
+                            Asset Tag: 
+                            @if($item->generated_tag === 'PENDING_ASSET_TAG')
+                                <span class="text-amber-500 animate-pulse">GENERATING ON APPROVAL...</span>
+                            @else
+                                <span class="text-emerald-400">{{ $item->generated_tag }}</span>
+                            @endif
                         </p>
                     </div>
 
@@ -94,12 +102,15 @@
                         <h6 class="text-[9px] font-black text-slate-700 uppercase tracking-widest mb-4 italic">Organizational Path</h6>
                         <div class="space-y-3 mb-6">
                             @php
+                                // Pull location data from the user who submitted the request, 
+                                // since the Asset record might not exist yet.
+                                $submitter = $submission?->submittedBy;
                                 $paths = [
-                                    ['L' => 'Faculty', 'V' => $asset?->faculty?->faculty_name],
-                                    ['L' => 'Department', 'V' => $asset?->department?->dept_name],
-                                    ['L' => 'Office', 'V' => $asset?->office?->office_name],
-                                    ['L' => 'Unit', 'V' => $asset?->unit?->unit_name],
-                                    ['L' => 'Institute', 'V' => $asset?->institute?->institute_name]
+                                    ['L' => 'Faculty',    'V' => $submitter?->faculty?->faculty_name],
+                                    ['L' => 'Department', 'V' => $submitter?->department?->dept_name],
+                                    ['L' => 'Office',     'V' => $submitter?->office?->office_name],
+                                    ['L' => 'Unit',       'V' => $submitter?->unit?->unit_name],
+                                    ['L' => 'Institute',  'V' => $submitter?->institute?->institute_name]
                                 ];
                             @endphp
                             @foreach($paths as $path)
@@ -206,22 +217,27 @@
                             <h6 class="font-black text-slate-800 uppercase text-[10px] tracking-widest mb-4 italic border-b pb-2">Verification Evidence</h6>
                             <div class="row g-3">
                                 @forelse($docs as $doc)
-                                    <div class="col-md-6">
-                                        <a href="{{ asset('storage/' . $doc) }}" target="_blank" class="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white transition-all text-decoration-none group">
-                                            <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
-                                                <i class="fas {{ Str::endsWith($doc, '.pdf') ? 'fa-file-pdf text-red-500' : 'fa-file-image text-blue-500' }} text-lg"></i>
-                                            </div>
-                                            <div class="ms-3">
-                                                <p class="m-0 text-[11px] font-black text-slate-700 uppercase">Evidence_File_{{ $loop->iteration }}</p>
-                                                <small class="text-[9px] text-slate-400 font-bold">CLICK TO VIEW SOURCE</small>
-                                            </div>
-                                        </a>
-                                    </div>
-                                @empty
-                                    <div class="col-12 py-8 text-center border-2 border-dashed border-slate-100 rounded-[2rem]">
-                                        <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest m-0 italic">No evidence uploaded for this item.</p>
-                                    </div>
-                                @endforelse
+                                @php
+                                    // If $doc is an array, get the first element; otherwise use it as is.
+                                    $filePath = is_array($doc) ? ($doc['path'] ?? $doc[0] ?? null) : $doc;
+                                @endphp
+
+                                @if($filePath)
+                                <div class="col-md-6">
+                                    <a href="{{ asset('storage/' . $filePath) }}" target="_blank" class="flex items-center p-4 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-white transition-all text-decoration-none group">
+                                        <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                                            <i class="fas {{ Str::endsWith($filePath, '.pdf') ? 'fa-file-pdf text-red-500' : 'fa-file-image text-blue-500' }} text-lg"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <p class="m-0 text-[11px] font-black text-slate-700 uppercase">Evidence_File_{{ $loop->iteration }}</p>
+                                            <small class="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Click to view source</small>
+                                        </div>
+                                    </a>
+                                </div>
+                                @endif
+                            @empty
+                                {{-- Empty state code --}}
+                            @endforelse
                             </div>
                         </div>
 
