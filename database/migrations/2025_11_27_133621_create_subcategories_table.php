@@ -16,6 +16,7 @@ return new class extends Migration
         // Use unsignedInteger to match your existing categories table
         $table->unsignedBigInteger('category_id'); 
         $table->string('subcategory_name');
+        $table->string('subcategory_code', 10)->nullable();
         $table->text('description')->nullable();
         $table->enum('is_active', ['active', 'inactive'])->default('active')->comment('Status of the subcategory');
         $table->timestamps();

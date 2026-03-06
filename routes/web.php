@@ -141,6 +141,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
             Route::post('/submissions/{submission_id}/re-evaluate', 'reEvaluate')->name('submissions.re-evaluate');
             Route::get('/central-registry', 'registryIndex')->name('registry.index');
             Route::get('/registry/export', 'export')->name('registry.export');
+            Route::get('/export', 'export')->name('reports.export');
         });
 
         Route::controller(AssetController::class)->prefix('approved-items')->as('approved_items.')->group(function () {

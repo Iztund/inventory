@@ -123,18 +123,6 @@
                     </div>
                 </div>
 
-                {{-- Office Filter --}}
-                <div class="col-md-3">
-                    <select name="office_id" class="form-select border-slate-200 bg-slate-50">
-                        <option value="">All Parent Offices</option>
-                        @foreach($offices as $office)
-                            <option value="{{ $office->office_id }}" {{ request('office_id') == $office->office_id ? 'selected' : '' }}>
-                                {{ $office->office_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
                 {{-- Status Filter (Added) --}}
                 <div class="col-md-2">
                     <select name="status" class="form-select border-slate-200 bg-slate-50">
@@ -170,7 +158,6 @@
                     <thead class="bg-slate-50">
                         <tr>
                             <th class="ps-4 py-3 text-slate-600 fw-bold uppercase" style="font-size:0.75rem;">Unit Identity</th>
-                            <th class="py-3 text-slate-600 fw-bold uppercase text-nowrap" style="font-size:0.75rem;">Parent Entity</th>
                             <th class="px-1 py-3 text-slate-600 fw-bold uppercase text-nowrap" style="font-size:0.75rem;">Unit Head</th>   
                             <th class="text-center py-3 text-slate-600 fw-bold uppercase" style="font-size:0.75rem;">Status</th>
                             <th class="pe-4 py-3 text-slate-600 fw-bold uppercase text-end" style="font-size:0.75rem;">Actions</th>
@@ -182,19 +169,6 @@
                             <td class="ps-4">
                                 <div class="fw-bold text-slate-900 mb-0 text-xs">{{ $unitItem->unit_name }}</div>
                                 <code class="text-orange-600 small fw-bold">{{ $unitItem->unit_code }}</code>
-                            </td>
-                            <td>
-                                @if($unitItem->office)
-                                    <span class="badge bg-slate-100 text-slate-700 border border-slate-200 fw-medium">
-                                        <i class="fas fa-building me-1"></i> {{ $unitItem->office->office_name }}
-                                    </span>
-                                @elseif($unitItem->unit)
-                                    <span class="badge bg-blue-50 text-blue-700 border border-blue-100 fw-medium">
-                                        <i class="fas fa-university me-1"></i> {{ $unitItem->unit->unit_name }}
-                                    </span>
-                                @else
-                                    <span class="text-slate-400 small italic">Independent</span>
-                                @endif
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">

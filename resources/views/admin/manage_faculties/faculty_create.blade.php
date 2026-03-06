@@ -100,8 +100,8 @@
                                 <h6 class="fw-semibold text-gray-700 mb-0">Leadership & Location</h6>
                             </div>
                             
-                           <select id="office_head_id" name="head_id" class="form-select select2-remote">
-                                <option value="">Select Head of Office</option>
+                           <select id="faculty_dean_id" name="faculty_dean_id" class="form-select select2-remote">
+                                <option value="">Select Dean</option>
                                 {{-- No need for @foreach here if using AJAX --}}
                             </select>
                             <div>

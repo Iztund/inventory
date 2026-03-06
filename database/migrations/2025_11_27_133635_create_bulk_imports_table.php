@@ -26,21 +26,10 @@ return new class extends Migration
 
             $table->foreign('imported_by_user_id')->references('user_id')->on('users')->onDelete('cascade');
         });
-
-        // Add a field to assets table to track bulk imports
-        Schema::table('assets', function (Blueprint $table) {
-            $table->unsignedBigInteger('bulk_import_id')->nullable()->after('asset_id');
-            $table->foreign('bulk_import_id')->references('import_id')->on('bulk_imports')->onDelete('set null');
-        });
     }
 
     public function down()
-    {
-        Schema::table('assets', function (Blueprint $table) {
-            $table->dropForeign(['bulk_import_id']);
-            $table->dropColumn('bulk_import_id');
-        });
-        
+    {       
         Schema::dropIfExists('bulk_imports');
     }
 };

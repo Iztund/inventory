@@ -43,7 +43,7 @@
     <div class="row g-4 mb-8">
         @php
             $coreMetrics = [
-                ['My Submissions', $stats['total'] ?? 0, 'fa-clipboard-list', 'text-emerald-600', 'bg-emerald-50', 'Total Submitted Items'],
+                ['Total Submissions Made', $stats['total'] ?? 0, 'fa-clipboard-list', 'text-emerald-600', 'bg-emerald-50', 'Total Submitted Items'],
                 ['Pending Audit', $stats['pending'] ?? 0, 'fa-clock', 'text-amber-500', 'bg-amber-50', 'Under Review Items'],
                 ['Verified Assets', $stats['approved'] ?? 0, 'fa-check-circle', 'text-emerald-500', 'bg-emerald-50', 'Approved Items'],
                 // New Rejected Metric Added Below

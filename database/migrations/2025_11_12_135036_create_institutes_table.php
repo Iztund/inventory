@@ -15,22 +15,20 @@ return new class extends Migration
             // Primary Key: Matches the model's $primaryKey
             $table->id('institute_id');
 
+            // Foreign Key for Director (Links to User)
+            $table->unsignedBigInteger('institute_director_id')->nullable();
+
             // Core Attributes
             $table->string('institute_name')->unique();
             $table->string('institute_code')->unique();
             $table->string('institute_address')->nullable();
-           $table->enum('is_active', ['active','inactive'])->default('active')->comment('Status of the institute');
+            $table->enum('is_active', ['active','inactive'])->default('active')->comment('Status of the institute');
 
-            // Foreign Key for Director (Links to User)
-            $table->unsignedBigInteger('institute_director_id')->nullable();
+            
 
             // Foreign Key for Parent Faculty (Links to Faculty)
             $table->unsignedBigInteger('faculty_id')->nullable();
-            $table->foreign('faculty_id')
-                  ->references('faculty_id')
-                  ->on('faculties')
-                  ->nullOnDelete()
-                  ->cascadeOnUpdate();
+
             
             // Timestamps
             $table->timestamps();

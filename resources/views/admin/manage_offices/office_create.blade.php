@@ -103,7 +103,7 @@
                             <div class="mb-4">
                                 <label class="form-label fw-medium text-gray-700 mb-2">Head of Office</label>
                                 <select id="office_head_id" name="office_head_id" class="form-select select2-remote @error('office_head_id') is-invalid @enderror">
-                                    <option value="">Search and select staff member...</option>
+                                    <option value="">Search and select head of office...</option>
                                 </select>
                                 @error('office_head_id') 
                                     <div class="invalid-feedback">{{ $message }}</div> 

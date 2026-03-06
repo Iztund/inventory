@@ -19,7 +19,6 @@
             <p class="text-sm text-slate-500 ml-12">Submit assets for audit and verification</p>
         </div>
     </div>
-
     <form action="{{ route('staff.submissions.store') }}" method="POST" enctype="multipart/form-data" id="audit-form">
         @csrf
         <div class="row g-4">

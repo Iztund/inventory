@@ -37,7 +37,7 @@
 
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
         @foreach([
-            ['Total Assets', $stats['total'] ?? 0, 'fa-database', 'bg-indigo-50 text-audit-indigo'],
+            ['Total Submissions Made', $stats['total'] ?? 0, 'fa-database', 'bg-indigo-50 text-audit-indigo'],
             ['Pending Review', $stats['pending'] ?? 0, 'fa-hourglass-half', 'bg-amber-50 text-amber-600'],
             ['Approved', $stats['approved'] ?? 0, 'fa-check-double', 'bg-emerald-50 text-emerald-600'],
             ['Rejected', $stats['rejected'] ?? 0, 'fa-ban', 'bg-rose-50 text-rose-600']
@@ -62,8 +62,8 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
             @foreach([
-                ['Academic Units', 'faculties', 'fa-graduation-cap', 'bg-indigo-50', 'text-indigo-600'],
-                ['Admin & Support', 'offices', 'fa-building', 'bg-emerald-50', 'text-emerald-600'],
+                ['Faculties & Departments', 'faculties', 'fa-graduation-cap', 'bg-indigo-50', 'text-indigo-600'],
+                ['Offices & Units', 'offices', 'fa-building', 'bg-emerald-50', 'text-emerald-600'],
                 ['Research Institutes', 'institutes', 'fa-microscope', 'bg-amber-50', 'text-amber-600']
             ] as [$title, $key, $icon, $bg, $color])
             <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
@@ -102,6 +102,7 @@
                         <tr>
                             <th class="ps-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Ref ID</th>
                             <th class="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Inventory Details</th>
+                            <th class="py-4 text-[10px] font-black uppercase tracking-widest text-center text-slate-400">Origin & submission Date</th>
                             <th class="py-4 text-[10px] font-black uppercase tracking-widest text-center text-slate-400">Status / Metrics</th>
                             <th class="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Batch Value</th>
                             <th class="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Audit Trail</th>
@@ -129,7 +130,7 @@
                                     <div class="text-[9px] text-slate-700 font-bold uppercase tracking-tighter">{{ $sub->created_at->format('d M Y') }}</div>
                                 </td>
                                 <td class="py-5">
-                                    <div class="text-xs font-black text-indigo-600 uppercase tracking-tight truncate max-w-[200px]" title="{{ $items->pluck('item_name')->implode(', ') }}">
+                                    <div class="flex flex-col gap-1 text-xs font-black text-indigo-600 uppercase tracking-tight truncate max-w-[200px]" title="{{ $items->pluck('item_name')->implode(', ') }}">
                                         {{ $items->pluck('item_name')->implode(', ') }}
                                     </div>
                                     <div class="text-[10px] font-bold text-slate-700 mt-0.5">
@@ -142,6 +143,15 @@
                                         </span>
                                     @endif
                                 </td>
+                                <td class="py-5">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="inline-flex w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter {{ $sub->origin_color }}">
+                                            {{ $sub->origin_name}}
+                                        </span>
+                                        <div class=" inline-flex w-fit px-1.5 py-0.5 text-[9px] text-slate-600 font-bold">{{ $sub->submission_date_formatted }}</div>
+                                    </div>
+                                </td>
+                                    
                                 <td class="py-5 text-center">
                                     @if($isPendingBatch)
                                         <span class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-600 border border-amber-100 px-3 py-1 rounded-full text-[10px] font-black uppercase">

@@ -84,16 +84,37 @@
             <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown">
                 <i class="fas fa-user-circle fa-lg text-slate-300"></i>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow-xl border-0 mt-2 p-2">
-                <li class="px-3 py-2 bg-slate-50 rounded-t border-b mb-1">
-                    <span class="block text-[10px] text-slate-500 font-black uppercase tracking-wider">Staff Account</span>
-                    <span class="block text-sm font-bold text-slate-900">{{ Auth::user()->full_name ?? Auth::user()->username }}</span>
+            <ul class="dropdown-menu dropdown-menu-end border border-white/30 shadow-2xl mt-3 p-2 backdrop-blur-xl bg-white/80 overflow-hidden" 
+                style="min-width: 240px; border-radius: 1.25rem;">
+                
+                <li class="px-3 py-3 mb-2 rounded-xl bg-gradient-to-br from-emerald-50/50 to-teal-50/50 border border-emerald-100/50 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg shadow-emerald-200/50">
+                            <span class="text-xs font-black">{{ strtoupper(substr(Auth::user()->full_name ?? 'ST', 0, 2)) }}</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="block text-[9px] text-emerald-700 font-black uppercase tracking-[0.15em] leading-none mb-1">
+                                Staff Account
+                            </span>
+                            <span class="block font-black text-slate-800 text-[13px] truncate tracking-tight">
+                                {{ Auth::user()->full_name ?? Auth::user()->username }}
+                            </span>
+                            <span class="block text-[10px] text-slate-500 truncate italic">
+                                {{ Auth::user()->affiliation->primary ?? 'College of Medicine' }}
+                            </span>
+                        </div>
+                    </div>
                 </li>
+                <div class="h-[1px] bg-slate-200/40 mx-2 my-1"></div>
+
                 <li>
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
-                        <button type="submit" class="dropdown-item text-danger font-bold py-2 rounded text-sm hover:bg-red-50">
-                            <i class="fas fa-power-off me-2"></i>Logout
+                        <button type="submit" class="dropdown-item group flex items-center px-3 py-2.5 rounded-lg text-rose-600 hover:bg-rose-500 hover:text-white transition-all duration-200 w-full">
+                            <div class="w-7 h-7 flex items-center justify-center rounded-md bg-rose-50 group-hover:bg-white/20 transition-colors me-2">
+                                <i class="fas fa-power-off text-[12px] text-rose-500 group-hover:text-white"></i>
+                            </div>
+                            <span class="font-bold text-[12px]">Sign Out</span>
                         </button>
                     </form>
                 </li>
@@ -132,7 +153,7 @@
                             <i class="fas fa-plus-square {{ request()->routeIs('staff.submissions.create') ? 'text-white' : 'text-emerald-400 group-hover:text-white' }}"></i>
                         </div> 
                         <span class="text-[13px] {{ request()->routeIs('staff.submissions.create') ? 'text-white' : 'text-slate-100' }}">
-                            New Submission
+                            New Request
                         </span>
                     </a>
 
@@ -142,7 +163,7 @@
                             <i class="fas fa-history {{ request()->routeIs('staff.submissions.index') ? 'text-white' : 'text-emerald-400 group-hover:text-white' }}"></i>
                         </div> 
                         <span class="text-[13px] {{ request()->routeIs('staff.submissions.index') ? 'text-white' : 'text-slate-100' }}">
-                            My Submissions
+                            My Requests
                         </span>
                     </a>
 
@@ -209,13 +230,14 @@
             @yield('content')
         </main>
         
-        <footer class="py-4 bg-white mt-auto border-t border-slate-200">
+        <footer class="py-3 bg-white mt-auto border-t border-slate-200">
             <div class="container-fluid px-4">
-                <div class="flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                    <div>COMIS &copy; {{ date('Y') }}</div>
+                <div class="flex items-center justify-between text-[10px] font-bold text-slate-600 tracking-[0.2em]">
+                    <div>CoMUI © {{ date('Y') }}</div>
                     <div class="flex items-center space-x-2">
-                        <div class="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
-                        <span>College of Medicine, UI</span>
+                        <div class="w-1 h-1 bg-slate-400 rounded-full"></div>
+                        <img src="{{ asset('build/assets/images/logo.png') }}" alt="COMIS Logo" class="w-6 h-6 object-contain brightness-100">
+                        <span class="text-slate-600">College of Medicine</span>
                     </div>
                 </div>
             </div>

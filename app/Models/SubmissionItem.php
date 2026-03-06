@@ -28,7 +28,6 @@ class SubmissionItem extends Model
         'document_path',
         'serial_number',
         'status',
-        'remarks',       // ADDED: To store specific feedback
         'condition',     
         'item_notes',    // Matches the 'item_notes' name in your Blade file
     ];
@@ -146,7 +145,7 @@ public function getGeneratedTagAttribute()
         $subcat = $this->subcategory?->subcategory_code ?? 'XX';
         
         // Use asset_id if it exists (post-approval), otherwise item ID
-        $serialSource = $this->asset_id ?? $this->id;
+        $serialSource = $this->asset_id ?? $this->submission_item_id;
         $serial = str_pad($serialSource, 6, '0', STR_PAD_LEFT);
 
         return "COM/{$prefix}/{$cat}/{$subcat}/{$year}/{$serial}";

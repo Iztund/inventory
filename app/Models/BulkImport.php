@@ -58,11 +58,6 @@ class BulkImport extends Model
         return $this->belongsTo(Department::class, 'entity_id', 'dept_id');
     }
 
-    public function office()
-    {
-        return $this->belongsTo(Office::class, 'entity_id', 'office_id');
-    }
-
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'entity_id', 'unit_id');
@@ -71,6 +66,10 @@ class BulkImport extends Model
     public function institute()
     {
         return $this->belongsTo(Institute::class, 'entity_id', 'institute_id');
+    }
+     public function office()
+    {
+        return $this->belongsTo(Office::class, 'entity_id', 'office_id');
     }
 
     // Helper method to get entity name

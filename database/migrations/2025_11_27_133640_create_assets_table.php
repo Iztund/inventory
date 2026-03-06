@@ -10,24 +10,27 @@ return new class extends Migration
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->id('asset_id');
+            $table->unsignedBigInteger('bulk_import_id')->nullable();
+            $table->unsignedBigInteger('submission_item_id')->nullable();
             $table->string('asset_tag')->nullable()->unique();
+            $table->timestamp('last_audited_at')->nullable();
 
             // Categorization
             $table->foreignId('category_id')->constrained('categories', 'category_id')->onDelete('restrict');
             $table->foreignId('subcategory_id')->constrained('subcategories', 'subcategory_id')->onDelete('restrict');
-            $table->string('funding_source_per_item')->nullable();
-            $table->string('funding_source')->nullable();
             // Medical College Organizational Hierarchy (All Nullable)
             $table->foreignId('current_faculty_id')->nullable()->constrained('faculties', 'faculty_id')->onDelete('set null');
+            $table->foreignId('current_office_id')->nullable()->constrained('offices','office_id')->onDelete('set null');
             $table->foreignId('current_dept_id')->nullable()->constrained('departments', 'dept_id')->onDelete('set null');
-            $table->foreignId('current_office_id')->nullable()->constrained('offices', 'office_id')->onDelete('set null');
             $table->foreignId('current_unit_id')->nullable()->constrained('units', 'unit_id')->onDelete('set null');
             $table->foreignId('current_institute_id')->nullable()->constrained('institutes', 'institute_id')->onDelete('set null');
-
+            
             // Physical Location (Optional but recommended)
             $table->foreignId('location_id')->nullable()->constrained('locations', 'location_id')->onDelete('set null');
 
             // Item Details
+            
+            $table->foreign('bulk_import_id')->references('import_id')->on('bulk_imports')->onDelete('set null');
             $table->string('serial_number')->unique()->nullable();
             $table->string('item_name'); // Changed to lowercase for standard consistency
             $table->text('description')->nullable();

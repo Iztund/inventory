@@ -2,11 +2,23 @@
 
 <style>
     .select2-container--default .select2-selection--single { 
-        height: 48px !important; border: 1px solid #dee2e6 !important; border-radius: 10px !important; padding-top: 10px;
+        height: 48px !important; 
+        border: 1px solid #dee2e6 !important; 
+        border-radius: 10px !important; 
+        padding-top: 10px;
     }
-    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 46px !important; }
-    .parent-warning { font-size: 0.75rem; font-weight: 500; display: none; }
-    .select2-container--disabled .select2-selection--single { background-color: #f8f9fa !important; cursor: not-allowed !important; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { 
+        height: 46px !important; 
+    }
+    .parent-warning { 
+        font-size: 0.75rem; 
+        font-weight: 500; 
+        display: none; 
+    }
+    .select2-container--disabled .select2-selection--single { 
+        background-color: #f8f9fa !important; 
+        cursor: not-allowed !important; 
+    }
 </style>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -14,79 +26,119 @@
 
 <script>
 $(document).ready(function() {
-    const $searchSelects = $('.select2-remote, #faculty_dean_id');
+    // Select all remote search selects
+    const $searchSelects = $('.select2-remote, #faculty_dean_id, #institute_director_id, #office_head_id');
 
     $searchSelects.each(function() {
         const $this = $(this);
-        const parentSelector = $this.data('parent-filter'); // This must be "#faculty_id"
-        const parentType = $this.data('parent-type') || 'parent';
+        const parentSelector = $this.data('parent-filter'); // e.g., "#faculty_id" for departments
+        const parentType = $this.data('parent-type'); // e.g., 'faculty', 'office', 'institute', or null
         const warningId = `warn-${$this.attr('id')}`;
 
-        // Create warning
-        if (!$(`#${warningId}`).length) {
-            $this.after(`<small id="${warningId}" class="parent-warning text-amber-600 mt-1"><i class="fas fa-exclamation-triangle me-1"></i> Please select a ${parentType} first.</small>`);
+        // Determine entity type based on select ID if not explicitly set
+        let entityType = parentType;
+        if (!entityType) {
+            // Auto-detect entity type for parent entities
+            if ($this.attr('id') === 'faculty_dean_id') {
+                entityType = 'faculty';
+            } else if ($this.attr('id') === 'office_head_id') {
+                entityType = 'office';
+            } else if ($this.attr('id') === 'institute_director_id') {
+                entityType = 'institute';
+            }
+        }
+
+        console.log(`Initializing ${$this.attr('id')} with entityType: ${entityType}, parentSelector: ${parentSelector}`);
+
+        // Create warning for dependent entities only
+        if (parentSelector && !$(`#${warningId}`).length) {
+            const parentName = entityType === 'faculty' ? 'faculty' : 'office';
+            $this.after(`<small id="${warningId}" class="parent-warning text-amber-600 mt-1">
+                <i class="fas fa-exclamation-triangle me-1"></i> Please select a ${parentName} first.
+            </small>`);
         }
         const $warning = $(`#${warningId}`);
 
         function updateState() {
-            // If there's no parent filter attribute at all, it's a standalone (like an Institute)
-            if (!parentSelector) {
-                $this.prop('disabled', false);
-                $warning.hide();
-            } else {
-                // It's a dependent entity (Department or Unit)
+            let isEnabled = true;
+            
+            // Check if this is a dependent entity (has a parent selector)
+            if (parentSelector) {
                 const parentVal = $(parentSelector).val();
-                const isEnabled = (parentVal !== null && parentVal !== "");
+                isEnabled = (parentVal !== null && parentVal !== "" && parentVal !== undefined);
 
-                if (!isEnabled) {
+                if (!isEnabled && $warning) {
                     $this.prop('disabled', true);
                     $warning.show();
-                } else {
+                } else if ($warning) {
                     $this.prop('disabled', false);
                     $warning.hide();
                 }
+            } else {
+                // Independent entity (Faculty, Office, Institute) - always enabled
+                $this.prop('disabled', false);
             }
 
-            // Re-init Select2
+            // Initialize/Re-initialize Select2
+            if ($this.hasClass('select2-hidden-accessible')) {
+                $this.select2('destroy');
+            }
+
             $this.select2({
                 placeholder: "Search staff...",
                 allowClear: true,
                 minimumInputLength: 2,
                 width: '100%',
+                disabled: !isEnabled,
                 ajax: {
                     url: "{{ $searchRoute }}",
                     dataType: 'json',
                     delay: 250,
-                    data: params => ({
-                        q: params.term,
-                        parent_id: parentSelector ? $(parentSelector).val() : null,
-                        parent_type: parentType // 'faculty' for Depts, 'office' for Units, null for Institutes
-                    }),
-                    processResults: data => ({ results: data }),
+                    data: function(params) {
+                        const data = {
+                            q: params.term
+                        };
+
+                        // For dependent entities (Department/Unit), send parent info
+                        if (parentSelector) {
+                            data.parent_id = $(parentSelector).val();
+                            data.parent_type = entityType; // 'faculty' or 'office'
+                        } else if (entityType) {
+                            // For parent entities (Faculty/Office/Institute), filter by entity type
+                            data.parent_type = entityType;
+                        }
+
+                        console.log('AJAX data being sent:', data);
+                        return data;
+                    },
+                    processResults: function(data) {
+                        console.log('Results received:', data);
+                        return { results: data };
+                    },
                     cache: true
                 }
             });
         }
 
-        // Initial Call
+        // Initial state
         updateState();
 
-        // Listen for changes on the parent
+        // Listen for parent changes (for dependent entities only)
         if (parentSelector) {
             $(document).on('change', parentSelector, function() {
-                console.log("Parent changed to: " + $(this).val()); // Debugging line
+                console.log(`Parent ${parentSelector} changed to:`, $(this).val());
                 $this.val(null).trigger('change');
                 updateState();
             });
         }
     });
 
-    // Auto-uppercase
+    // Auto-uppercase for code fields
     $(document).on('input', 'input[name*="_code"]', function() {
         $(this).val($(this).val().toUpperCase().replace(/[^A-Z0-9\-]/g, ''));
     });
 
-    // Submit Loading
+    // Form submission loading state
     $('#{{ $formId }}').on('submit', function() {
         const $btn = $('button[form="{{ $formId }}"]');
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');

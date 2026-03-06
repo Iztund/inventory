@@ -26,8 +26,8 @@ class User extends Authenticatable // Note: This table still uses Laravel's defa
         
         // <<< ADDED MISSING ORG IDs HERE >>>
         'faculty_id',   
-        'institute_id', 
-        'office_id',    
+        'institute_id',   
+        'office_id', 
         
         // Secondary Affiliation
         'unit_id',
@@ -160,11 +160,10 @@ public function getAffiliationAttribute()
         return $this->belongsTo(Institute::class, 'institute_id', 'institute_id');
     }
 
-    public function office(): BelongsTo
+     public function office(): BelongsTo
     {
         return $this->belongsTo(Office::class, 'office_id', 'office_id');
     }
-
 
     public function unit():BelongsTo
     {
@@ -179,16 +178,20 @@ public function getAffiliationAttribute()
         {
             return $this->hasOne(Department::class, 'dept_head_id', 'user_id');
         }
+    public function headedUnit(): HasOne
+        {
+            return $this->hasOne(Unit::class, 'unit_head_id', 'user_id');
+        }
 
     public function headedFaculty()
         {
             return $this->hasOne(Faculty::class, 'faculty_dean_id', 'user_id');
         }
-
     public function headedOffice()
         {
-            return $this->hasOne(Department::class, 'office_head_id', 'user_id');
+            return $this->hasOne(Office::class, 'office_head_id', 'user_id');
         }
+
 
     public function headedInstitute()
         {
@@ -220,8 +223,8 @@ public function getOrganizationNameAttribute()
     if ($this->unit_id)       return $this->unit->unit_name;
     if ($this->department_id) return $this->department->dept_name;
     if ($this->institute_id)  return $this->institute->institute_name;
-    if ($this->office_id)      return $this->office->office_name;
     if ($this->faculty_id)     return $this->faculty->faculty_name;
+    if ($this->office_id)     return $this->office->office_name;
 
     return 'College of Medicine';
 }

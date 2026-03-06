@@ -19,9 +19,8 @@ return new class extends Migration
             $table->enum('submission_type', ['new_purchase', 'transfer', 'disposal', 'maintenance']);
             
             $table->string('summary')->nullable();
-            $table->text('notes')->nullable();
-            $table->string('funding_source')->nullable();            
-            $table->enum('status', ['pending', 'approved', 'rejected', 'audited'])->default('pending');
+            $table->text('notes')->nullable();            
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamp('submitted_at')->useCurrent();
             $table->timestamp('audited_at')->nullable();
             $table->timestamps();

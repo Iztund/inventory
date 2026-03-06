@@ -66,18 +66,16 @@ return new class extends Migration
                 ->on('faculties')
                 ->nullOnDelete()
                 ->cascadeOnUpdate();
-
-            // Office FK
-            $table->foreign('office_id')
-                ->references('office_id')
-                ->on('offices')
-                ->nullOnDelete()
-                ->cascadeOnUpdate();
-
+                
             // Institute FK
             $table->foreign('institute_id')
                 ->references('institute_id')
                 ->on('institutes')
+                ->nullOnDelete()
+                ->cascadeOnUpdate();
+            $table->foreign('office_id')
+                ->references('office_id')
+                ->on('offices')
                 ->nullOnDelete()
                 ->cascadeOnUpdate();
         });

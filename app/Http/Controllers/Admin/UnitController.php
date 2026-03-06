@@ -117,7 +117,7 @@ class UnitController extends Controller
         if ($unit->supervisor) {
             $existingHead = [
                 'id'   => $unit->supervisor->user_id,
-                'text' => ($unit->supervisor->profile->full_name 
+                'text' => ($unit->supervisor->full_name 
                         ?? $unit->supervisor->username)
                         . " (" . $unit->supervisor->email . ")",
             ];

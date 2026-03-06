@@ -15,11 +15,13 @@ class Asset extends Model
     protected $keyType = 'int';
 
     protected $fillable = [
+        'submission_item_id',
         'category_id',
         'subcategory_id',
+        'bulk_import_id', // ADDED: To link asset to its bulk import record
         'current_faculty_id',
-        'current_dept_id',
         'current_office_id',
+        'current_dept_id',
         'current_unit_id',
         'current_institute_id',
         'location_id',
@@ -33,8 +35,6 @@ class Asset extends Model
         'quantity',
         'status',
         'asset_tag',
-        'funding_source',
-        'funding_source_per_item', // ADDED: To persist funding info from submission to inventory
     ];
 
     protected $casts = [
@@ -51,14 +51,14 @@ class Asset extends Model
         return $this->belongsTo(Faculty::class, 'current_faculty_id', 'faculty_id');
     }
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class, 'current_dept_id', 'dept_id'); 
-    }
-
     public function office(): BelongsTo
     {
         return $this->belongsTo(Office::class, 'current_office_id', 'office_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'current_dept_id', 'dept_id'); 
     }
 
     public function unit(): BelongsTo
@@ -90,7 +90,10 @@ class Asset extends Model
     {
         return $this->belongsTo(Location::class, 'location_id');
     }
-
+    public function submission(): BelongsTo
+    {
+        return $this->belongsTo(Submission::class, 'submission_id', 'submission_id');
+    }
     /**
      * RELATIONSHIPS: Audit & History
      */
@@ -151,12 +154,23 @@ public function scopeApplyScopeForUser($query, $user)
     });
 }
 
+public function submittedBy()
+    {
+        // Check your assets table: if the column is 'user_id', use that. 
+        // If it's 'submitted_by_id', change 'user_id' below.
+        return $this->belongsTo(User::class, 'user_id'); 
+    }
+
 // app/Models/Asset.php
 
 /**
  * Accessor: Get Status based on the linked Submission.
  * This uses your existing 'submissionItem' relationship.
  */
+public function bulkImport()
+    {
+        return $this->belongsTo(BulkImport::class, 'bulk_import_id', 'import_id');
+    }
 public function getComputedStatusAttribute()
 {
     // Reach through: Asset -> SubmissionItem -> Submission

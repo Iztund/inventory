@@ -60,16 +60,36 @@
                 <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle fa-lg text-slate-400"></i>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 text-[12px]">
-                    <li class="px-3 py-2 bg-slate-50 border-b">
-                        <span class="block text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Administrator</span>
-                        <span class="block font-bold text-slate-800">{{ Auth::user()->username }}</span>
+                <ul class="dropdown-menu dropdown-menu-end border border-white/20 shadow-2xl mt-3 p-2 backdrop-blur-xl bg-white/80 overflow-hidden" 
+                    style="min-width: 220px; border-radius: 1.25rem;">
+                    
+                    <li class="px-3 py-3 mb-2 rounded-xl bg-gradient-to-br from-slate-50/50 to-slate-100/50 border border-white/40 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shadow-md shadow-amber-200">
+                                <i class="fas fa-shield-halved text-xs"></i>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="block text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">
+                                    Administrator
+                                </span>
+                                <span class="block font-black text-slate-800 text-[13px] truncate tracking-tight">
+                                    {{ Auth::user()->full_name ?? Auth::user()->username }}
+                                </span>
+                                <span class="block text-[10px] text-slate-500 truncate italic">
+                                    {{ Auth::user()->affiliation->primary ?? 'College of Medicine' }}
+                                </span>
+                            </div>
+                        </div>
                     </li>
-                    <li>
+
+                    <div class="h-[1px] bg-slate-200/50 mx-2 mb-1"></div>
+
+                    <li class="mt-1">
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
-                            <button type="submit" class="dropdown-item text-danger font-bold py-2">
-                                <i class="fas fa-power-off me-2"></i>Logout
+                            <button type="submit" class="dropdown-item group flex items-center px-3 py-2.5 rounded-lg text-rose-600 hover:bg-rose-500 hover:text-white transition-all duration-200 w-full">
+                                <i class="fas fa-power-off me-3 text-[14px] text-rose-400 group-hover:text-white transition-colors"></i>
+                                <span class="font-bold text-[12px]">Sign Out</span>
                             </button>
                         </form>
                     </li>
@@ -80,71 +100,105 @@
 
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion bg-admin-navy shadow-2xl">
+            <nav class="sb-sidenav accordion bg-admin-navy border-r border-slate-800">
                 <div class="sb-sidenav-menu">
-                    <div class="nav pt-3 px-2 flex flex-col gap-1">
+                    <div class="nav pt-4 px-3">
                         
-                        <div class=" text-white text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 ps-3">Control Panel</div>
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.dashboard') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-columns"></i></div> 
-                            <span class="text-[12px]">Dashboard</span>
+                        {{-- Section: Control Panel --}}
+                        <div class="flex items-center gap-2 mb-3 px-2">
+                            <span class="text-white/80 text-[11px] font-black uppercase tracking-[0.2em]">Control Panel</span>
+                            <div class="h-[1px] flex-grow bg-slate-700/50"></div>
+                        </div>
+
+                        <a class="nav-link rounded px-3 py-2.5 mb-2 transition-all flex items-center group {{ request()->routeIs('admin.dashboard') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:text-white hover:bg-white/5' }}" 
+                        href="{{ route('admin.dashboard') }}">
+                            <div class="sb-nav-link-icon text-white"><i class="fas fa-columns"></i></div> 
+                            <span class="text-[13px]">Dashboard</span>
                         </a>
 
-                        <div class="text-white text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 mt-4 ps-3">Administration</div>
+                        {{-- Section: Administration --}}
+                        <div class="flex items-center gap-2 mb-3 mt-6 px-2">
+                            <span class="text-white/80 text-[11px] font-black uppercase tracking-[0.2em]">Administration</span>
+                            <div class="h-[1px] flex-grow bg-slate-700/50"></div>
+                        </div>
                         
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.submissions.*') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.submissions.pending') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-list-check"></i></div> 
-                            <span class="text-[12px]">Pending Reviews</span>
-                        </a>
-                        
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.approved_items.*') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.approved_items.index') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-check-double"></i></div> 
-                            <span class="text-[12px]">Verified Registry</span>
+                        <a class="nav-link rounded-lg px-3 py-2.5 mb-2 transition-all flex items-center group {{ request()->routeIs('admin.submissions.*') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:bg-white/10' }}" 
+                            href="{{ route('admin.submissions.pending') }}">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-list-check {{ request()->routeIs('admin.submissions.*') ? 'text-white' : 'text-amber-400 group-hover:text-white' }}"></i>
+                            </div> 
+                            <span class="text-[13px]">Pending Reviews</span>
                         </a>
 
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.users.*') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.users.index') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-users"></i></div> 
-                            <span class="text-[12px]">Manage Users</span>
+                        <a class="nav-link rounded-lg px-3 py-2.5 mb-2 transition-all flex items-center group {{ request()->routeIs('admin.approved_items.*') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:bg-white/10' }}" 
+                            href="{{ route('admin.approved_items.index') }}">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-check-double {{ request()->routeIs('admin.approved_items.*') ? 'text-white' : 'text-amber-400 group-hover:text-white' }}"></i>
+                            </div> 
+                            <span class="text-[13px]">Verified Registry</span>
                         </a>
 
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.units-management.*') || request()->routeIs('admin.departments.*') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.units-management.index') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-university"></i></div> 
-                            <span class="text-[12px]">College Management</span>
+                        <a class="nav-link rounded-lg px-3 py-2.5 mb-2 transition-all flex items-center group {{ request()->routeIs('admin.users.*') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:bg-white/10' }}" 
+                            href="{{ route('admin.users.index') }}">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-users {{ request()->routeIs('admin.users.*') ? 'text-white' : 'text-amber-400 group-hover:text-white' }}"></i>
+                            </div> 
+                            <span class="text-[13px]">Manage Users</span>
                         </a>
 
-                        <div class="text-white text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-2 mt-4 ps-3">Inventory & Reports</div>
-                        
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.bulk-assets.*') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.bulk-assets.index') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-database"></i></div> 
-                            <span class="text-[12px]">Bulk Asset Import</span>
+                        <a class="nav-link rounded-lg px-3 py-2.5 mb-1 transition-all flex items-center group {{ request()->routeIs('admin.units-management.*') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:bg-white/10' }}" 
+                            href="{{ route('admin.units-management.index') }}">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-university {{ request()->routeIs('admin.units-management.*') ? 'text-white' : 'text-amber-400 group-hover:text-white' }}"></i>
+                            </div> 
+                            <span class="text-[13px]">College Management</span>
                         </a>
 
-                        <a class="flex items-center gap-3 px-3 py-2.5 rounded font-bold no-underline transition-all {{ request()->routeIs('admin.reports.*') ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-white/5' }}" 
-                           href="{{ route('admin.reports.index') }}">
-                            <div class="text-[14px] w-5 text-center"><i class="fas fa-chart-line"></i></div> 
-                            <span class="text-[12px]">Comprehensive Reports</span>
+                        {{-- Section: Data --}}
+                        <div class="flex items-center gap-2 mb-3 mt-6 px-2">
+                            <span class="text-white/80 text-[11px] font-black uppercase tracking-[0.2em]">Data & Reports</span>
+                            <div class="h-[1px] flex-grow bg-slate-700/50"></div>
+                        </div>
+
+                        <a class="nav-link rounded-lg px-3 py-2.5 mb-2 transition-all flex items-center group {{ request()->routeIs('admin.bulk-assets.*') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:bg-white/10' }}" 
+                            href="{{ route('admin.bulk-assets.index') }}">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-file-import {{ request()->routeIs('admin.bulk-assets.*') ? 'text-white' : 'text-amber-400 group-hover:text-white' }}"></i>
+                            </div> 
+                            <span class="text-[13px]">Bulk Import</span>
+                        </a>
+
+                        <a class="nav-link rounded-lg px-3 py-2.5 mb-2 transition-all flex items-center group {{ request()->routeIs('admin.reports.*') ? 'bg-amber-600 text-white shadow-lg font-bold' : 'text-slate-300 hover:bg-white/10' }}" 
+                            href="{{ route('admin.reports.index') }}">
+                            <div class="sb-nav-link-icon">
+                                <i class="fas fa-chart-pie {{ request()->routeIs('admin.reports.*') ? 'text-white' : 'text-amber-400 group-hover:text-white' }}"></i>
+                            </div> 
+                            <span class="text-[13px]">Reports Index</span>
                         </a>
                         
                     </div>
                 </div>
 
-                <div class="bg-black/30 p-3 border-t border-slate-800 mt-auto">
-                    <div class="flex items-center gap-2">
-                        <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-slate-500 text-[8px] uppercase font-black leading-none mb-1 tracking-wider">System Active</span>
-                            <span class="text-amber-400 text-[11px] font-bold truncate leading-tight">
-                                {{ Auth::user()->full_name ?? Auth::user()->username }}
-                            </span>
-                            <span class="text-slate-400 text-[9px] truncate leading-none mt-0.5">
-                                {{ Auth::user()->email }}
-                            </span>
+                {{-- Neat Admin Footer Card --}}
+                <div class="sb-sidenav-footer bg-black/20 p-3 border-t border-slate-800 mt-auto">
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/10 shadow-sm hover:bg-white/10 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex-shrink-0">
+                                <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center text-white font-black shadow-lg text-sm">
+                                    {{ strtoupper(substr(Auth::user()->full_name ?? 'AD', 0, 2)) }}
+                                </div>
+                                <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-amber-400 rounded-full border-2 border-admin-navy animate-pulse"></div>
+                            </div>
+
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-slate-200 text-[9px] uppercase font-black tracking-widest leading-none mb-1.5 opacity-80">Admin</span>
+                                <span class="text-white text-[11px] font-bold truncate leading-tight">
+                                    {{ Auth::user()->full_name ?? 'Administrator' }}
+                                </span>
+                                <span class="text-slate-200 text-[9px] truncate mt-0.5 font-medium">
+                                    {{ Auth::user()->email }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -158,11 +212,12 @@
             
             <footer class="py-3 bg-white mt-auto border-t border-slate-200">
                 <div class="container-fluid px-4">
-                    <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                        <div>COMIS &copy; {{ date('Y') }}</div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-1 h-1 bg-slate-300 rounded-full"></div>
-                            <span>College of Medicine</span>
+                    <div class="flex items-center justify-between text-[10px] font-bold text-slate-600 tracking-[0.2em]">
+                        <div>CoMUI © {{ date('Y') }}</div>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-1 h-1 bg-slate-400 rounded-full"></div>
+                            <img src="{{ asset('build/assets/images/logo.png') }}" alt="COMIS Logo" class="w-6 h-6 object-contain brightness-100">
+                            <span class="text-slate-600">College of Medicine</span>
                         </div>
                     </div>
                 </div>

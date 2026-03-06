@@ -90,7 +90,7 @@
     <!-- Main Container -->
     <div class="relative z-10 min-h-screen d-flex align-items-center justify-content-center p-3 p-md-4">
         
-        <div class="bg-white rounded-4 shadow-2xl overflow-hidden" style="max-width: 480px; width: 100%; box-shadow: 0 35px 120px -20px rgba(0,0,0,0.7);">
+        <div class="bg-white rounded-4 shadow-2xl overflow-hidden" style="max-width: 700px; width: 100%; box-shadow: 0 35px 120px -20px rgba(223, 219, 219, 0.7);">
             
             <!-- Header Section -->
             <div class="text-center p-5 pb-4 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 position-relative overflow-hidden">
@@ -100,7 +100,7 @@
                 <!-- Logo -->
                 <div class="position-relative" style="z-index: 10;">
                     <div class="d-inline-flex align-items-center justify-content-center bg-white bg-opacity-15 backdrop-blur-lg rounded-4 p-3 mb-3 shadow-lg">
-                        <img src="{{ asset('build/assets/images/logo.png') }}" alt="College of Medicine Logo" class="img-fluid" style="width: 56px; height: 56px;">
+                        <img src="{{ asset('build/assets/images/logo.png') }}" alt="College of Medicine Logo" class="img-fluid" style="width: 60px; height: 60px;">
                     </div>
                     
                     <h1 class="fs-3 fw-black text-white mb-2" style="letter-spacing: -0.03em;">Set New Password</h1>
@@ -242,11 +242,16 @@
 
             <!-- Footer -->
             <div class="p-4 bg-slate-50 border-top border-slate-200 text-center">
-                <p class="mb-0 fw-bold text-slate-400 text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.1em;">
+                <p class="mb-0 fw-bold text-slate-500 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.1em;">
                     <i class="fas fa-shield-halved me-1"></i> Secure Password Reset
                 </p>
-                <p class="mb-0 text-slate-400 mt-1" style="font-size: 0.65rem;">
-                    College of Medicine Inventory System
+                
+                <p class="mb-0 text-slate-500 mt-1 d-flex align-items-center justify-content-center" style="font-size: 0.7rem;">
+                    <img src="{{ asset('build/assets/images/logo.png') }}" 
+                        alt="CoMUI Logo" 
+                        class="me-2" 
+                        style="width: 1.2rem; height: 1.2rem; object-fit: contain;">
+                    <span>CoMUI Inventory System</span>
                 </p>
             </div>
         </div>

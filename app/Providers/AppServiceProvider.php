@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Failed;
+use App\Listeners\LogFailedLoginAttempt;
 use Illuminate\Support\Facades\View;
 use App\Models\Submission; // Adjust based on your model name
 class AppServiceProvider extends ServiceProvider
@@ -26,5 +28,9 @@ public function boot()
         
         $view->with('stats', $stats);
     });
+    Event::listen(
+        Failed::class,
+        LogFailedLoginAttempt::class
+    );
 }
 }

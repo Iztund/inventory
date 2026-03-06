@@ -42,7 +42,7 @@ class Submission extends Model
      */
     public function submittedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'submitted_by_user_id');
+        return $this->belongsTo(User::class, 'submitted_by_user_id', 'user_id');
     }
    public function getTotalValueAttribute()
 {

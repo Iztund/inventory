@@ -159,17 +159,20 @@
                             {{-- Audit Date Range (Wider) --}}
                             <div class="md:col-span-7">
                                 <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 h-full shadow-lg">
-                                    <h6 class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-3 italic">Verification Date Filter</h6>
+                                    <h6 class="text-[10px] font-black text-white-50 uppercase tracking-widest mb-3 italic">Verification Date Filter</h6>
                                     <div class="grid grid-cols-2 gap-4">
+                                        {{-- Start Date --}}
                                         <div class="relative">
                                             <label class="absolute -top-2 left-3 bg-slate-900 px-2 text-[8px] font-black text-indigo-400 uppercase">Start Date</label>
                                             <input type="date" name="date_from" value="{{ request('date_from') }}" 
-                                                class="w-full text-xs font-bold bg-transparent border border-slate-700 text-white rounded-xl py-2.5 focus:ring-indigo-500">
+                                                class="w-full text-xs font-bold bg-transparent border border-slate-700 text-white rounded-xl py-2.5 px-4 focus:ring-indigo-500 [color-scheme:dark]">
                                         </div>
+
+                                        {{-- End Date --}}
                                         <div class="relative">
                                             <label class="absolute -top-2 left-3 bg-slate-900 px-2 text-[8px] font-black text-indigo-400 uppercase">End Date</label>
                                             <input type="date" name="date_to" value="{{ request('date_to') }}" 
-                                                class="w-full text-xs font-bold bg-transparent border border-slate-700 text-white rounded-xl py-2.5 focus:ring-indigo-500">
+                                                class="w-full text-xs font-bold bg-transparent border border-slate-700 text-white rounded-xl py-2.5 px-4 focus:ring-indigo-300 [color-scheme:dark]">
                                         </div>
                                     </div>
                                 </div>
@@ -208,11 +211,11 @@
             {{-- Stats Bar --}}
             <div class="bg-slate-50 border-b border-slate-100 px-6 md:px-8 py-4 flex flex-wrap gap-4 md:gap-8">
                 <div>
-                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Registry Valuation</span>
+                    <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Registry Valuation</span>
                     <span class="text-sm md:text-lg font-black text-slate-900">₦{{ number_format($submissions->sum(fn($s) => $s->items->sum(fn($i) => ($i->cost ?? 0) * $i->quantity)), 2) }}</span>
                 </div>
                 <div>
-                    <span class="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Items</span>
+                    <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Items</span>
                     <span class="text-sm md:text-lg font-black text-indigo-600">{{ $submissions->sum(fn($s) => $s->items->count()) }} Units</span>
                 </div>
             </div>
@@ -239,15 +242,17 @@
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <span class="block text-[8px] font-black text-slate-400 uppercase">Location</span>
+                                <span class="block text-[8px] font-black text-slate-500 uppercase">Location</span>
                                 <p class="text-[10px] font-bold text-slate-700 truncate">
                                     @if($u->faculty) {{ $u->faculty->faculty_name }}
                                     @elseif($u->office) {{ $u->office->office_name }}
+                                    @elseif($u->department) {{ $u->department->dept_name }}
+                                    @elseif($u->unit) {{ $u->unit->unit_name }}
                                     @else {{ $u->institute->institute_name ?? 'N/A' }} @endif
                                 </p>
                             </div>
                             <div>
-                                <span class="block text-[8px] font-black text-slate-400 uppercase">Outcome</span>
+                                <span class="block text-[8px] font-black text-slate-500 uppercase">Outcome</span>
                                 <div class="flex gap-2">
                                     <span class="text-[10px] font-black text-emerald-600">{{ $items->where('status', 'approved')->count() }}✓</span>
                                     <span class="text-[10px] font-black text-rose-500">{{ $items->where('status', 'rejected')->count() }}✗</span>

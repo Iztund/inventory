@@ -173,7 +173,7 @@ if ($user->role_id == 1) {
     $this->authorizeRole([2]);
     $userId = Auth::id();
     $user = Auth::user();
-
+    
     // 1. Validate
     $request->validate([
         'items' => 'required|array|min:1',
@@ -184,7 +184,13 @@ if ($user->role_id == 1) {
         'items.*.quantity'        => 'required|integer|min:1',
         'items.*.cost'            => 'nullable|numeric|min:0',
         'items.*.documents'       => 'nullable|array',
+        'items.*.item_notes'      => 'nullable|string',
+        'items.*.serial_number'   => 'nullable|string',
+        'items.*.condition'       => 'nullable|string',
         'items.*.documents.*'     => 'file|mimes:pdf,jpg,jpeg,png|max:10240',
+        'notes'                   => 'nullable|string',
+        'summary'                 => 'nullable|string',
+
     ]);
 
     try {
@@ -230,22 +236,6 @@ if ($user->role_id == 1) {
                     $serial = !empty($itemData['serial_number']) 
                         ? $itemData['serial_number'] 
                         : 'TEMP-' . strtoupper(uniqid()) . '-' . $index;
-
-                    $asset = Asset::create([
-                        'serial_number'        => $serial,
-                        'item_name'            => $itemData['item_name'],
-                        'purchase_price'       => $itemData['cost'] ?? 0,
-                        'status'               => 'available',
-                        'category_id'          => $itemData['category_id'],
-                        'subcategory_id'       => $itemData['subcategory_id'],
-                        'quantity'             => $itemData['quantity'],
-                        'current_faculty_id'   => $user->faculty_id,
-                        'current_dept_id'      => $user->department_id,
-                        'current_office_id'    => $user->office_id,
-                        'current_unit_id'      => $user->unit_id,
-                        'current_institute_id' => $user->institute_id,
-                    ]);
-                    $assetId = $asset->asset_id;
                 }
 
                 // --- CREATE SUBMISSION ITEM ---
@@ -260,6 +250,7 @@ if ($user->role_id == 1) {
                     'serial_number'  => $itemData['serial_number'] ?? null,
                     'quantity'       => $itemData['quantity'],
                     'document_path'  => $itemFileDetails,
+                    'status'         =>'pending',
                 ]);
 
                 if ($asset) {
@@ -524,8 +515,8 @@ public function update(Request $request, $submission_id)
         ->where(function($q) use ($user) {
             if ($user->institute_id)   return $q->where('current_institute_id', $user->institute_id);
             if ($user->unit_id)        return $q->where('current_unit_id', $user->unit_id);
-            if ($user->office_id)      return $q->where('current_office_id', $user->office_id);
             if ($user->department_id)  return $q->where('current_dept_id', $user->department_id);
+            if ($user->office_id)      return $q->where('current_office_id', $user->office_id);
             if ($user->faculty_id)     return $q->where('current_faculty_id', $user->faculty_id);
         })
         ->orderBy('item_name')

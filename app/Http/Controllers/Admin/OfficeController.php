@@ -33,8 +33,9 @@ class OfficeController extends Controller
                          ->orderBy('office_name', 'asc')
                          ->paginate(15)
                          ->appends($request->query());
+        $assignedHeadsCount = Office::whereNotNull('office_head_id')->count();
 
-        return view('admin.manage_offices.offices', compact('offices'));
+        return view('admin.manage_offices.offices', compact('offices', 'assignedHeadsCount'));
     }
 
     public function create(): View
@@ -43,7 +44,7 @@ class OfficeController extends Controller
         $activeOfficeStaff = User::where('status', 'active')
         ->whereHas('office') // Assuming the relationship name is 'office'
         ->count();
-        return view('admin.manage_offices.office_create', compact('office', 'activeUsers', 'activeOfficeStaff'));
+        return view('admin.manage_offices.office_create', compact('office', 'activeOfficeStaff'));
     }
 
     public function store(Request $request): RedirectResponse

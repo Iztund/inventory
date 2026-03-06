@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::create('categories', function (Blueprint $table) {
             $table->id('category_id'); // category_id
             $table->string('category_name')->unique(); // e.g., 'IT Equipment', 'Medical Consumables'
+            $table->string('category_code', 10)->nullable();
             $table->text('description')->nullable();
             $table->boolean('is_consumable')->default(false);
             $table->enum('is_active', ['active', 'inactive'])

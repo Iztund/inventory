@@ -100,7 +100,7 @@
                             
                             <div class="mb-4">
                                 <label class="form-label fw-medium text-gray-700 mb-2">Head of Office</label>
-                                <select id="leader_id" 
+                                <select id="office_head_id" 
                                         name="office_head_id" {{-- Changed from head_id to office_head_id --}}
                                         class="form-select select2-remote @error('office_head_id') is-invalid @enderror">
                                     @if($office->head)

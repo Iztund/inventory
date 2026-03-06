@@ -19,26 +19,9 @@ class Unit extends Model
         'unit_name',
         'unit_code',
         'unit_head_id', // FK → users.user_id
-        'dept_id',            // FK → departments.dept_id
-        'office_id',          // FK → offices.office_id
+        'office_id',
         'is_active',
     ];
-
-    /**
-     * Unit belongs to a Department (academic unit)
-     */
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class, 'dept_id', 'dept_id');
-    }
-
-    /**
-     * Unit belongs to an Office (administrative unit)
-     */
-    public function office(): BelongsTo
-    {
-        return $this->belongsTo(Office::class, 'office_id', 'office_id');
-    }
 
     /**
      * Unit Supervisor (User)
@@ -48,6 +31,10 @@ class Unit extends Model
         return $this->belongsTo(User::class, 'unit_head_id', 'user_id');
     }
 
+     public function office(): BelongsTo
+    {
+        return $this->belongsTo(Office::class, 'office_id', 'office_id');
+    }
     /**
      * Users assigned to this Unit
      */

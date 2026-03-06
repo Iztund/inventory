@@ -136,7 +136,7 @@
                         <!-- Feature Cards -->
                         <div class="d-flex flex-column gap-3">
                             <!-- Feature 1 -->
-                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm" style="transition: all 0.3s;">
+                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm">
                                 <div class="bg-emerald-500 rounded-3 p-2 d-flex align-items-center justify-content-center shadow-lg flex-shrink-0" style="width: 44px; height: 44px;">
                                     <i class="fas fa-microscope"></i>
                                 </div>
@@ -147,7 +147,7 @@
                             </div>
 
                             <!-- Feature 2 -->
-                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm" style="transition: all 0.3s;">
+                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm">
                                 <div class="bg-emerald-500 rounded-3 p-2 d-flex align-items-center justify-content-center shadow-lg flex-shrink-0" style="width: 44px; height: 44px;">
                                     <i class="fas fa-file-invoice-dollar"></i>
                                 </div>
@@ -158,7 +158,7 @@
                             </div>
 
                             <!-- Feature 3 -->
-                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm" style="transition: all 0.3s;">
+                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm">
                                 <div class="bg-emerald-500 rounded-3 p-2 d-flex align-items-center justify-content-center shadow-lg flex-shrink-0" style="width: 44px; height: 44px;">
                                     <i class="fas fa-chart-line"></i>
                                 </div>
@@ -169,7 +169,7 @@
                             </div>
 
                             <!-- Feature 4 -->
-                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm" style="transition: all 0.3s;">
+                            <div class="d-flex align-items-center gap-3 bg-dark bg-opacity-5 border border-white border-opacity-10 backdrop-blur-md rounded-3 p-3 shadow-sm">
                                 <div class="bg-emerald-500 rounded-3 p-2 d-flex align-items-center justify-content-center shadow-lg flex-shrink-0" style="width: 44px; height: 44px;">
                                     <i class="fas fa-shield-halved"></i>
                                 </div>
@@ -217,7 +217,35 @@
                         <p class="text-slate-500 fw-semibold mb-0" style="font-size: 0.95rem;">Enter your credentials to access the system</p>
                     </div>
 
-                    <!-- Session Timeout Alert -->
+                    {{-- Success Alert (Password Updated) --}}
+                    @if(session('success'))
+                    <div class="d-flex align-items-center gap-3 p-4 mb-4 bg-success bg-opacity-10 border border-success border-opacity-25 rounded-3 shadow-sm alert-dismissible">
+                        <div class="bg-success bg-opacity-15 rounded-2 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                            <i class="fas fa-check-circle text-success fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 fw-bold text-success text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Success</p>
+                            <p class="mb-0 text-slate-700 fw-medium" style="font-size: 0.8rem;">{{ session('success') }}</p>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    @endif
+
+                    {{-- Info Alert (Session Timeout / Password Change Required) --}}
+                    @if(session('info'))
+                    <div class="d-flex align-items-center gap-3 p-4 mb-4 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3 shadow-sm alert-dismissible">
+                        <div class="bg-info bg-opacity-15 rounded-2 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                            <i class="fas fa-info-circle text-info fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 fw-bold text-info text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Information</p>
+                            <p class="mb-0 text-slate-700 fw-medium" style="font-size: 0.8rem;">{{ session('info') }}</p>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    @endif
+
+                    <!-- Session Timeout Alert (from query parameter) -->
                     @if(request()->query('reason') === 'timeout')
                     <div class="d-flex align-items-center gap-3 p-4 mb-5 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 shadow-sm">
                         <div class="bg-warning bg-opacity-15 rounded-2 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
@@ -283,7 +311,9 @@
                                     required
                                     class="form-control form-control-lg border-2 border-slate-100 rounded-3 fw-bold text-slate-800 bg-slate-50"
                                     style="padding: 1rem 3.5rem 1rem 3.5rem; font-size: 0.95rem; transition: all 0.3s; outline: none;"
-                                    placeholder="••••••••••">
+                                    placeholder="••••••••••"
+                                    onfocus="this.classList.remove('border-slate-100', 'bg-slate-50'); this.classList.add('border-emerald-500', 'bg-white', 'shadow-lg');"
+                                    onblur="if(!this.value) { this.classList.add('border-slate-100', 'bg-slate-50'); this.classList.remove('border-emerald-500', 'bg-white', 'shadow-lg'); }">
                                 
                                 <button 
                                     type="button" 
@@ -349,18 +379,15 @@
 
             if (toggleButton) {
                 toggleButton.addEventListener('click', function() {
-                    // Toggle the type attribute
                     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                     passwordInput.setAttribute('type', type);
                     
-                    // Toggle the eye / eye-slash icon
                     if (type === 'password') {
                         toggleIcon.classList.remove('fa-eye-slash');
                         toggleIcon.classList.add('fa-eye');
                     } else {
                         toggleIcon.classList.remove('fa-eye');
                         toggleIcon.classList.add('fa-eye-slash');
-                        toggleIcon.classList.add('text-emerald-600'); // Optional: highlight when visible
                     }
                 });
             }
@@ -379,13 +406,11 @@
 
         // Auto-dismiss alerts after 8 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.bg-warning, .bg-danger');
+            const alerts = document.querySelectorAll('.alert-dismissible');
             alerts.forEach(alert => {
                 setTimeout(() => {
-                    alert.style.transition = 'opacity 0.5s, transform 0.5s';
-                    alert.style.opacity = '0';
-                    alert.style.transform = 'translateY(-10px)';
-                    setTimeout(() => alert.remove(), 500);
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
                 }, 8000);
             });
         });

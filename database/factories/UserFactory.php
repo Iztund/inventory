@@ -26,7 +26,9 @@ public function definition(): array
 {
     $structureType = fake()->randomElement([
         'faculty',
+        'department',
         'office',
+        'unit',
         'institute',
         'none'
     ]);
@@ -45,6 +47,7 @@ public function definition(): array
         if ($faculty) {
             $faculty_id = $faculty->faculty_id;
 
+
             $department = Department::where('faculty_id', $faculty_id)
                 ->inRandomOrder()
                 ->first();
@@ -61,7 +64,7 @@ public function definition(): array
 
         if ($office) {
             $office_id = $office->office_id;
-
+            
             $unit = Unit::where('office_id', $office_id)
                 ->inRandomOrder()
                 ->first();
@@ -70,12 +73,16 @@ public function definition(): array
                 $unit_id = $unit->unit_id;
             }
         }
+        
     }
 
-    // -------- INSTITUTE (Standalone) --------
-    if ($structureType === 'institute') {
-        $institute_id = Institute::inRandomOrder()->value('institute_id');
-    }
+        // -------- INSTITUTE (Standalone) --------
+            if ($structureType === 'institute') {
+            $institute = Institute::inRandomOrder()->first();
+            if ($institute) {
+                $institute_id = $institute->institute_id;
+            }
+        }
 
     return [
         'username' => fake()->unique()->userName(),

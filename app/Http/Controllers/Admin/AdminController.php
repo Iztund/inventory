@@ -45,10 +45,10 @@ class AdminController extends Controller
             'totalActiveUsers'    => User::where('status', 'active')->count(),
             'totalInactiveUsers'  => User::where('status', '!=', 'active')->count(),
             'totalFaculties'      => Faculty::count(),
+            'totalOffices'        => Office::count(),
             'totalDepartments'    => Department::count(),
             'totalUnits'          => Unit::count(),
             'totalInstitutes'     => Institute::count(),
-            'totalOffices'        => Office::count(),
             'totalCategories'     => Category::count(),
             'recentSubmissions'   => $recentSubmissions,
             'topAssets'           => $topAssets,
@@ -101,117 +101,165 @@ class AdminController extends Controller
     // ============================================
     public function reportsIndex(Request $request)
 {
+    // Extract filters
     $entityType = $request->input('entity_type');
-    $startDate  = $request->input('start_date', now()->subMonth()->startOfDay());
-    $endDate    = $request->input('end_date', now()->endOfDay());
+    $startDate = $request->input('start_date', now()->subMonth()->startOfDay());
+    $endDate = $request->input('end_date', now()->endOfDay());
 
-    // 1. Base Query (Filtered by Date & Global Standing)
-    $assetQuery = Asset::query();
+    // Build base asset query with entity filtering
+    $assetQuery = $this->buildAssetQuery($entityType);
 
-    // --- APPLY EXCLUSIVE FILTERING FOR SUMMARY METRICS ---
-    // This ensures the "Total Assets" and "Total Value" cards update correctly
-    if ($entityType) {
-        switch ($entityType) {
-            case 'faculty':
-                $assetQuery->whereNotNull('current_faculty_id')->whereNull('current_dept_id');
-                break;
-            case 'department':
-                $assetQuery->whereNotNull('current_dept_id');
-                break;
-            case 'office':
-                $assetQuery->whereNotNull('current_office_id')->whereNull('current_unit_id');
-                break;
-            case 'unit':
-                $assetQuery->whereNotNull('current_unit_id');
-                break;
-            case 'institute':
-                $assetQuery->whereNotNull('current_institute_id');
-                break;
-        }
-    }
-    
-    
-   // 2. Summary Metrics (Filtered)
-    $submissionQuery = Submission::whereBetween('submitted_at', [$startDate, $endDate]);
-
-    if ($entityType) {
-        // Filter submissions based on the profile of the user who submitted it
-        $submissionQuery->whereHas('submittedBy', function($q) use ($entityType) {
-            switch ($entityType) {
-                case 'faculty':
-                    // Submissions by users in a Faculty but not in a Dept
-                    $q->whereNotNull('faculty_id')->whereNull('dept_id');
-                    break;
-                case 'department':
-                    $q->whereNotNull('dept_id');
-                    break;
-                case 'office':
-                    // Submissions by users in an Office but not in a Unit
-                    $q->whereNotNull('office_id')->whereNull('unit_id');
-                    break;
-                case 'unit':
-                    $q->whereNotNull('unit_id');
-                    break;
-                case 'institute':
-                    $q->whereNotNull('institute_id');
-                    break;
-            }
-        });
-    }
-
+    // Get summary metrics
     $summary = [
-        'total_assets' => (clone $assetQuery)->count(),
-        'total_value'  => (clone $assetQuery)->sum(DB::raw('quantity * purchase_price')),
-        'submissions_period' => $submissionQuery->count(),
+        'total_assets' => (clone $assetQuery)->sum('quantity'),
+        'total_value' => (clone $assetQuery)->sum(DB::raw('quantity * purchase_price')),
+        'submissions_period' => $this->getSubmissionsCount($entityType, $startDate, $endDate),
     ];
 
-    // 3. Dynamic Entity Loop (For the Bar Chart)
-    $queryData = collect();
-    $typesToFetch = $entityType ? [$entityType] : ['faculty', 'department', 'office', 'unit', 'institute'];
-
-    foreach ($typesToFetch as $type) {
-        $table = Str::plural($type);
-        $prefix = ($type === 'department') ? 'dept' : $type;
-        $pk = $prefix . '_id';
-        $nameAttr = $prefix . '_name';
-        $foreignKey = 'current_' . $prefix . '_id';
-
-        if (Schema::hasTable($table)) {
-            $data = Asset::join($table, "assets.{$foreignKey}", '=', "{$table}.{$pk}")
-                // Apply the branch exclusion logic
-                ->when($type === 'faculty', fn($q) => $q->whereNull('assets.current_dept_id'))
-                ->when($type === 'office', fn($q) => $q->whereNull('assets.current_unit_id'))
-                ->select("{$table}.{$nameAttr} as label", DB::raw('SUM(assets.quantity * assets.purchase_price) as total'))
-                ->groupBy("{$table}.{$nameAttr}")
-                ->get();
-                
-            $queryData = $queryData->concat($data);
-        }
-    }
-
-    $allEntities = $queryData->sortByDesc('total')->take(10);
-
-    // 4. Chart Data (Logic is now consistent with steps above)
+    // Get chart data
     $chartData = [
-        'enrollment_labels' => $allEntities->pluck('label')->toArray(),
-        'enrollment_data'   => $allEntities->pluck('total')->map(fn($v) => round($v / 1000000, 2))->toArray(),
-        'status_labels'     => ['Available', 'Assigned', 'Maintenance', 'Retired'],
-        'status_data'       => [
-            (clone $assetQuery)->where('status', 'available')->count(),
-            (clone $assetQuery)->where('status', 'assigned')->count(),
-            (clone $assetQuery)->where('status', 'maintenance')->count(),
-            (clone $assetQuery)->where('status', 'retired')->count(),
-        ]
+        'enrollment_labels' => [],
+        'enrollment_data' => [],
+        'status_labels' => ['Available', 'Assigned', 'Maintenance', 'Retired'],
+        'status_data' => $this->getStatusCounts($assetQuery),
     ];
 
-    // Top 10 High-Value Assets for the Table
-    $topAssets = (clone $assetQuery)->with(['category', 'subcategory', 'department', 'unit', 'office', 'faculty', 'institute'])
+    // Get entity breakdown for bar chart
+    $allEntities = $this->getEntityBreakdown($entityType);
+    
+    $chartData['enrollment_labels'] = $allEntities->pluck('label')->toArray();
+    $chartData['enrollment_data'] = $allEntities->pluck('total')
+        ->map(fn($v) => round($v / 1000000, 2))
+        ->toArray();
+
+    // Get top 10 high-value assets
+    $topAssets = (clone $assetQuery)
+        ->with(['category', 'subcategory', 'department', 'unit', 'faculty', 'office','institute'])
         ->select('*', DB::raw('quantity * purchase_price as total_value'))
-        ->orderBy('total_value', 'desc')
+        ->orderByDesc('total_value')
         ->take(10)
         ->get();
 
     return view('admin.comprehensive_reports', compact('summary', 'chartData', 'topAssets', 'allEntities'));
+}
+
+/**
+ * Build asset query with entity type filtering
+ */
+private function buildAssetQuery(?string $entityType)
+{
+    $query = Asset::query();
+
+    if (!$entityType) {
+        return $query;
+    }
+
+    $filters = [
+        // Case A: Asset is in a Faculty but NOT assigned to a Dept/Office/etc.
+        'faculty' => fn($q) => $q->whereNotNull('current_faculty_id')
+                                 ->whereNull('current_dept_id')
+                                 ->whereNull('current_institute_id'),
+
+        // Case B: Asset is in a Department but NOT in a sub-office or unit
+        'department' => fn($q) => $q->whereNotNull('current_dept_id')
+                                    ->whereNull('current_unit_id'),
+
+        // Case C: Asset belongs to a specific Office
+        'office' => fn($q) => $q->whereNotNull('current_office_id')
+                                        ->whereNull('current_unit_id'),
+        // Case D: Asset belongs to a specific Unit
+        'unit' => fn($q) => $q->whereNotNull('current_unit_id'),
+
+        // Case E: Asset belongs to an Institute
+        'institute' => fn($q) => $q->whereNotNull('current_institute_id'),
+    ];
+
+    return isset($filters[$entityType]) ? $filters[$entityType]($query) : $query;
+}
+
+/**
+ * Get submissions count for date range and entity type
+ */
+private function getSubmissionsCount(?string $entityType, $startDate, $endDate): int
+{
+    $query = Submission::whereBetween('submitted_at', [$startDate, $endDate]);
+
+    if (!$entityType) {
+        return $query->count();
+    }
+
+    $profileFilters = [
+        'faculty' => fn($q) => $q->whereNotNull('faculty_id')->whereNull('dept_id'),
+        'office' => fn($q) => $q->whereNotNull('office_id')->whereNull('unit_id'),
+        'department' => fn($q) => $q->whereNotNull('dept_id'),
+        'unit' => fn($q) => $q->whereNotNull('unit_id'),
+        'institute' => fn($q) => $q->whereNotNull('institute_id'),
+    ];
+
+    return $query->whereHas('submittedBy', $profileFilters[$entityType] ?? fn($q) => $q)->count();
+}
+
+/**
+ * Get status counts for pie chart
+ */
+private function getStatusCounts($assetQuery): array
+{
+    $statuses = ['available', 'assigned', 'maintenance', 'retired'];
+    
+    return collect($statuses)
+        ->map(fn($status) => (clone $assetQuery)->where('status', $status)->count())
+        ->toArray();
+}
+
+/**
+ * Get entity breakdown with total values
+ */
+private function getEntityBreakdown(?string $entityType)
+{
+    $types = $entityType ? [$entityType] : ['faculty', 'department','office', 'unit', 'institute'];
+    
+    return collect($types)
+        ->flatMap(fn($type) => $this->getEntitiesOfType($type))
+        ->sortByDesc('total')
+        ->take(10);
+}
+
+/**
+ * Get all entities of a specific type with their totals
+ */
+private function getEntitiesOfType(string $type)
+{
+    $config = [
+        'faculty' => ['table' => 'faculties', 'prefix' => 'faculty'],
+        'department' => ['table' => 'departments', 'prefix' => 'dept'],
+        'office' => ['table' => 'offices', 'prefix' => 'office'],
+        'unit' => ['table' => 'units', 'prefix' => 'unit'],
+        'institute' => ['table' => 'institutes', 'prefix' => 'institute'],
+    ];
+
+    if (!isset($config[$type]) || !Schema::hasTable($config[$type]['table'])) {
+        return collect();
+    }
+
+    $cfg = $config[$type];
+    $table = $cfg['table'];
+    $prefix = $cfg['prefix'];
+    $pk = $prefix . '_id';
+    $nameAttr = $prefix . '_name';
+    $foreignKey = 'current_' . $prefix . '_id';
+
+    $query = Asset::join($table, "assets.{$foreignKey}", '=', "{$table}.{$pk}")
+        ->select("{$table}.{$nameAttr} as label", DB::raw('SUM(assets.quantity * assets.purchase_price) as total'))
+        ->groupBy("{$table}.{$nameAttr}");
+
+    // Apply branch exclusion
+    if ($type === 'faculty') {
+        $query->whereNull('assets.current_dept_id');
+    } elseif ($type === 'office') {
+        $query->whereNull('assets.current_unit_id');
+    }
+
+    return $query->get();
 }
     // ============================================
     // CSV REPORT EXPORT
@@ -264,7 +312,7 @@ class AdminController extends Controller
 
             foreach ($items as $item) {
                 $user = $item->submission->submittedBy;
-                $entity = $user->faculty->faculty_name ?? $user->office->office_name ?? $user->institute->institute_name ?? 'N/A';
+                $entity = $user->faculty->faculty_name ?? $user->institute->institute_name ?? $user->office->office_name ?? 'N/A';
                 $subEntity = $user->department->dept_name ?? $user->unit->unit_name ?? 'General';
 
                 fputcsv($file, [
@@ -325,9 +373,8 @@ class AdminController extends Controller
     public function searchStaff(Request $request)
 {
     $q = $request->query('q');
-    // These values will be passed from your Select2 AJAX data
     $parentId = $request->query('parent_id'); 
-    $parentType = $request->query('parent_type'); // 'faculty' or 'office'
+    $parentType = $request->query('parent_type'); // 'faculty', 'office', or 'institute'
 
     if (!$q) {
         return response()->json([]); 
@@ -344,12 +391,35 @@ class AdminController extends Controller
                             ->orWhere('middle_name', 'like', "%{$q}%");
                 });
         })
-        // Filter logic: Restrict results based on the hierarchy level
-        ->when($parentId && $parentType, function ($query) use ($parentId, $parentType) {
-            if ($parentType === 'faculty') {
-                return $query->where('faculty_id', $parentId);
-            } elseif ($parentType === 'office') {
-                return $query->where('office_id', $parentId);
+        // Apply filtering based on entity type and parent
+        ->when($parentType, function ($query) use ($parentType, $parentId) {
+            switch ($parentType) {
+                case 'faculty':
+                    // For Faculty Dean selection OR Department Head selection
+                    if ($parentId) {
+                        // This is a Department - filter by faculty_id
+                        return $query->where('faculty_id', $parentId);
+                    } else {
+                        // This is a Faculty - show users belonging to ANY faculty
+                        return $query->whereNotNull('faculty_id');
+                    }
+                    
+                case 'office':
+                    // For Office Head selection OR Unit Head selection
+                    if ($parentId) {
+                        // This is a Unit - filter by office_id
+                        return $query->where('office_id', $parentId);
+                    } else {
+                        // This is an Office - show users belonging to ANY office
+                        return $query->whereNotNull('office_id');
+                    }
+                    
+                case 'institute':
+                    // For Institute Director selection - show users belonging to ANY institute
+                    return $query->whereNotNull('institute_id');
+                    
+                default:
+                    return $query;
             }
         })
         ->take(20)
@@ -358,7 +428,6 @@ class AdminController extends Controller
     $formattedUsers = $users->map(function($user) {
         return [
             'id' => $user->user_id,
-            // formatted via your User model's full_name attribute
             'text' => $user->full_name . ' (' . $user->email . ')',
         ];
     });

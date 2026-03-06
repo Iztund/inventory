@@ -26,8 +26,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 2, 
-                'office_name' => 'Office of the Deputy Provost (Academic)', 
-                'office_code' => 'DPAC', // <-- ADDED
+                'office_name' => 'College Office',
+                'office_code' => 'COF', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -35,8 +35,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 3, 
-                'office_name' => 'Office of the Deputy Provost (Administration)', 
-                'office_code' => 'DPAD', // <-- ADDED
+                'office_name' => 'Biomedical Communication Centre',
+                'office_code' => 'BCC', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -44,8 +44,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 4, 
-                'office_name' => 'Registry Office', 
-                'office_code' => 'REG', // <-- ADDED
+                'office_name' => 'Finance Office', 
+                'office_code' => 'FIN', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -53,8 +53,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 5, 
-                'office_name' => 'Bursary Office', 
-                'office_code' => 'BURS', // <-- ADDED
+                'office_name' => 'College Research & Innovation Management', 
+                'office_code' => 'CRIM', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -62,8 +62,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 6, 
-                'office_name' => 'Office of Academic Planning', 
-                'office_code' => 'OAP', // <-- ADDED
+                'office_name' => 'Corporate Affairs', 
+                'office_code' => 'COA', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' =>'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -71,8 +71,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 7, 
-                'office_name' => 'Office of Student Affairs', 
-                'office_code' => 'OSA', // <-- ADDED
+                'office_name' => 'Medical Library', 
+                'office_code' => 'MLIB', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -80,8 +80,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 8, 
-                'office_name' => 'Library Services', 
-                'office_code' => 'LIB', // <-- ADDED
+                'office_name' => 'Counselling Unit',
+                'office_code' => 'COU', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' =>'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -89,8 +89,8 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 9, 
-                'office_name' => 'ICT Office', 
-                'office_code' => 'ICT', // <-- ADDED
+                'office_name' => 'Ibarapa Community & Primary Care',
+                'office_code' => 'ICPC', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
@@ -98,13 +98,31 @@ class OfficeSeeder extends Seeder
             ],
             [
                 'office_id' => 10, 
-                'office_name' => 'Office of Research and Development', 
-                'office_code' => 'ORD', // <-- ADDED
+                'office_name' => 'Central Animal House',
+                'office_code' => 'CAH', // <-- ADDED
                 'office_head_id' => null, // <-- ADDED
                 'is_active' => 'active',      // <-- ADDED
                 'created_at' => $now, 
                 'updated_at' => $now
             ],
+            [
+                'office_id' => 11, 
+                'office_name' => 'Alexander Brown Hall', 
+                'office_code' => 'ABH', // <-- ADDED
+                'office_head_id' => null, // <-- ADDED
+                'is_active' => 'active',      // <-- ADDED
+                'created_at' => $now, 
+                'updated_at' => $now
+            ],
+            [
+                'office_id' => 12, 
+                'office_name' => 'Ajose Building', 
+                'office_code' => 'OR', // <-- ADDED
+                'office_head_id' => null, // <-- ADDED
+                'is_active' => 'active',      // <-- ADDED
+                'created_at' => $now, 
+                'updated_at' => $now
+            ]
         ];
 
         DB::table('offices')->insert($offices);

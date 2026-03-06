@@ -128,9 +128,9 @@
                                         class="form-select select2-remote @error('unit_head_id') is-invalid @enderror"
                                         data-parent-filter="#office_id" 
                                         data-parent-type="office">
-                                    @if($unit->head)
+                                    @if($existingHead)
                                         <option value="{{ $unit->unit_head_id }}" selected>
-                                            {{ $unit->head->full_name }} ({{ $unit->head->email }})
+                                            {{ $existingHead['text'] }}
                                         </option>
                                     @else
                                         <option value="">Search for staff...</option>

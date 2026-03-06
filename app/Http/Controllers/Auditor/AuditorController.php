@@ -25,9 +25,9 @@ class AuditorController extends Controller
     ];
 
     $recentSubmissions = Submission::with([
-        'items', 'items.audit.auditor.profile', 'submittedBy.profile', 'submittedBy.faculty', 
-        'submittedBy.department', 'submittedBy.office', 'submittedBy.unit', 
-        'submittedBy.institute'
+        'items', 'items.audit.auditor.profile', 'submittedBy.profile', 
+        'submittedBy.faculty', 'submittedBy.department', 'submittedBy.office', 
+        'submittedBy.unit', 'submittedBy.institute'
     ])
     ->latest('submitted_at')
     ->take(10)
@@ -35,21 +35,44 @@ class AuditorController extends Controller
 
     foreach ($recentSubmissions as $sub) {
         $firstItem = $sub->items->first();
-        
-        // 1. Auditor Display Name Logic
+        $user = $sub->submittedBy;
+
+        // 1. NEW: Structural Origin Logic (College Hierarchy)
+        // We check the user's relations to see where the item is coming from
+        if ($user->unit) {
+            $sub->origin_name = $user->unit->unit_name;
+            $sub->origin_color = 'bg-indigo-100 text-indigo-700';
+        } elseif ($user->office) {
+            $sub->origin_name = $user->office->office_name;
+            $sub->origin_color = 'bg-amber-100 text-amber-700';
+        } elseif ($user->department) {
+            $sub->origin_name = $user->department->dept_name;
+            $sub->origin_type = 'Dept';
+            $sub->origin_color = 'bg-emerald-100 text-emerald-700';
+        } elseif ($user->faculty) {
+            $sub->origin_name = $user->faculty->faculty_name;
+            $sub->origin_color = 'bg-blue-100 text-blue-700';
+        } elseif ($user->institute) {
+            $sub->origin_name = $user->institute->institute_name;
+            $sub->origin_color = 'bg-purple-100 text-purple-700';
+        } else {
+            $sub->origin_name = 'General / College';
+            $sub->origin_type = 'N/A';
+            $sub->origin_color = 'bg-slate-100 text-slate-600';
+        }
+
+        // 2. Auditor Display Name Logic
         $sub->auditor_display_name = $firstItem && $firstItem->audit && $firstItem->audit->auditor 
             ? $firstItem->audit->auditor->full_name 
             : 'Pending';
-
-        // 2. Routing Logic
+        $sub->submission_date_formatted = $sub->submitted_at ? $sub->submitted_at->format('M d, Y') : 'N/A';
+        // 3. Routing Logic
         if ($sub->status === 'pending') {
-            // This route uses {id} usually in SubmissionController
             $sub->routeName = 'auditor.submissions.show';
             $sub->routeParam = ['id' => $sub->submission_id]; 
             $sub->label = 'Audit Batch';
             $sub->btnClass = 'bg-indigo-600 text-white';
         } else {
-            // CRITICAL FIX: This route now strictly expects {submission_id}
             $sub->routeName = 'auditor.approved_items.show';
             $sub->routeParam = ['submission_id' => $sub->submission_id]; 
             $sub->label = 'View Details';
@@ -70,7 +93,7 @@ class AuditorController extends Controller
             'comments'         => 'required_if:overall_decision,rejected|nullable|string|max:2000',
             'items'            => 'required|array',
             'items.*.status'   => 'required|in:approved,rejected,pending',
-            'items.*.remarks'  => 'nullable|string|max:1000',
+            'items.*.item_notes'  => 'nullable|string|max:1000',
         ]);
 
         $submission = Submission::with(['items', 'submittedBy'])->findOrFail($submission_id);
@@ -248,59 +271,75 @@ class AuditorController extends Controller
     // ============================================
     // EXPORT (CSV of submissions)
     // ============================================
-    public function export(Request $request)
-    {
-        $query = Submission::with([
-            'items.category', 'items.subcategory',
-            'submittedBy.profile', 'submittedBy.faculty', 'submittedBy.department',
-            'submittedBy.office', 'submittedBy.unit', 'submittedBy.institute'
-        ]);
+   public function export(Request $request)
+{
+    // Eager load with the exact relationship names from your models
+    $query = Asset::with([
+        'category', 'subcategory',
+        'faculty', 'department', 'office', 'unit', 'institute',
+        'submissionItem.submission.submittedBy.profile',
+        'submissionItem',
+        'submission.submittedSubmissions' // Loading the submission chain
+    ]);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $submissions = $query->latest('submitted_at')->get();
-
-        return Response::stream(function() use ($submissions) {
-            $file = fopen('php://output', 'w');
-            
-            fputcsv($file, [
-                'Ref #', 'Item Name', 'Cost', 'Quantity', 'Funding Source',
-                'Category', 'Subcategory', 'Submitted By', 'Entity',
-                'Department/Unit', 'Date Submitted'
-            ]);
-
-            foreach ($submissions as $s) {
-                $user = $s->submittedBy;
-                $entity = $user->faculty->faculty_name ?? $user->office->office_name ?? $user->institute->institute_name ?? 'N/A';
-                $subEntity = $user->department->dept_name ?? $user->unit->unit_name ?? 'General';
-
-                foreach ($s->items as $item) {
-                    fputcsv($file, [
-                        '#' . str_pad($s->submission_id, 5, '0', STR_PAD_LEFT),
-                        $item->item_name ?? 'N/A',
-                        $item->cost ?? '0.00',
-                        $item->quantity ?? '0',
-                        $item->funding_source_per_item ?? $s->funding_source ?? 'N/A',
-                        $item->category->category_name ?? 'N/A',
-                        $item->subcategory->subcategory_name ?? 'N/A',
-                        $user->profile->full_name ?? $user->username,
-                        $entity,
-                        $subEntity,
-                        $s->submitted_at ? $s->submitted_at->format('M d, Y') : 'N/A'
-                    ]);
-                }
-            }
-            fclose($file);
-        }, 200, [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=Inventory_Report_" . now()->format('Ymd_His') . ".csv",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-        ]);
+    if ($request->filled('status')) {
+        $query->whereHas('submissionItem', function($q) use ($request) {
+            $q->where('status', $request->status);
+        });
     }
 
+    $assets = $query->latest()->get();
+
+    return response()->stream(function() use ($assets) {
+        $file = fopen('php://output', 'w');
+        
+        fputcsv($file, [
+            'Asset Tag #', 'Item Name', 'Current Status', 'Procurement Status', 
+            'Cost', 'Qty', 'Category', 'Origin Structure', 'Location', 
+            'Submitted By', 'Date Submitted'
+        ]);
+
+        foreach ($assets as $asset) {
+            // 1. Determine Location safely
+            $originName = 'College of Medicine';
+            if ($asset->unit) $originName = $asset->unit->unit_name;
+            elseif ($asset->office) $originName = $asset->office->office_name;
+            elseif ($asset->department) $originName = $asset->department->dept_name;
+            elseif ($asset->faculty) $originName = $asset->faculty->faculty_name;
+            elseif ($asset->institute) $originName = $asset->institute->institute_name;
+
+            // 2. SAFE USER LOADING
+            // Note: We use the submittedBy relationship you defined in the Asset Model
+            // Or fallback to the Submission's user.
+            $submittedBy = $asset->submissionItem?->submission?->submittedBy?->full_name 
+               ?? $asset->submission?->submittedBy?->full_name 
+               ?? 'System';
+
+            // 3. SAFE DATE LOADING
+            $dateSubmitted = $asset->submissionItem?->created_at 
+                ? $asset->submissionItem->created_at->format('Y-m-d') 
+                : ($asset->created_at ? $asset->created_at->format('Y-m-d') : 'N/A');
+
+            fputcsv($file, [
+                $asset->asset_tag ?? 'N/A',
+                $asset->item_name,
+                strtoupper($asset->status),
+                ucfirst($asset->submissionItem?->status ?? 'Approved'),
+                $asset->purchase_price ?? $asset->cost ?? 0,
+                $asset->quantity,
+                $asset->category?->category_name ?? 'N/A',
+                $asset->origin_type ?? 'N/A',
+                $originName,
+                $submittedBy,
+                $dateSubmitted
+            ]);
+        }
+        fclose($file);
+    }, 200, [
+        "Content-type"        => "text/csv",
+        "Content-Disposition" => "attachment; filename=College_Asset_Registry_" . now()->format('Ymd') . ".csv",
+    ]);
+}
     // ============================================
     // INTERNAL HELPERS (Auditor-Specific)
     // ============================================
@@ -418,6 +457,7 @@ return redirect()->route('auditor.submissions.index', ['status' => $targetStatus
         
         // We temporarily update status so the accessor knows it's okay to generate
         $item->status = 'approved'; 
+        $item->submission->status = 'approved';
 
         $asset = Asset::create([
             'item_name'            => $item->item_name,

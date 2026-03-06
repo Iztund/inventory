@@ -4,438 +4,240 @@
 
 @section('content')
 
-<div class="min-vh-100 py-4 px-3 px-lg-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);">
-<div style="max-width:1200px;" class="mx-auto">
-
+<div class="mx-auto my-5 max-w-[1300px] rounded-[60px] border border-white/10 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] p-12 shadow-[0_40px_100px_rgba(0,0,0,0.4)]">
+    
     {{-- Alert System --}}
-    @foreach(['success' => ['#059669', 'check-circle'], 'error' => ['#dc2626', 'exclamation-circle'], 'info' => ['#2563eb', 'info-circle']] as $type => $meta)
+    @foreach(['success' => ['bg-emerald-500', 'fa-check-circle'], 'error' => ['bg-red-600', 'fa-exclamation-circle'], 'info' => ['bg-blue-600', 'fa-info-circle']] as $type => $meta)
         @if(session($type))
-            <div class="alert alert-dismissible fade show border-0 rounded-4 p-4 mb-4 d-flex align-items-center shadow-lg" 
-                 style="background: {{ $meta[0] }}15; border-left: 4px solid {{ $meta[0] }} !important; backdrop-filter: blur(10px); animation: slideDown 0.5s ease-out;">
-                
-                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: {{ $meta[0] }}20;">
-                    <i class="fas fa-{{ $meta[1] }} text-white" style="font-size: 1.2rem; color: {{ $meta[0] }}; filter: drop-shadow(0 0 8px {{ $meta[0] }});"></i>
+            <div class="alert alert-dismissible fade show border-0 rounded-4 p-4 mb-4 d-flex align-items-center shadow-lg animate-[slideDown_0.5s_ease-out] backdrop-blur-md" 
+                 style="background: {{ $type == 'success' ? '#05966915' : ($type == 'error' ? '#dc262615' : '#2563eb15') }}; border-left: 4px solid {{ $type == 'success' ? '#059669' : ($type == 'error' ? '#dc2626' : '#2563eb') }} !important;">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3 h-12 w-12" style="background: rgba(255,255,255,0.1);">
+                    <i class="fas {{ $meta[1] }} text-white text-xl"></i>
                 </div>
-                
                 <div class="text-white">
-                    <div class="fw-bold mb-1" style="font-size: 0.9rem;">{{ ucfirst($type) }}</div>
-                    <div style="font-size: 0.85rem; opacity: 0.9;">{{ session($type) }}</div>
+                    <div class="fw-bold mb-1">{{ ucfirst($type) }}</div>
+                    <div class="text-xs opacity-90">{{ session($type) }}</div>
                 </div>
-                
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close btn-close-white ms-auto shadow-none" data-bs-dismiss="alert"></button>
             </div>
         @endif
     @endforeach
 
-    @if ($errors->any())
-        <div class="alert border-0 rounded-4 p-4 mb-4 d-flex align-items-start shadow-lg" style="background: #dc262615; border-left: 4px solid #dc2626 !important; backdrop-filter: blur(10px);">
-            <i class="fas fa-list-ul text-danger fs-5 mt-1 me-3"></i>
-            <div>
-                <h6 class="fw-bold text-white mb-2">Please fix the following:</h6>
-                <ul class="mb-0 ps-3 text-white" style="font-size: 0.85rem; opacity: 0.9;">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-    @endif
-
-    {{-- Header Section --}}
-    <div class="text-center mb-5">
-        <a href="{{ route('admin.bulk-assets.index') }}" 
-           class="btn btn-lg d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow-lg" 
-           style="width: 60px; height: 60px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s;">
-            <i class="fas fa-arrow-left text-white fs-5"></i>
-        </a>
+    <div class="rounded-[40px] border border-white/10 bg-white/5 p-10 shadow-2xl backdrop-blur-[25px]">
         
-        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" 
-             style="width: 120px; height: 120px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 20px 60px rgba(245,158,11,0.4);">
-            <i class="fas fa-cloud-upload-alt text-white" style="font-size: 3rem; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));"></i>
+        <div class="mb-8">
+            <a href="{{ route('admin.bulk-assets.index') }}" 
+               class="group relative inline-flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-slate-400 no-underline backdrop-blur-md transition-all duration-300 hover:border-amber-500/40 hover:bg-white/10 hover:text-slate-100 hover:-translate-y-1">
+                <i class="fas fa-arrow-left text-sm transition-transform duration-300 group-hover:-translate-x-1 group-hover:text-amber-500"></i>
+                <span class="text-l text-white font-bold tracking-wide">Back</span>
+                <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent transition-transform duration-500 group-hover:translate-x-full"></div>
+            </a>
         </div>
-        
-        <h1 class="text-white fw-black mb-3" style="font-size: 2.5rem; letter-spacing: -0.02em; text-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-            Upload Asset Data
-        </h1>
-        
-        <p class="text-white mb-0" style="font-size: 1.1rem; opacity: 0.8; max-width: 600px; margin: 0 auto;">
-            Import multiple assets at once using CSV or Excel files
-        </p>
-    </div>
 
-    {{-- Instructions Card --}}
-    <div class="rounded-4 p-4 mb-4 shadow-lg" style="background: rgba(59, 130, 246, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(59, 130, 246, 0.2);">
-        <div class="d-flex align-items-start gap-3">
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.2);">
-                <i class="fas fa-info-circle text-white fs-4"></i>
+        <div class="text-center mb-5">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 h-[100px] w-[100px] bg-gradient-to-br from-amber-400 to-amber-700 shadow-[0_20px_60px_rgba(245,158,11,0.3)]">
+                 <i class="fas fa-cloud-upload-alt text-white text-4xl"></i>
             </div>
-            <div class="text-white">
-                <h6 class="fw-bold mb-3">Quick Start Guide:</h6>
-                <ol class="mb-0 ps-3" style="line-height: 1.8;">
-                    <li>Download the CSV template below</li>
-                    <li>Fill in your asset data following the format</li>
-                    <li>Select the target entity (Faculty/Department/Office/Unit/Institute)</li>
-                    <li>Upload your completed file</li>
-                </ol>
-            </div>
+            <h1 class="text-white fw-black mb-2 text-4xl lg:text-5xl">Upload Asset Data</h1>
+            <p class="text-white/70 text-lg">Import multiple assets at once using CSV or Excel files</p>
         </div>
-    </div>
 
-    {{-- Download Template Card --}}
-    <div class="rounded-4 p-4 mb-4 shadow-lg d-flex align-items-center justify-content-between" 
-         style="background: linear-gradient(135deg, rgba(5, 150, 105, 0.2) 0%, rgba(5, 150, 105, 0.05) 100%); backdrop-filter: blur(20px); border: 1px solid rgba(5, 150, 105, 0.3);">
-        <div class="d-flex align-items-center gap-3">
-            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow: 0 10px 30px rgba(5,150,105,0.3);">
-                <i class="fas fa-file-csv text-white" style="font-size: 2rem;"></i>
-            </div>
-            <div class="text-white">
-                <h5 class="fw-black mb-1" style="font-size: 1.2rem;">CSV Template</h5>
-                <p class="mb-0" style="opacity: 0.8; font-size: 0.9rem;">Download template with sample data and column headers</p>
-            </div>
-        </div>
-        <a href="{{ route('admin.bulk-assets.csv.template') }}" 
-           class="btn btn-lg rounded-pill px-4 py-3 fw-bold shadow-lg" 
-           style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border: none; transition: all 0.3s; position: relative; overflow: hidden;">
-            <i class="fas fa-download me-2"></i> Download
-        </a>
-    </div>
+        <form action="{{ route('admin.bulk-assets.csv.process') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+            @csrf
 
-    {{-- Upload Form --}}
-    <form action="{{ route('admin.bulk-assets.csv.process') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
-        @csrf
-
-        <div class="row g-4">
-            
-            {{-- Entity Selection --}}
-            <div class="col-12">
-                <div class="rounded-4 overflow-hidden shadow-lg" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div class="p-4 d-flex align-items-center gap-3" style="background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid rgba(99, 102, 241, 0.2);">
-                        <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background: rgba(99, 102, 241, 0.2);">
-                            <i class="fas fa-building text-white" style="font-size: 1.5rem;"></i>
+            <div class="row g-5">
+                <div class="col-lg-5">
+                    <div class="mb-5">
+                        <h5 class="text-white fw-bold mb-4">
+                            <i class="fas fa-sitemap text-amber-500 me-2"></i> Destination
+                        </h5>
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small fw-bold tracking-wider">SELECT DESTINATION</label>
+                            <select name="entity_type" id="entity_type" 
+                                    class="form-select form-select-lg rounded-3 shadow-none bg-black/30 border-white/10 text-slate-400 transition-all focus:border-amber-500 focus:bg-black/40 focus:text-white" required>
+                                <option value="" class="bg-[#1e293b]">Select Destination...</option>
+                                <option value="faculty" class="bg-[#1e293b]">Faculty</option>
+                                <option value="office" class="bg-[#1e293b]">Office</option>
+                                <option value="department" class="bg-[#1e293b]">Department</option>
+                                <option value="unit" class="bg-[#1e293b]">Unit</option>
+                                <option value="institute" class="bg-[#1e293b]">Institute</option>
+                            </select>
                         </div>
-                        <div>
-                            <h5 class="text-white fw-black mb-0" style="font-size: 1.2rem;">Target Location</h5>
-                            <p class="text-white mb-0" style="opacity: 0.7; font-size: 0.85rem;">Select where these assets will be assigned</p>
+
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small fw-bold tracking-wider">ASSIGN TO NAME</label>
+                            <select name="entity_id" id="entity_id" 
+                                    class="form-select form-select-lg rounded-3 shadow-none bg-black/40 border-white/5 text-slate-600 transition-all disabled:cursor-not-allowed disabled:opacity-100" 
+                                    required disabled>
+                                <option value="" class="bg-[#1e293b]">Awaiting destination selection...</option>
+                            </select>
                         </div>
                     </div>
-                    
-                    <div class="p-4">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label text-white fw-bold mb-2">
-                                    <i class="fas fa-sitemap me-2"></i> Entity Type
-                                </label>
-                                <select name="entity_type" id="entity_type" class="form-select form-select-lg rounded-3" required
-                                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px);">
-                                    <option value="" style="background: #1e293b; color: white;">Select Entity Type</option>
-                                    <option value="faculty" style="background: #1e293b; color: white;">Faculty</option>
-                                    <option value="department" style="background: #1e293b; color: white;">Department</option>
-                                    <option value="office" style="background: #1e293b; color: white;">Office</option>
-                                    <option value="unit" style="background: #1e293b; color: white;">Unit</option>
-                                    <option value="institute" style="background: #1e293b; color: white;">Institute</option>
-                                </select>
-                            </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label text-white fw-bold mb-2">
-                                    <i class="fas fa-map-marker-alt me-2"></i> Specific Entity
-                                </label>
-                                <select name="entity_id" id="entity_id" class="form-select form-select-lg rounded-3" required disabled
-                                        style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px);">
-                                    <option value="" style="background: #1e293b; color: white;">Select entity type first</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- File Upload --}}
-            <div class="col-12">
-                <div class="rounded-4 overflow-hidden shadow-lg" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div class="p-4 d-flex align-items-center gap-3" style="background: rgba(245, 158, 11, 0.1); border-bottom: 1px solid rgba(245, 158, 11, 0.2);">
-                        <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background: rgba(245, 158, 11, 0.2);">
-                            <i class="fas fa-file-import text-white" style="font-size: 1.5rem;"></i>
-                        </div>
-                        <div>
-                            <h5 class="text-white fw-black mb-0" style="font-size: 1.2rem;">Upload File</h5>
-                            <p class="text-white mb-0" style="opacity: 0.7; font-size: 0.85rem;">Supports CSV, Excel (.xlsx, .xls)</p>
-                        </div>
-                    </div>
-                    
-                    <div class="p-4">
-                        <div class="border-2 border-dashed rounded-4 p-5 text-center" 
-                             style="border-color: rgba(255,255,255,0.2) !important; background: rgba(255,255,255,0.02); transition: all 0.3s;"
-                             id="dropZone">
-                            
-                            <input type="file" 
-                                   name="import_file" 
-                                   id="import_file" 
-                                   class="d-none" 
-                                   accept=".csv, .xlsx, .xls"
-                                   required>
-                            
-                            <i class="fas fa-cloud-upload-alt text-white mb-4" style="font-size: 4rem; opacity: 0.3;"></i>
-                            <h5 class="text-white fw-bold mb-3">Drop your file here or click to browse</h5>
-                            <p class="text-white mb-4" style="opacity: 0.6;">Accepts .xlsx, .xls, .csv files up to 10MB</p>
-                            
-                            <button type="button" 
-                                    class="btn btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg" 
-                                    style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none;"
-                                    onclick="document.getElementById('import_file').click()">
-                                <i class="fas fa-folder-open me-2"></i> Browse Files
-                            </button>
-
-                            <div id="fileInfo" class="mt-4 d-none">
-                                <div class="d-inline-flex align-items-center gap-3 p-3 rounded-pill shadow-lg" 
-                                     style="background: rgba(99, 102, 241, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(99, 102, 241, 0.3);">
-                                    <i id="fileIcon" class="fas fa-file-excel text-white" style="font-size: 1.5rem;"></i>
-                                    <span id="fileName" class="text-white fw-bold"></span>
-                                    <button type="button" class="btn btn-sm btn-link text-white" onclick="clearFile()">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Format Reference (Collapsible) --}}
-            <div class="col-12">
-                <div class="rounded-4 overflow-hidden shadow-lg" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);">
-                    <div class="p-4 d-flex align-items-center justify-content-between" style="background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid rgba(59, 130, 246, 0.2); cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#formatTable">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.2);">
-                                <i class="fas fa-table text-white"></i>
+                    <div class="p-4 rounded-4 bg-emerald-500/10 border border-emerald-500/20">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-emerald-600 p-3 rounded-3 shadow-lg shadow-emerald-900/40">
+                                <i class="fas fa-file-csv text-white text-2xl"></i>
                             </div>
                             <div>
-                                <h5 class="text-white fw-bold mb-0">Expected File Format</h5>
-                                <p class="text-white mb-0" style="opacity: 0.7; font-size: 0.85rem;">Click to view column requirements</p>
+                                <h6 class="text-white fw-bold mb-0">CSV Template</h6>
+                                <p class="text-emerald-500/60 small mb-0 font-bold">Standardized Format</p>
                             </div>
                         </div>
-                        <i class="fas fa-chevron-down text-white"></i>
+                        <a href="{{ route('admin.bulk-assets.csv.template') }}" class="btn btn-success w-100 rounded-pill fw-bold py-3 bg-emerald-600 border-0 hover:bg-emerald-500 transition-all shadow-lg">
+                            <i class="fas fa-download me-2"></i> Download Template
+                        </a>
                     </div>
-                    
-                    <div class="collapse" id="formatTable">
-                        <div class="p-4">
+                </div>
+
+                <div class="col-lg-7">
+                    <h5 class="text-white fw-bold mb-4"><i class="fas fa-file-import text-amber-500 me-2"></i> Upload File</h5>
+
+                    <div id="dropZone" 
+                         class="group rounded-4 p-5 text-center border-2 border-dashed border-white/20 mb-4 transition-all bg-black/20 hover:bg-black/40 hover:border-amber-500/40 cursor-pointer"
+                         onclick="document.getElementById('import_file').click()">
+                        
+                        <input type="file" name="import_file" id="import_file" class="d-none" accept=".csv, .xlsx, .xls" required>
+                        
+                        <div id="dropPrompt">
+                            <i class="fas fa-folder-open text-white-50 text-5xl mb-3 transition-colors group-hover:text-amber-500"></i>
+                            <h5 class="text-white fw-bold">Drop your file here or click to browse</h5>
+                            <p class="text-white/60 small uppercase tracking-widest">Excel or CSV (Max 10MB)</p>
+                        </div>
+
+                        <div id="fileInfo" class="d-none animate-bounce-short">
+                            <div class="bg-indigo-500/20 border border-indigo-500/40 px-4 py-2 rounded-pill d-inline-flex align-items-center">
+                                <i class="fas fa-file-excel text-indigo-400 me-3"></i>
+                                <span id="fileName" class="text-white fw-bold small me-4"></span>
+                                <i class="fas fa-times text-white/50 cursor-pointer hover:text-white" onclick="event.stopPropagation(); clearFile()"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-4 overflow-hidden border border-white/10 bg-white/5">
+                        <div class="p-4 d-flex align-items-center justify-content-between text-white cursor-pointer hover:bg-white/5 transition-colors" 
+                             onclick="toggleFormatTable()" id="formatToggleHeader">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="fas fa-table text-amber-500"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-0">Expected File Format</h6>
+                                    <p class="mb-0 text-xs text-white-50">View all required and optional columns</p>
+                                </div>
+                            </div>
+                            <i id="chevron" class="fas fa-chevron-down text-white-50 transition-transform duration-300"></i>
+                        </div>
+
+                        <div id="formatTable" class="hidden p-4 bg-black/30 border-top border-white/5">
                             <div class="table-responsive">
-                                <table class="table table-dark table-hover mb-0" style="background: transparent;">
-                                    <thead style="background: rgba(255,255,255,0.05);">
-                                        <tr>
-                                            <th class="text-white fw-bold border-0 py-3">Column</th>
-                                            <th class="text-white fw-bold border-0 py-3">Required</th>
-                                            <th class="text-white fw-bold border-0 py-3">Example</th>
-                                            <th class="text-white fw-bold border-0 py-3">Notes</th>
+                                <table class="table table-dark table-borderless table-sm mb-0 align-middle">
+                                    <thead>
+                                        <tr class="text-amber-500 text-xs uppercase tracking-wider border-bottom border-white/10">
+                                            <th class="pb-2">Column Header</th>
+                                            <th class="pb-2">Status</th>
+                                            <th class="pb-2">Requirements</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="text-white fw-bold border-0 py-3">item_name</td>
-                                            <td class="border-0 py-3"><span class="badge bg-danger rounded-pill">Required</span></td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.8;">Dell Latitude 5420 Laptop</td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.6;">Full asset name</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-white fw-bold border-0 py-3">category_name</td>
-                                            <td class="border-0 py-3"><span class="badge bg-danger rounded-pill">Required</span></td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.8;">Electronics</td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.6;">Must match existing</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-white fw-bold border-0 py-3">subcategory_name</td>
-                                            <td class="border-0 py-3"><span class="badge bg-secondary rounded-pill">Optional</span></td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.8;">Computers</td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.6;">If applicable</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-white fw-bold border-0 py-3">quantity</td>
-                                            <td class="border-0 py-3"><span class="badge bg-danger rounded-pill">Required</span></td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.8;">1</td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.6;">Number of units</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-white fw-bold border-0 py-3">purchase_price</td>
-                                            <td class="border-0 py-3"><span class="badge bg-danger rounded-pill">Required</span></td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.8;">450000.00</td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.6;">In Naira</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-white fw-bold border-0 py-3">purchase_date</td>
-                                            <td class="border-0 py-3"><span class="badge bg-secondary rounded-pill">Optional</span></td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.8;">2024-01-15</td>
-                                            <td class="text-white border-0 py-3" style="opacity: 0.6;">YYYY-MM-DD format</td>
-                                        </tr>
+                                    <tbody class="text-xs">
+                                        <tr><td class="pt-3 fw-bold font-mono text-slate-200">item_name</td><td class="pt-3"><span class="badge bg-danger">Required</span></td><td class="pt-3">Full name of the asset</td></tr>
+                                        <tr><td class="fw-bold font-mono text-slate-200">category_name</td><td><span class="badge bg-danger">Required</span></td><td>Must exist in system</td></tr>
+                                        <tr><td class="fw-bold font-mono text-slate-200">subcategory_name</td><td><span class="badge bg-danger">Required</span></td><td>Must exist in system</td></tr>
+                                        <tr><td class="fw-bold font-mono text-slate-200">quantity</td><td><span class="badge bg-danger">Required</span></td><td>Numeric value only</td></tr>
+                                        <tr><td class="fw-bold font-mono text-slate-200">unit_price</td><td><span class="badge bg-danger">Required</span></td><td>Currency format (₦)</td></tr>
+                                        <tr><td class="fw-bold font-mono text-slate-200">status</td><td><span class="badge bg-danger">Required</span></td><td>Available, Assigned, etc.</td></tr>
+                                        <tr><td class="fw-bold font-mono text-slate-200 text-slate-400">serial_number</td><td><span class="badge bg-secondary opacity-50">Optional</span></td><td>Unique device ID</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
+
+                    <div class="mt-5 gap-2 justify-content-center">
+                        <a href="{{ route('admin.bulk-assets.index') }}" class="btn rounded-pill px-4 py-3 fw-bold text-white border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">Cancel</a>
+                        <button type="submit" class="btn rounded-pill px-3 py-2 fw-bold shadow-xl text-white bg-emerald-600 hover:bg-emerald-500 border-0 transition-all hover:-translate-y-1" id="submitBtn">
+                            <span id="btnText">Upload & Import Assets</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            {{-- Action Buttons --}}
-            <div class="col-12">
-                <div class="d-flex gap-3 justify-content-center">
-                    <a href="{{ route('admin.bulk-assets.index') }}" 
-                       class="btn btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg" 
-                       style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px);">
-                        <i class="fas fa-times me-2"></i> Cancel
-                    </a>
-                    
-                    <button type="submit" 
-                            class="btn btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg" 
-                            style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; border: none; position: relative; overflow: hidden;" 
-                            id="submitBtn">
-                        <i class="fas fa-upload me-2"></i>
-                        <span id="btnText">Upload & Import</span>
-                    </button>
-                </div>
-            </div>
-
-        </div>
-    </form>
-
+        </form>
+    </div>
 </div>
-</div>
-
-<style>
-@keyframes slideDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.form-select:focus,
-.btn:hover {
-    transform: translateY(-2px);
-    transition: all 0.3s;
-}
-
-#dropZone:hover {
-    border-color: rgba(245, 158, 11, 0.5) !important;
-    background: rgba(245, 158, 11, 0.05) !important;
-}
-</style>
 
 @push('scripts')
 <script>
-// Entity type dropdown
-document.getElementById('entity_type').addEventListener('change', function() {
-    const entityType = this.value;
-    const entityIdSelect = document.getElementById('entity_id');
-    
-    entityIdSelect.innerHTML = '<option value="">Loading...</option>';
-    entityIdSelect.disabled = true;
-
-    if (!entityType) {
-        entityIdSelect.innerHTML = '<option value="">Select entity type first</option>';
-        return;
+    // Logic for toggling instructions table
+    function toggleFormatTable() {
+        const table = document.getElementById('formatTable');
+        const chevron = document.getElementById('chevron');
+        
+        if (table.classList.contains('hidden')) {
+            table.classList.remove('hidden');
+            chevron.classList.add('rotate-180');
+        } else {
+            table.classList.add('hidden');
+            chevron.classList.remove('rotate-180');
+        }
     }
 
-    const entities = {
-        faculty: @json($faculties),
-        department: @json($departments),
-        office: @json($offices),
-        unit: @json($units),
-        institute: @json($institutes)
+    // Dynamic Select Loading
+    document.getElementById('entity_type').addEventListener('change', function() {
+        const type = this.value;
+        const idSelect = document.getElementById('entity_id');
+        idSelect.innerHTML = '<option value="">Loading...</option>';
+        idSelect.disabled = true;
+
+        if (!type) {
+            idSelect.innerHTML = '<option value="">Awaiting destination...</option>';
+            return;
+        }
+
+        const data = {
+            faculty: @json($faculties),
+            department: @json($departments),
+            office:@json($offices),
+            unit: @json($units),
+            institute: @json($institutes)
+        };
+
+        const list = data[type] || [];
+        let html = `<option value="" class="bg-[#1e293b]">Select ${type.charAt(0).toUpperCase() + type.slice(1)}</option>`;
+        
+        list.forEach(item => {
+            const id = item[type + '_id'];
+            const name = (type === 'department' ? item.dept_name : item[type + '_name']);
+            html += `<option value="${id}" class="bg-[#1e293b]">${name}</option>`;
+        });
+
+        idSelect.innerHTML = html;
+        idSelect.disabled = false;
+        // Visual switch from "Dark Disabled" to "Active Slate"
+        idSelect.classList.replace('text-slate-600', 'text-slate-400');
+    });
+
+    // File Input UI Sync
+    document.getElementById('import_file').addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            document.getElementById('fileName').textContent = e.target.files[0].name;
+            document.getElementById('fileInfo').classList.remove('d-none');
+            document.getElementById('dropPrompt').classList.add('d-none');
+        }
+    });
+
+    window.clearFile = function() {
+        document.getElementById('import_file').value = '';
+        document.getElementById('fileInfo').classList.add('d-none');
+        document.getElementById('dropPrompt').classList.remove('d-none');
     };
 
-    const options = entities[entityType];
-    let html = '<option value="" style="background: #1e293b; color: white;">Select ' + entityType + '</option>';
-    
-    options.forEach(item => {
-        const idField = entityType + '_id';
-        const nameField = (entityType === 'department' ? 'dept' : entityType) + '_name';
-        html += `<option value="${item[idField]}" style="background: #1e293b; color: white;">${item[nameField]}</option>`;
+    // Form Submission UI feedback
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing File...';
     });
-
-    entityIdSelect.innerHTML = html;
-    entityIdSelect.disabled = false;
-});
-
-// File input
-document.getElementById('import_file').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        document.getElementById('fileName').textContent = file.name;
-        document.getElementById('fileInfo').classList.remove('d-none');
-        
-        const iconI = document.getElementById('fileIcon');
-        if (file.name.endsWith('.csv')) {
-            iconI.className = 'fas fa-file-csv text-white';
-        } else {
-            iconI.className = 'fas fa-file-excel text-white';
-        }
-        
-        document.getElementById('dropZone').style.borderColor = 'rgba(5, 150, 105, 0.5)';
-        document.getElementById('dropZone').style.background = 'rgba(5, 150, 105, 0.1)';
-    }
-});
-
-function clearFile() {
-    document.getElementById('import_file').value = '';
-    document.getElementById('fileInfo').classList.add('d-none');
-    document.getElementById('dropZone').style.borderColor = 'rgba(255,255,255,0.2)';
-    document.getElementById('dropZone').style.background = 'rgba(255,255,255,0.02)';
-}
-
-// Form submit
-document.getElementById('uploadForm').addEventListener('submit', function() {
-    const btn = document.getElementById('submitBtn');
-    const btnText = document.getElementById('btnText');
-    
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
-    btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
-});
-
-// Drag and drop
-const dropZone = document.getElementById('dropZone');
-
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    });
-});
-
-['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.style.borderColor = 'rgba(5, 150, 105, 0.5)';
-        dropZone.style.background = 'rgba(5, 150, 105, 0.1)';
-    });
-});
-
-['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.style.borderColor = 'rgba(255,255,255,0.2)';
-        dropZone.style.background = 'rgba(255,255,255,0.02)';
-    });
-});
-
-dropZone.addEventListener('drop', function(e) {
-    const files = e.dataTransfer.files;
-    document.getElementById('import_file').files = files;
-    
-    if (files.length > 0) {
-        document.getElementById('fileName').textContent = files[0].name;
-        document.getElementById('fileInfo').classList.remove('d-none');
-    }
-});
-
-// Auto-hide alerts
-setTimeout(() => {
-    document.querySelectorAll('.alert').forEach(alert => {
-        bootstrap.Alert.getOrCreateInstance(alert).close();
-    });
-}, 5000);
 </script>
 @endpush
-
 @endsection

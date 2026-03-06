@@ -47,7 +47,7 @@
                 ['Approved Items', $approvedSubmissions ?? 0, 'fa-check-circle', 'text-emerald-500', 'bg-emerald-50', 'Processed'],
                 ['Rejected Items', $rejectedSubmissions ?? 0, 'fa-times-circle', 'text-red-500', 'bg-red-50', 'Denied'],
                 ['Total Requests', $totalSubmissions ?? 0, 'fa-clipboard-list', 'text-indigo-500', 'bg-indigo-50', 'Historical Log'],
-                ['Asset Categories', $totalCategories ?? 0, 'fa-tags', 'text-amber-500', 'bg-amber-50', 'Classification'],
+                ['Items Categories', $totalCategories ?? 0, 'fa-tags', 'text-amber-500', 'bg-amber-50', 'Classification'],
             ];
         @endphp
         
@@ -121,7 +121,7 @@
                 ['Faculties', $totalFaculties ?? 0, 'bg-blue-50', 'text-blue-600'],
                 ['Departments', $totalDepartments ?? 0, 'bg-emerald-50', 'text-emerald-600'],
                 ['Institutes', $totalInstitutes ?? 0, 'bg-amber-50', 'text-amber-600'],
-                ['Offices', $totalOffices ?? 0, 'bg-cyan-50', 'text-cyan-600'],
+                ['Offices & Buildings', $totalOffices ?? 0, 'bg-cyan-50', 'text-cyan-600'],
                 ['Admin Units', $totalUnits ?? 0, 'bg-slate-50', 'text-slate-600'],
             ];
         @endphp

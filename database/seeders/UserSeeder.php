@@ -17,8 +17,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('ezek1234'), // always hash passwords
                 'faculty_id'=>NULL,
                 'institute_id'=>NULL,
-                'office_id'=>9,
-                'unit_id'=>41,
+                'office_id'=>4,
+                'unit_id'=>21,
                 'role_id' => 1, // admin
                 'dept_id' => null,
                 'status' => 'active',
@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
                 'faculty_id'=>NULL,
                 'institute_id'=>NULL,
                 'office_id'=>1,
-                'unit_id'=>2,
+                'unit_id'=>1,
                 'role_id' => 2, // staff
                 'dept_id'=>NULL,
                 'status' => 'active',
@@ -48,8 +48,8 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('ezek1234'),
                 'faculty_id'=>NULL,
                 'institute_id'=>NULL,
-                'office_id'=>9,
-                'unit_id'=>40,
+                'office_id'=>1,
+                'unit_id'=>4,
                 'role_id' => 3, // auditor
                 'dept_id' =>NULL,
                 'status' => 'active',

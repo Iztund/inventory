@@ -17,7 +17,7 @@ return new class extends Migration
 
             // Submission FK (References submissions.submission_id)
             $table->foreignId('submission_id')->constrained('submissions', 'submission_id')->onDelete('cascade'); 
-            
+            $table->unsignedBigInteger('submission_item_id')->nullable();
             // Auditor FK (References users.id)
             $table->foreignId('auditor_id')->constrained('users','user_id')->onDelete('cascade');
 

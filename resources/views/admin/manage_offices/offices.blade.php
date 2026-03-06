@@ -90,8 +90,8 @@
                             <i class="fas fa-building text-white" style="font-size:1.4rem;"></i>
                         </div>
                         <div>
-                            <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700;">Units</div>
-                            <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $offices->sum('units_count') }}</div>
+                            <div class="text-slate-600 text-uppercase mb-1" style="font-size:0.7rem; letter-spacing:0.1em; font-weight:700; white-space: nowrap;">Assigned Heads</div>
+                            <div class="fw-black text-slate-900" style="font-size:2rem; line-height:1;">{{ $assignedHeadsCount }}</div>
                         </div>
                     </div>
                 </div>

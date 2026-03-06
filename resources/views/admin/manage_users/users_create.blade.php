@@ -166,7 +166,7 @@
                         {{-- Office & Unit Pair --}}
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label text-slate-600 fw-bold text-uppercase mb-2" style="font-size:0.68rem; letter-spacing:0.08em;">Office</label>
+                                <label class="form-label text-slate-600 fw-bold text-uppercase mb-2" style="font-size:0.68rem; letter-spacing:0.08em;">Office/Building</label>
                                 <select name="office_id" id="office_select" class="form-select border-slate-200 bg-white" style="padding:0.6rem 0.9rem; border-radius:8px; font-size:0.84rem;">
                                     <option value="">None</option>
                                     @foreach($offices as $office)

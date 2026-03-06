@@ -13,23 +13,12 @@ return new class extends Migration
 {
     Schema::create('units', function (Blueprint $table) {
         $table->id('unit_id');
-
-        // -------- FACULTY (nullable) --------
-        $table->unsignedBigInteger('faculty_id')->nullable();
-        $table->foreign('faculty_id')
-            ->references('faculty_id')
-            ->on('faculties')
-            ->nullOnDelete()
-            ->cascadeOnUpdate();
-
-        // -------- OFFICE (nullable) --------
         $table->unsignedBigInteger('office_id')->nullable();
         $table->foreign('office_id')
             ->references('office_id')
             ->on('offices')
             ->nullOnDelete()
             ->cascadeOnUpdate();
-
         // -------- UNIT DATA --------
         $table->string('unit_name')->unique();
         $table->string('unit_code')->nullable();

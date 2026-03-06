@@ -82,7 +82,7 @@
                         {{-- Academic Branch (Indigo Style) --}}
                         <div class="col-span-12 lg:col-span-3">
                             <div class="p-4 rounded-2xl bg-slate-50 border border-white h-full shadow-sm">
-                                <h6 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3 italic">Academic Hierarchy</h6>
+                                <h6 class="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3 italic">Academic</h6>
                                 <div class="flex flex-col gap-2">
                                     <select name="faculty_id" id="facultySelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2.5 focus:ring-amber-500/10">
                                         <option value="">-- Faculty --</option>
@@ -108,7 +108,7 @@
                                 <h6 class="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-3 italic">Administrative</h6>
                                 <div class="flex flex-col gap-2">
                                     <select name="office_id" id="officeSelect" class="w-full text-[11px] font-bold bg-white border-slate-200 rounded-xl py-2.5 focus:ring-amber-500/10">
-                                        <option value="">-- Office --</option>
+                                        <option value="">-- Office & Building --</option>
                                         @foreach($offices as $o)
                                             <option value="{{ $o->office_id }}" {{ request('office_id') == $o->office_id ? 'selected' : '' }}>{{ $o->office_name }}</option>
                                         @endforeach

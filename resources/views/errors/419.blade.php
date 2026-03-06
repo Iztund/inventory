@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Expired</title>
-    {{-- Add your CSS links here or use CDN for Tailwind/Bootstrap --}}
+    <title>Security Session Expired</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="min-h-screen flex items-center justify-center bg-slate-50 px-4">
         <div class="max-w-md w-full text-center">
+            
             {{-- Icon --}}
             <div class="mb-8 relative inline-block">
                 <div class="w-24 h-24 bg-white rounded-3xl border border-slate-200 shadow-sm flex items-center justify-center mx-auto">
@@ -21,11 +21,19 @@
                 </div>
             </div>
 
-            {{-- Text --}}
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-3">Security Session Expired</h1>
+            {{-- Dynamic Heading based on Auth Status --}}
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-3">
+                {{ Auth::check() ? 'Form Security Expired' : 'Security Session Expired' }}
+            </h1>
+            
+            {{-- Dynamic Subtitle based on Auth Status --}}
             <p class="text-slate-500 text-sm leading-relaxed mb-8">
-                For the protection of the College's inventory data, sessions are timed out after a period of inactivity. 
-                <br><span class="font-bold text-slate-700">Please refresh to continue.</span>
+                @if(Auth::check())
+                    Your session is still active, but the form security token has expired.
+                @else
+                    For the protection of the College's inventory data, sessions are timed out after a period of inactivity.
+                @endif
+                <br><span class="font-bold text-slate-700">Please refresh or return to continue.</span>
             </p>
 
             {{-- Actions --}}
@@ -36,10 +44,19 @@
                     Refresh Page
                 </button>
                 
-                <a href="{{ route('login') }}" 
-                    class="block w-full text-slate-500 hover:text-slate-800 text-xs font-bold uppercase tracking-widest no-underline transition-colors py-2">
-                    Return to Login Screen
-                </a>
+                @if(Auth::check())
+                    {{-- User is still logged in, show Dashboard link --}}
+                    <a href="{{ route('dashboard') }}" 
+                        class="block w-full text-emerald-600 hover:text-emerald-800 text-xs font-bold uppercase tracking-widest no-underline transition-colors py-2">
+                        <i class="fas fa-gauge-high mr-1"></i> Return to Dashboard
+                    </a>
+                @else
+                    {{-- User is logged out, show Login link --}}
+                    <a href="{{ route('login') }}" 
+                        class="block w-full text-slate-500 hover:text-slate-800 text-xs font-bold uppercase tracking-widest no-underline transition-colors py-2">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Return to Login Screen
+                    </a>
+                @endif
             </div>
 
             {{-- Footer --}}

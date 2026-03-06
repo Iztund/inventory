@@ -194,7 +194,7 @@
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label class="form-label text-slate-500 fw-bold text-uppercase mb-2" style="font-size:0.68rem; letter-spacing:0.08em;">Office</label>
+                                    <label class="form-label text-slate-500 fw-bold text-uppercase mb-2" style="font-size:0.68rem; letter-spacing:0.08em;">Office/Building</label>
                                     <select name="office_id" 
                                             class="form-select border-slate-200 bg-white" 
                                             style="padding:0.6rem 0.9rem; border-radius:8px; font-size:0.84rem;">

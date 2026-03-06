@@ -161,6 +161,7 @@
                     <thead class="bg-slate-50">
                         <tr>
                             <th class="ps-4 py-3 text-slate-500 fw-bold uppercase" style="font-size:0.7rem;">Asset Details</th>
+                            <th class="ps-4 py-3 text-slate-500 fw-bold uppercase " style="font-size:0.7rem;">Asset Tag</th>
                             <th class="py-3 text-slate-500 fw-bold uppercase" style="font-size:0.7rem;">Category</th>
                             <th class="py-3 text-slate-500 fw-bold uppercase text-center" style="font-size:0.7rem;">Qty</th>
                             <th class="pe-4 py-3 text-slate-500 fw-bold uppercase text-end" style="font-size:0.7rem;">Valuation</th>

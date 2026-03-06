@@ -72,10 +72,10 @@ class InstituteController extends Controller
     {
         $institute = Institute::with('director.profile')->findOrFail($id);
         $activeStaffs = User::where('status', 'active')
-        ->whereHas('institute', function($q) use ($id) {
-                $q->where('institute_id', $id);
-            })
-        ->get();
+                    ->whereHas('institute', function($q) use ($id) {
+                            $q->where('institute_id', $id);
+                        })
+                    ->get();
         $ItemCount = Asset::where('current_institute_id', $id)->count();
         return view('admin.manage_institutes.institutes_edit', compact('institute', 'activeStaffs', 'ItemCount'));
     }
